@@ -1,0 +1,13 @@
+{
+    "name": "duality",
+    "version": "0.0.1",
+    "description": "A handwired split keyboard using ergogen",
+    "author": "HalfDane <halfdane@gmx.net>",
+    "license": "MIT",
+    "scripts": {
+        "start": "ergogen duality_keyboard.yaml -o generated_files"
+    },
+    "devDependencies": {
+        "ergogen": "^3.1.2"
+    }
+}

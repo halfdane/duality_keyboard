@@ -1,0 +1,594 @@
+board_pinky_bottom:
+    x: 18
+    'y': 0
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_pinky_bottom
+        colrow: pinky_bottom
+        col: &ref_0
+            spread: 18
+            stagger: 0
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: pinky
+        row: bottom
+board_pinky_home:
+    x: 18
+    'y': 17
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_pinky_home
+        colrow: pinky_home
+        col: *ref_0
+        row: home
+board_pinky_top:
+    x: 18
+    'y': 34
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_pinky_top
+        colrow: pinky_top
+        col: *ref_0
+        row: top
+board_ring_bottom:
+    x: 36
+    'y': 12.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_ring_bottom
+        colrow: ring_bottom
+        col: &ref_1
+            spread: 18
+            stagger: 12.573
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: ring
+        row: bottom
+board_ring_home:
+    x: 36
+    'y': 29.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_ring_home
+        colrow: ring_home
+        col: *ref_1
+        row: home
+board_ring_top:
+    x: 36
+    'y': 46.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_ring_top
+        colrow: ring_top
+        col: *ref_1
+        row: top
+board_middle_bottom:
+    x: 54
+    'y': 17.3355
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_middle_bottom
+        colrow: middle_bottom
+        col: &ref_2
+            spread: 18
+            stagger: 4.7625
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: middle
+        row: bottom
+board_middle_home:
+    x: 54
+    'y': 34.3355
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_middle_home
+        colrow: middle_home
+        col: *ref_2
+        row: home
+board_middle_top:
+    x: 54
+    'y': 51.3355
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_middle_top
+        colrow: middle_top
+        col: *ref_2
+        row: top
+board_index_bottom:
+    x: 72
+    'y': 12.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_index_bottom
+        colrow: index_bottom
+        col: &ref_3
+            spread: 18
+            stagger: -4.7625
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: index
+        row: bottom
+board_index_home:
+    x: 72
+    'y': 29.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_index_home
+        colrow: index_home
+        col: *ref_3
+        row: home
+board_index_top:
+    x: 72
+    'y': 46.573
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_index_top
+        colrow: index_top
+        col: *ref_3
+        row: top
+board_inner_bottom:
+    x: 90
+    'y': 9.7155
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_inner_bottom
+        colrow: inner_bottom
+        col: &ref_4
+            spread: 18
+            stagger: -2.8575
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: inner
+        row: bottom
+board_inner_home:
+    x: 90
+    'y': 26.7155
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_inner_home
+        colrow: inner_home
+        col: *ref_4
+        row: home
+board_inner_top:
+    x: 90
+    'y': 43.7155
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: board_inner_top
+        colrow: inner_top
+        col: *ref_4
+        row: top
+thumb_tucky_default:
+    x: 62.475
+    'y': -12.192
+    r: 15
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: thumb_tucky_default
+        colrow: tucky_default
+        col:
+            stagger: 0
+            spread: 0
+            rotate: 0
+            origin:
+                - 0
+                - 0
+            rows: {}
+            key: {}
+            name: tucky
+        row: default
+thumb_middle_default:
+    x: 82.65147280000001
+    'y': -9.6739521
+    r: 0
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: thumb_middle_default
+        colrow: middle_default
+        col:
+            spread: 18
+            rotate: -15
+            origin:
+                - -9.525
+                - -9.525
+            stagger: 0
+            rows: {}
+            key: {}
+            name: middle
+        row: default
+thumb_reachy_default:
+    x: 102.7921676
+    'y': -12.46376
+    r: -15
+    meta:
+        shift:
+            - 0
+            - 0
+        rotate: 0
+        padding: 17
+        width: 1
+        height: 1
+        skip: false
+        asym: both
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+        name: thumb_reachy_default
+        colrow: reachy_default
+        col:
+            spread: 18
+            rotate: -15
+            origin:
+                - -9.525
+                - -9.525
+            stagger: 0
+            rows: {}
+            key: {}
+            name: reachy
+        row: default

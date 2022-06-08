@@ -1,0 +1,56 @@
+points:
+    key:
+        padding: cy
+        footprints:
+            choc:
+                type: choc
+                anchor:
+                    rotate: 180
+                nets:
+                    from: '=column_net'
+                    to: GND
+                params:
+                    keycaps: true
+                    reverse: true
+    zones:
+        board:
+            columns:
+                pinky:
+                    spread: cx
+                ring:
+                    spread: cx
+                    stagger: 0.66U
+                middle:
+                    spread: cx
+                    stagger: 0.25U
+                index:
+                    spread: cx
+                    stagger: '-0.25U'
+                inner:
+                    spread: cx
+                    stagger: '-0.15U'
+            rows:
+                bottom: null
+                home: null
+                top: null
+        thumb:
+            anchor:
+                ref: board_index_bottom
+                shift:
+                    - '-0.5U'
+                    - '-1.3U'
+                rotate: 15
+            columns:
+                tucky: null
+                middle:
+                    spread: cx
+                    rotate: -15
+                    origin:
+                        - '-0.5U'
+                        - '-0.5U'
+                reachy:
+                    spread: cx
+                    rotate: -15
+                    origin:
+                        - '-0.5U'
+                        - '-0.5U'
