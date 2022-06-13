@@ -54,12 +54,31 @@ points:
           keycaps: false
 outlines:
   exports:
-    plate:
-      - type: rectangle
-        size: [150, 130]
-        anchor.shift: [0, -40]
-        corner: 10
-    pro_micro:
+    _bottom_arch_circle:
+      - type: circle
+        radius: 180
+        anchor:
+          shift: [ 35, -198 ]
+    _top_arch_circle:
+      - type: circle
+        radius: 130
+        anchor:
+          shift: [ 90, -40 ]
+    _main_body_circle:
+      - type: circle
+        radius: 75
+        anchor:
+          shift: [ 75, 25 ]
+    _main: [
+        +_top_arch_circle,
+        -_bottom_arch_circle,
+        ~_main_body_circle
+    ]
+    _plate:
+      - type: outline
+        name: _main
+        fillet: 20
+    _pro_micro:
       $params: [positionx, positiony]
       $args: [86, 80]
       pins1:
@@ -72,20 +91,26 @@ outlines:
         type: rectangle
         size: [31, 3]
         anchor.shift: [positionx, positiony-15]
-    keys:
+    _key_caps:
       - type: keys
         side: left
         size: [18,18]
+        corner: 1
+    _switch_holes:
+      - type: keys
+        side: left
+        size: [ 14,14 ]
         corner: 0
-    touchpad:
+    _touchpad:
       - type: circle
         radius: 19
         anchor.shift: [127, 25]
-    intersected_outline:
-      - +plate
-      - -keys
-      - -touchpad
-      - -pro_micro
+    switch_plate:
+      - +_plate
+      - -_key_caps
+      - +_switch_holes
+      - -_touchpad
+      - -_pro_micro
 pcbs:
   simple_split:
     footprints:

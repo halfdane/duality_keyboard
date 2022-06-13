@@ -5,10 +5,12 @@
     "author": "HalfDane <halfdane@gmx.net>",
     "license": "MIT",
     "scripts": {
-        "prestart": "rm -rf generated_files",
-        "start": "ergogen duality_keyboard.yaml --debug -o generated_files"
+        "start": "ergogen config/duality_keyboard.yaml --debug -o generated_files",
+        "poststart": "mv generated_files/outlines/switch_plate.svg duality.svg",
+        "watch": "watch 'npm run start' ./config"
     },
     "devDependencies": {
-        "ergogen": "^3.1.2"
+        "ergogen": "^3.1.2",
+        "watch": "^1.0.2"
     }
 }
