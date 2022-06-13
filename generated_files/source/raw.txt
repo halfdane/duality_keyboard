@@ -1,50 +1,92 @@
+# `U` is a predefined unit of measure that means 19.05mm, which is MX spacing
 points:
-  key:
-      padding: cy
-      footprints:
-          choc:
-            type: choc
-            anchor:
-              rotate: 180
-            nets:
-              from: =column_net
-              to: GND
-            params:
-                keycaps: true
-                reverse: true
   zones:
-    board:
+    matrix:
+      anchor:
+        rotate: 5
       columns:
         pinky:
           spread: cx
         ring:
-          spread: cx
-          stagger: 0.66U 
+          rotate: -5
+          stagger: 0.66U
+          spread: 1.1cx
         middle:
-          spread: cx
           stagger: 0.25U
+          spread: cx
         index:
-          spread: cx
           stagger: -0.25U
-        inner:
           spread: cx
+        inner:
           stagger: -0.15U
+          spread: cx
       rows:
-        bottom:
-        home:
-        top:
+        bottom.padding: cx
+        home.padding: cx
+        top.padding: cx
     thumb:
       anchor:
-        ref: board_index_bottom
-        shift: [-0.5U, -1.3U]
-        rotate: 15
+        ref: matrix_index_bottom
+        shift: [-0.66U, -1.25U]
+        rotate: 0
       columns:
         tucky:
+          key.name: thumb_tucky
         middle:
-          spread: cx
+          key.name: thumb_middle
+          origin: [-0.5U, -0.3U]
           rotate: -15
-          origin: [-0.5U, -0.5U]
         reachy:
-          spread: cx
+          spread: U
           rotate: -15
-          origin: [-0.5U, -0.5U]
+          origin: [-0.5U, -0.3U]
+          key.name: thumb_reachy
+  key:
+    footprints:
+      - type: mx
+        nets:
+          from: GND
+          to: =name
+        params:
+          reverse: true
+          keycaps: false
+outlines:
+  exports:
+    keys:
+      - type: keys
+        side: left
+        size: [18,17]
+        corner: 1
+    touchpad:
+      - type: circle
+        radius: 17.5
+        anchor.shift: [120, 25]
+    intersected_outline:
+      - +keys
+      - +touchpad
+pcbs:
+  simple_split:
+    footprints:
+      - type: promicro
+        anchor:
+          - ref: matrix_inner_home
+            shift: [1U, 0.5U]
+            rotate: -90
+        nets:
+          P7: matrix_pinky_top
+          P18: matrix_ring_top
+          P19: matrix_middle_top
+          P20: matrix_index_top
+          P21: matrix_inner_top
+          P15: matrix_pinky_home
+          P14: matrix_ring_home
+          P16: matrix_middle_home
+          P10: matrix_index_home
+          P1: matrix_inner_home
+          P2: matrix_pinky_bottom
+          P3: matrix_ring_bottom
+          P4: matrix_middle_bottom
+          P5: matrix_index_bottom
+          P6: matrix_inner_bottom
+          P8: thumb_tucky
+          P9: thumb_reachy

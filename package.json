@@ -5,7 +5,8 @@
     "author": "HalfDane <halfdane@gmx.net>",
     "license": "MIT",
     "scripts": {
-        "start": "ergogen duality_keyboard.yaml -o generated_files"
+        "prestart": "rm -rf generated_files",
+        "start": "ergogen duality_keyboard.yaml --debug -o generated_files"
     },
     "devDependencies": {
         "ergogen": "^3.1.2"
