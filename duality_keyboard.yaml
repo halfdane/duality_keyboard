@@ -2,32 +2,34 @@
 points:
   zones:
     matrix:
+      $params: [spread_val]
+      $args: [1.05cx]
       anchor:
         rotate: 5
       columns:
         pinky:
-          spread: 1.1cx
+          spread: spread_val
         ring:
           rotate: -5
           stagger: 0.66U
-          spread: 1.1cx
+          spread: spread_val
         middle:
           stagger: 0.25U
-          spread: 1.05cx
+          spread: spread_val
         index:
           stagger: -0.25U
-          spread: 1.05cx
+          spread: spread_val
         inner:
           stagger: -0.15U
-          spread: 1.05cx
+          spread: spread_val
       rows:
-        bottom.padding: 1.05cx
-        home.padding: 1.05cx
-        top.padding: 1.05cx
+        bottom.padding: spread_val
+        home.padding: spread_val
+        top.padding: spread_val
     thumb:
       anchor:
         ref: matrix_index_bottom
-        shift: [-0.4U, -1.25U]
+        shift: [-0.5U, -1.1U]
         rotate: 0
       columns:
         tucky:
@@ -43,7 +45,7 @@ points:
           key.name: thumb_reachy
   key:
     footprints:
-      - type: mx
+      - type: choc
         nets:
           from: GND
           to: =name
@@ -57,11 +59,24 @@ outlines:
         size: [150, 130]
         anchor.shift: [0, -40]
         corner: 10
+    pro_micro:
+      $params: [positionx, positiony]
+      $args: [86, 80]
+      pins1:
+        operation: add
+        type: rectangle
+        size: [31, 3]
+        anchor.shift: [positionx, positiony]
+      pins2:
+        operation: add
+        type: rectangle
+        size: [31, 3]
+        anchor.shift: [positionx, positiony-15]
     keys:
       - type: keys
         side: left
-        size: [18,17]
-        corner: 1
+        size: [18,18]
+        corner: 0
     touchpad:
       - type: circle
         radius: 19
@@ -70,6 +85,7 @@ outlines:
       - +plate
       - -keys
       - -touchpad
+      - -pro_micro
 pcbs:
   simple_split:
     footprints:
