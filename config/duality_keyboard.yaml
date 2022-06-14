@@ -103,7 +103,7 @@ outlines:
         corner: 0
     _touchpad:
       - type: circle
-        radius: 19
+        radius: 39/2
         anchor.shift: [126, 25]
     _cable_hole_top:
       - type: rectangle
