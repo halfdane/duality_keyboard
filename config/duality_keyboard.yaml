@@ -110,6 +110,22 @@ outlines:
         size: [12, 6]
         anchor.shift: [55, 73]
         corner: 2
+    _screw_hole_tl:
+      - type: circle
+        radius: 5/2
+        anchor.shift: [18, 64]
+    _screw_hole_tr:
+      - type: circle
+        radius: 5/2
+        anchor.shift: [122, 75]
+    _screw_hole_bl:
+      - type: circle
+        radius: 5/2
+        anchor.shift: [20, -12]
+    _screw_hole_br:
+      - type: circle
+        radius: 5/2
+        anchor.shift: [120, -25]
     switch_plate:
       - +_plate
       - -_key_caps
@@ -117,6 +133,10 @@ outlines:
       - -_touchpad
       - -_cable_hole_top
       - -_pro_micro
+      - -_screw_hole_tl
+      - -_screw_hole_tr
+      - -_screw_hole_bl
+      - -_screw_hole_br
 pcbs:
   simple_split:
     footprints:
