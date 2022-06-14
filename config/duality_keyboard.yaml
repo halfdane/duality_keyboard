@@ -105,11 +105,17 @@ outlines:
       - type: circle
         radius: 19
         anchor.shift: [126, 25]
+    _cable_hole_top:
+      - type: rectangle
+        size: [12, 6]
+        anchor.shift: [55, 73]
+        corner: 2
     switch_plate:
       - +_plate
       - -_key_caps
       - +_switch_holes
       - -_touchpad
+      - -_cable_hole_top
       - -_pro_micro
 pcbs:
   simple_split:
