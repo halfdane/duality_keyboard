@@ -104,7 +104,7 @@ outlines:
     _touchpad:
       - type: circle
         radius: 19
-        anchor.shift: [127, 25]
+        anchor.shift: [126, 25]
     switch_plate:
       - +_plate
       - -_key_caps
