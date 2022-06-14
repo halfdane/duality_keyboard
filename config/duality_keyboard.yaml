@@ -63,7 +63,7 @@ outlines:
       - type: circle
         radius: 130
         anchor:
-          shift: [ 90, -40 ]
+          shift: [ 85, -40 ]
     _main_body_circle:
       - type: circle
         radius: 75
@@ -80,7 +80,7 @@ outlines:
         fillet: 20
     _pro_micro:
       $params: [positionx, positiony]
-      $args: [86, 80]
+      $args: [83, 80]
       pins1:
         operation: add
         type: rectangle
