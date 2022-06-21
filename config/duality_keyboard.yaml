@@ -1,31 +1,31 @@
 # `U` is a predefined unit of measure that means 19.05mm, which is MX spacing
 points:
+  $params: [cap_width, cap_height]
+  $args: [1.01cx, 1.01cy]
   zones:
     matrix:
-      $params: [spread_val]
-      $args: [1.05cx]
       anchor:
         rotate: 5
       columns:
         pinky:
-          spread: spread_val
+          spread: cap_width
         ring:
           rotate: -5
           stagger: 0.66U
-          spread: spread_val
+          spread: cap_width
         middle:
           stagger: 0.25U
-          spread: spread_val
+          spread: cap_width
         index:
           stagger: -0.25U
-          spread: spread_val
+          spread: cap_width
         inner:
           stagger: -0.15U
-          spread: spread_val
+          spread: cap_width
       rows:
-        bottom.padding: spread_val
-        home.padding: spread_val
-        top.padding: spread_val
+        bottom.padding: cap_height
+        home.padding: cap_height
+        top.padding: cap_height
     thumb:
       anchor:
         ref: matrix_index_bottom
@@ -39,10 +39,10 @@ points:
           origin: [-0.5U, -0.3U]
           rotate: -15
         reachy:
+          key.name: thumb_reachy
           spread: U
           rotate: -15
           origin: [-0.5U, -0.3U]
-          key.name: thumb_reachy
   key:
     footprints:
       - type: choc
@@ -94,7 +94,7 @@ outlines:
     _key_caps:
       - type: keys
         side: left
-        size: [18,18]
+        size: [1cx, 1cy]
         corner: 1
     _switch_holes:
       - type: keys
@@ -104,7 +104,8 @@ outlines:
     _touchpad:
       - type: circle
         radius: 39/2
-        anchor.shift: [126, 25]
+        anchor.shift: [31, 42]
+        anchor.ref: thumb_middle
     _cable_hole_top:
       - type: rectangle
         size: [12, 6]
