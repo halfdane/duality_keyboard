@@ -68,7 +68,7 @@ outlines:
       - type: circle
         radius: 75
         anchor:
-          shift: [ 75, 25 ]
+          shift: [ 73, 25 ]
     _main: [
         +_top_arch_circle,
         -_bottom_arch_circle,
@@ -80,7 +80,7 @@ outlines:
         fillet: 20
     _pro_micro:
       $params: [positionx, positiony]
-      $args: [83, 80]
+      $args: [81, 80]
       pins1:
         operation: add
         type: rectangle
@@ -91,6 +91,12 @@ outlines:
         type: rectangle
         size: [31, 3]
         anchor.shift: [positionx, positiony-15]
+      cable_hole_top:
+        operation: add
+        type: rectangle
+        size: [12, 6]
+        anchor.shift: [positionx-28, positiony-9]
+        corner: 2
     _key_caps:
       - type: keys
         side: left
@@ -106,15 +112,10 @@ outlines:
         radius: 39/2
         anchor.shift: [31, 42]
         anchor.ref: thumb_middle
-    _cable_hole_top:
-      - type: rectangle
-        size: [12, 6]
-        anchor.shift: [55, 73]
-        corner: 2
     _screw_hole_tl:
       - type: circle
         radius: 5/2
-        anchor.shift: [18, 64]
+        anchor.shift: [16, 63]
     _screw_hole_tr:
       - type: circle
         radius: 5/2
@@ -132,7 +133,6 @@ outlines:
       - -_key_caps
       - +_switch_holes
       - -_touchpad
-      - -_cable_hole_top
       - -_pro_micro
       - -_screw_hole_tl
       - -_screw_hole_tr
