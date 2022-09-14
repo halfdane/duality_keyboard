@@ -1,166 +1,68 @@
-# `U` is a predefined unit of measure that means 19.05mm, which is MX spacing
 points:
-  $params: [cap_width, cap_height]
-  $args: [1.01cx, 1.01cy]
   zones:
     matrix:
-      anchor:
-        rotate: 5
       columns:
-        pinky:
-          spread: cap_width
-        ring:
-          rotate: -5
-          stagger: 0.66U
-          spread: cap_width
-        middle:
-          stagger: 0.25U
-          spread: cap_width
-        index:
-          stagger: -0.25U
-          spread: cap_width
-        inner:
-          stagger: -0.15U
-          spread: cap_width
+        pinky.rotate: 10
+        ring.rotate: -10
+        ring.stagger: 0.66U
+        middle.stagger: 0.25U
+        index.stagger: -0.25U
+        inner.stagger: -0.15U
       rows:
-        bottom.padding: cap_height
-        home.padding: cap_height
-        top.padding: cap_height
+        bottom.padding: U
+        home.padding: U
+        top.padding: U
     thumb:
       anchor:
         ref: matrix_index_bottom
-        shift: [-0.5U, -1.1U]
-        rotate: 0
+        shift: [-0.3U, -1.1U]
+        rotate: -10
       columns:
         tucky:
           key.name: thumb_tucky
         middle:
           key.name: thumb_middle
           origin: [-0.5U, -0.3U]
-          rotate: -15
         reachy:
           key.name: thumb_reachy
-          spread: U
-          rotate: -15
           origin: [-0.5U, -0.3U]
-  key:
-    footprints:
-      - type: choc
-        nets:
-          from: GND
-          to: =name
-        params:
-          reverse: true
-          keycaps: false
 outlines:
   exports:
-    _bottom_arch_circle:
-      - type: circle
-        radius: 180
-        anchor:
-          shift: [ 35, -198 ]
-    _top_arch_circle:
-      - type: circle
-        radius: 130
-        anchor:
-          shift: [ 85, -40 ]
-    _main_body_circle:
-      - type: circle
-        radius: 75
-        anchor:
-          shift: [ 73, 25 ]
-    _main: [
-        +_top_arch_circle,
-        -_bottom_arch_circle,
-        ~_main_body_circle
-    ]
-    _plate:
-      - type: outline
-        name: _main
-        fillet: 20
-    _pro_micro:
-      $params: [positionx, positiony]
-      $args: [81, 80]
-      pins1:
-        operation: add
-        type: rectangle
-        size: [31, 3]
-        anchor.shift: [positionx, positiony]
-      pins2:
-        operation: add
-        type: rectangle
-        size: [31, 3]
-        anchor.shift: [positionx, positiony-15]
-      cable_hole_top:
-        operation: add
-        type: rectangle
-        size: [12, 6]
-        anchor.shift: [positionx-28, positiony-9]
-        corner: 2
-    _key_caps:
+    _raw:
       - type: keys
         side: left
-        size: [1cx, 1cy]
-        corner: 1
+        size: [ 28, 28 ]
+        corner: 2
+    _clip_thumb_hole:
+      - type: rectangle
+        size: [40, 30]
+        anchor:
+          shift: [0, -11]
+          rotate: -10
+    _clip_pinkie_hole:
+      - type: rectangle
+        size: [40, 30]
+        anchor:
+          shift: [-10, 19.8]
+          rotate: 10
+    _clip_top_stagger:
+      - type: rectangle
+        size: [104, 20.5]
+        corner: 2
+        anchor:
+          shift: [2, 51.7]
+    plate: [
+      +_raw,
+      +_clip_thumb_hole,
+      +_clip_pinkie_hole,
+      +_clip_top_stagger
+    ]
     _switch_holes:
       - type: keys
         side: left
         size: [ 14,14 ]
-        corner: 0
-    _touchpad:
-      - type: circle
-        radius: 39/2
-        anchor.shift: [31, 42]
-        anchor.ref: thumb_middle
-    _screw_hole_tl:
-      - type: circle
-        radius: 5/2
-        anchor.shift: [16, 63]
-    _screw_hole_tr:
-      - type: circle
-        radius: 5/2
-        anchor.shift: [122, 75]
-    _screw_hole_bl:
-      - type: circle
-        radius: 5/2
-        anchor.shift: [20, -12]
-    _screw_hole_br:
-      - type: circle
-        radius: 5/2
-        anchor.shift: [120, -25]
     switch_plate:
-      - +_plate
-      - -_key_caps
-      - +_switch_holes
-      - -_touchpad
-      - -_pro_micro
-      - -_screw_hole_tl
-      - -_screw_hole_tr
-      - -_screw_hole_bl
-      - -_screw_hole_br
-pcbs:
-  simple_split:
-    footprints:
-      - type: promicro
-        anchor:
-          - ref: matrix_inner_home
-            shift: [1U, 0.5U]
-            rotate: -90
-        nets:
-          P7: matrix_pinky_top
-          P18: matrix_ring_top
-          P19: matrix_middle_top
-          P20: matrix_index_top
-          P21: matrix_inner_top
-          P15: matrix_pinky_home
-          P14: matrix_ring_home
-          P16: matrix_middle_home
-          P10: matrix_index_home
-          P1: matrix_inner_home
-          P2: matrix_pinky_bottom
-          P3: matrix_ring_bottom
-          P4: matrix_middle_bottom
-          P5: matrix_index_bottom
-          P6: matrix_inner_bottom
-          P8: thumb_tucky
-          P9: thumb_reachy
+      - +plate
+      - -_switch_holes
+
+      
