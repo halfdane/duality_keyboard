@@ -1,9 +1,13 @@
+units:
+  thumb_rotation: -10
+  pinky_rotation: 10
+
 points:
   zones:
     matrix:
       columns:
-        pinky.rotate: 10
-        ring.rotate: -10
+        pinky.rotate: pinky_rotation
+        ring.rotate: -pinky_rotation
         ring.stagger: 0.66U
         middle.stagger: 0.25U
         index.stagger: -0.25U
@@ -15,8 +19,8 @@ points:
     thumb:
       anchor:
         ref: matrix_index_bottom
-        shift: [-0.3U, -1.1U]
-        rotate: -10
+        shift: [-0.3U, -1U]
+        rotate: thumb_rotation
       columns:
         tucky:
           key.name: thumb_tucky
@@ -26,43 +30,58 @@ points:
         reachy:
           key.name: thumb_reachy
           origin: [-0.5U, -0.3U]
+  mirror:
+    distance: 3U
+    ref: thumb_reachy
 outlines:
   exports:
-    _raw:
+    _raw_wood_outline:
       - type: keys
-        side: left
-        size: [ 28, 28 ]
+        side: both
+        size: [ 12, 12 ]
+        corner: -6.5
+    _raw_plate:
+      - type: keys
+        side: both
+        size: [ 34, 34 ]
         corner: 2
     _clip_thumb_hole:
       - type: rectangle
         size: [40, 30]
         anchor:
-          shift: [0, -11]
-          rotate: -10
-    _clip_pinkie_hole:
-      - type: rectangle
-        size: [40, 30]
-        anchor:
-          shift: [-10, 19.8]
-          rotate: 10
+          ref: thumb_tucky
+          shift: [-40, -0.89U]
+        mirror: true
     _clip_top_stagger:
       - type: rectangle
-        size: [104, 20.5]
+        size: [91, 20.5]
         corner: 2
         anchor:
-          shift: [2, 51.7]
+          ref: matrix_ring_top
+          shift: [-17, 1]
+        mirror: true
     plate: [
-      +_raw,
+      +_raw_plate,
       +_clip_thumb_hole,
-      +_clip_pinkie_hole,
       +_clip_top_stagger
     ]
     _switch_holes:
       - type: keys
-        side: left
+        side: both
         size: [ 14,14 ]
     switch_plate:
       - +plate
       - -_switch_holes
+    wood_left:
+      - type: outline
+        operation: add
+        name: plate
+      - type: outline
+        operation: subtract
+        name: _raw_wood_outline
+      - type: outline
+        operation: add
+        name: _switch_holes
+
 
       
