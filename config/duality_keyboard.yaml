@@ -54,11 +54,11 @@ outlines:
         mirror: true
     _clip_top_stagger:
       - type: rectangle
-        size: [91, 20.5]
+        size: [116.5, 30]
         corner: 2
         anchor:
           ref: matrix_ring_top
-          shift: [-17, 1]
+          shift: [-42.5, -8]
         mirror: true
     plate: [
       +_raw_plate,
@@ -72,16 +72,11 @@ outlines:
     switch_plate:
       - +plate
       - -_switch_holes
-    wood_left:
-      - type: outline
-        operation: add
-        name: plate
-      - type: outline
-        operation: subtract
-        name: _raw_wood_outline
-      - type: outline
-        operation: add
-        name: _switch_holes
+    wood: [
+      +plate,
+      -_raw_wood_outline,
+      +_switch_holes
+    ]
 
 
       
