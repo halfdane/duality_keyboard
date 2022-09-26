@@ -38,27 +38,26 @@ outlines:
     _raw_wood_outline:
       - type: keys
         side: both
-        size: [ 12, 12 ]
-        corner: -6.5
+        size: [ 19, 19 ]
     _raw_plate:
       - type: keys
         side: both
-        size: [ 34, 34 ]
+        size: [ 24, 24 ]
         corner: 2
     _clip_thumb_hole:
       - type: rectangle
         size: [40, 30]
         anchor:
           ref: thumb_tucky
-          shift: [-40, -0.89U]
+          shift: [-40, -12]
         mirror: true
     _clip_top_stagger:
       - type: rectangle
-        size: [116.5, 30]
+        size: [105.7, 30]
         corner: 2
         anchor:
           ref: matrix_ring_top
-          shift: [-42.5, -8]
+          shift: [-36.7, -8]
         mirror: true
     plate: [
       +_raw_plate,
@@ -75,8 +74,6 @@ outlines:
     wood: [
       +plate,
       -_raw_wood_outline,
-      +_switch_holes
     ]
 
 
-      
