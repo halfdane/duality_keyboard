@@ -37,34 +37,30 @@ outlines:
   exports:
     _raw_plate:
       - type: keys
-        side: both
+        side: left
         size: [ 24, 24 ]
         corner: 2
     _clip_pinkie_hole_top:
       - type: rectangle
         size: [50, 24]
-        mirror: true
         anchor:
           ref: matrix_pinky_top
           shift: [-12, 0]
     _clip_pinkie_hole_bottom:
       - type: rectangle
         size: [20, 10]
-        mirror: true
         anchor:
           ref: matrix_pinky_bottom
           shift: [0, -12]
     _clip_thumb_hole:
       - type: rectangle
         size: [40, 30]
-        mirror: true
         anchor:
           ref: thumb_tucky
           shift: [-40, -12]
     _clip_top_stagger:
       - type: rectangle
         size: [108, 20]
-        mirror: true
         corner: 2
         anchor:
           ref: matrix_ring_top
@@ -72,7 +68,6 @@ outlines:
     _thumb_screw:
       - type: rectangle
         size: [25, 30]
-        mirror: true
         corner: 10
         anchor:
           ref: thumb_reachy
@@ -80,45 +75,49 @@ outlines:
     _thumb_screw_hole:
       - type: circle
         radius: 2.5
-        mirror: true
         anchor:
           ref: thumb_reachy
-          shift: [0, 15]
+          shift: [2, 17]
     _pinkie_low_screw_hole:
       - type: circle
         radius: 2.5
-        mirror: true
         anchor:
           ref: matrix_pinky_bottom
           shift: [20, -5]
     _pinkie_top_screw_hole:
       - type: circle
         radius: 2.5
-        mirror: true
         anchor:
           ref: matrix_pinky_top
           shift: [-3, 32]
     _inner_top_screw_hole:
       - type: circle
         radius: 2.5
-        mirror: true
         anchor:
           ref: matrix_inner_top
           shift: [3, 16]
     _chip:
-      - type: rectangle
-        size: [18, 23.5]
-        mirror: true
-        anchor:
-          ref: matrix_ring_top
-          shift: [-27, -5]
-    _usb:
-      - type: rectangle
+      second_phase:
+        operation: add
+        type: rectangle
         size: [9, 9]
-        mirror: true
         anchor:
           ref: matrix_ring_top
-          shift: [-23, 14]
+          shift: [-22.5, 14]
+      third_phase:
+        operation: add
+        type: rectangle
+        size: [3.6, 4.3]
+        anchor:
+          ref: matrix_ring_top
+          shift: [-24.3, 0]
+      fourth_phase:
+        operation: add
+        type: rectangle
+        size: [3.6, 4.3]
+        anchor:
+          ref: matrix_ring_top
+          shift: [-15.3, 0]
     plate: [
       +_raw_plate,
       +_clip_thumb_hole,
@@ -130,7 +129,7 @@ outlines:
       -_pinkie_low_screw_hole,
       -_inner_top_screw_hole,
       -_pinkie_top_screw_hole,
-      -_usb
+      -_chip
     ]
     _switch_holes:
       - type: keys
@@ -139,6 +138,5 @@ outlines:
     switch_plate:
       - +plate
       - -_switch_holes
-
 
 
