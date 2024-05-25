@@ -1,17 +1,32 @@
 units:
-  thumb_rotation: -10
-  pinky_rotation: 10
+  thumb_rotation: -8
+  pinky_rotation: 8
+
+  base_x: 35
+  base_y: 29
+  base_width: 108
+  base_height: 85
+
+  stabilizer_stick_radius: 1.5
+
+  m2_screw_radius: 1
+  m2_head_radius: 2
+  m2_inlet_radius: 1.5
+
+  
 
 points:
   zones:
+    symbol.anchor:
+      shift: [12, -55]
     matrix:
       columns:
-        pinky.rotate: pinky_rotation
-        ring.rotate: -pinky_rotation
-        ring.stagger: 0.66U
-        middle.stagger: 0.25U
-        index.stagger: -0.25U
-        inner.stagger: -0.15U
+        pinky.key.splay: pinky_rotation
+        ring.key.splay: -pinky_rotation
+        ring.key.stagger: 0.5U
+        middle.key.stagger: 0.5U
+        index.key.stagger: -0.25U
+        inner.key.stagger: -0.15U
       rows:
         bottom.padding: U
         home.padding: U
@@ -26,117 +41,455 @@ points:
           key.name: thumb_tucky
         middle:
           key.name: thumb_middle
-          origin: [-0.5U, -0.3U]
+          key.origin: [-0.5U, -0.3U]
         reachy:
           key.name: thumb_reachy
-          origin: [-0.5U, -0.3U]
-  mirror:
-    distance: 3U
-    ref: thumb_reachy
+          key.origin: [-0.5U, -0.3U]
+
 outlines:
-  exports:
-    _raw_plate:
-      - type: keys
-        side: left
-        size: [ 24, 24 ]
-        corner: 2
-    _clip_pinkie_hole_top:
-      - type: rectangle
-        size: [50, 24]
-        anchor:
-          ref: matrix_pinky_top
-          shift: [-12, 0]
-    _clip_pinkie_hole_bottom:
-      - type: rectangle
-        size: [20, 10]
-        anchor:
-          ref: matrix_pinky_bottom
-          shift: [0, -12]
-    _clip_thumb_hole:
-      - type: rectangle
-        size: [40, 30]
-        anchor:
-          ref: thumb_tucky
-          shift: [-40, -12]
-    _clip_top_stagger:
-      - type: rectangle
-        size: [108, 20]
-        corner: 2
-        anchor:
-          ref: matrix_ring_top
-          shift: [-39, 2]
-    _thumb_screw:
-      - type: rectangle
-        size: [25, 30]
-        corner: 10
-        anchor:
-          ref: thumb_reachy
-          shift: [-13, -4]
-    _thumb_screw_hole:
-      - type: circle
-        radius: 2.5
-        anchor:
-          ref: thumb_reachy
-          shift: [2, 17]
-    _pinkie_low_screw_hole:
-      - type: circle
-        radius: 2.5
-        anchor:
-          ref: matrix_pinky_bottom
-          shift: [20, -5]
-    _pinkie_top_screw_hole:
-      - type: circle
-        radius: 2.5
-        anchor:
-          ref: matrix_pinky_top
-          shift: [-3, 32]
-    _inner_top_screw_hole:
-      - type: circle
-        radius: 2.5
-        anchor:
-          ref: matrix_inner_top
-          shift: [3, 16]
-    _chip:
-      second_phase:
-        operation: add
-        type: rectangle
-        size: [9, 9]
-        anchor:
-          ref: matrix_ring_top
-          shift: [-22.5, 14]
-      third_phase:
-        operation: add
-        type: rectangle
-        size: [3.6, 4.3]
-        anchor:
-          ref: matrix_ring_top
-          shift: [-24.3, 0]
-      fourth_phase:
-        operation: add
-        type: rectangle
-        size: [3.6, 4.3]
-        anchor:
-          ref: matrix_ring_top
-          shift: [-15.3, 0]
-    plate: [
-      +_raw_plate,
-      +_clip_thumb_hole,
-      +_clip_top_stagger,
-      +_clip_pinkie_hole_top,
-      +_clip_pinkie_hole_bottom,
-      +_thumb_screw,
-      -_thumb_screw_hole,
-      -_pinkie_low_screw_hole,
-      -_inner_top_screw_hole,
-      -_pinkie_top_screw_hole,
-      -_chip
-    ]
-    _switch_holes:
-      - type: keys
-        side: both
-        size: [ 14,14 ]
-    switch_plate:
-      - +plate
-      - -_switch_holes
+  _base:
+    - what: rectangle
+      size: [base_width, base_height]
+      corner: 1
+      where:
+        shift: [base_x, base_y]
+  
+  ### holes for vertical sticks that stabilize the different layers
+  _stick_tl:
+    - what: circle
+    # todo: fiddling with radius
+      radius: stabilizer_stick_radius-0.1
+      where:
+        shift: [0, 68.5]
+
+  _stick_tt:
+    - what: circle
+    # todo: fiddling with radius
+      radius: stabilizer_stick_radius-0.2
+      where:
+        ref: matrix_middle_top
+        shift: [0, 13]
+
+  _stick_tr:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        shift: [70, 68.5]
+
+  _stick_bl:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        shift: [-16, 15]
+
+  _stick_bb:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        shift: [58, -10]
+
+  _stick_br:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        shift: [86.5, 15]
+
+  _stick_mr:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        shift: [86.5, 52]
+
+  _stick_mm:
+    - what: circle
+      radius: stabilizer_stick_radius
+      where:
+        ref: matrix_middle_bottom
+        shift: [0, -12]
+
+  
+  _outer_sticks: [
+    _stick_tl,
+    _stick_tt,
+    _stick_tr,
+    _stick_bl,
+    _stick_bb,
+    _stick_br,
+    _stick_mr,
+  ]
+
+  _sticks: [
+    _outer_sticks,
+    _stick_mm,
+  ]
+
+  ### holes for magnets to hold the two sides together when transporting
+  _magnet_hole_top_left:
+    - what: circle
+      radius: 4
+      where:
+        ref: matrix_ring_top
+        shift: [0, 0.8U]
+  _magnet_hole_top_right:
+    - what: circle
+    # todo: fiddling with radius
+      radius: 3.9
+      where:
+        ref: matrix_inner_top
+        shift: [5, 0.75U]
+  _magnet_hole_bottom_left:
+    - what: circle
+    # todo: fiddling with radius
+      radius: 3.8
+      where:
+        ref: matrix_pinky_bottom
+        shift: [-15, -6]
+  _magnet_holes: [
+    _magnet_hole_top_left,
+    _magnet_hole_top_right,
+    _magnet_hole_bottom_left,
+  ]
+
+  ### holes&inlets for m2 screws 
+  _screw_tl:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_screw_radius-0.1
+      where:
+        shift: [-16, 68.5]
+  _head_tl:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_head_radius-0.1
+      where:
+        shift: [-16, 68.5]
+  _inlet_tl:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_inlet_radius-0.1
+      where:
+        shift: [-16, 68.5]
+  _screw_tr:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_screw_radius-0.2
+      where:
+        shift: [86, 68.5]
+  _head_tr:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_head_radius-0.2
+      where:
+        shift: [86, 68.5]
+  _inlet_tr:
+    - what: circle
+    # todo: fiddling with radius
+      radius: m2_inlet_radius-0.2
+      where:
+        shift: [86, 68.5]
+  _screw_thumb_top:
+    - what: circle
+      radius: m2_screw_radius
+      where:
+        shift: [86, 3]
+  _head_thumb_top:
+    - what: circle
+      radius: m2_head_radius
+      where:
+        shift: [86, 3]
+  _inlet_thumb_top:
+    - what: circle
+      radius: m2_inlet_radius
+      where:
+        shift: [86, 3]
+  _screw_thumb_bottom:
+    - what: circle
+      radius: m2_screw_radius
+      where:
+        shift: [77.2, -12]
+  _head_thumb_bottom:
+    - what: circle
+      radius: m2_head_radius
+      where:
+        shift: [77.2, -12]
+  _inlet_thumb_bottom:
+    - what: circle
+      radius: m2_inlet_radius
+      where:
+        shift: [77.2, -12]
+  _screw_bl:
+    - what: circle
+      radius: m2_screw_radius
+      where:
+        shift: [-16, -10]
+  _head_bl:
+    - what: circle
+      radius: m2_head_radius
+      where:
+        shift: [-16, -10]
+  _inlet_bl:
+    - what: circle
+      radius: m2_inlet_radius
+      where:
+        shift: [-16, -10]
+  _screw_holes: [
+    _screw_tl,
+    _screw_tr,
+    _screw_thumb_top,
+    _screw_thumb_bottom,
+    _screw_bl,
+  ]
+  _screw_heads: [
+    _head_tl,
+    _head_tr,
+    _head_thumb_top,
+    _head_thumb_bottom,
+    _head_bl,
+  ]
+  _inlet_holes: [
+    _inlet_tl,
+    _inlet_tr,
+    _inlet_thumb_top,
+    _inlet_thumb_bottom,
+    _inlet_bl,
+  ]
+        
+  ### xiao ble needs a place
+  _rp2040_body:
+    - what: rectangle
+      size: [23.5, 18]
+      where:
+        ref: matrix_ring_top
+        shift: [-23, 7]
+  _rp2040_usb:
+    - what: rectangle
+      size: [3.5,9.5]
+      where:
+        ref: matrix_ring_top
+        shift: [-35, 7]
+  _rp2040: [
+    _rp2040_body,
+    _rp2040_usb
+  ]
+
+  ### battery needs a place
+  _battery:
+    - what: rectangle
+      size: [32, 14]
+      where:
+        ref: matrix_ring_bottom
+        shift: [7.5, -0.8U]
+  
+  ### symbol 1
+  _symbol_circle_bl:
+    - what: circle
+      radius: 4
+      where:
+        shift: [0, 0]
+  _symbol_circle_br:
+    - what: circle
+      radius: 4
+      where:
+        shift: [12, 0]
+  _symbol_circle_t:
+    - what: circle
+      radius: 4
+      where:
+        shift: [6, 10.3]
+  _symbol_triangle:
+    - what: polygon
+      # operation: stack
+      points:
+        - shift: [0,0]
+        - shift: [12, 0]
+        - shift: [-6, 10.3]
+
+  symbol:
+    - what: outline
+      name: _symbol_circle_t
+    - what: outline
+      name: _symbol_circle_bl
+      operation: stack
+    - what: outline
+      name: _symbol_circle_br
+      operation: stack
+    - what: outline
+      name: _symbol_triangle
+      operation: subtract
+
+  # symbol: [
+  #   _symbol_circle_t,
+  #   _symbol_circle_bl,
+  #   _symbol_circle_br,
+  #   -_symbol_triangle
+  # ]
+
+  
+  ### switch plate
+  _thumbs:
+    - what: rectangle
+      size: [3U, 1U]
+      corner: 1
+      where:
+        ref: thumb_reachy
+        shift: [-1U, 0]
+  _key_holes:
+    - what: rectangle
+      where: true
+      size: 14
+  _key_frame:
+    - what: rectangle
+      where: 
+        ref: matrix_middle_top
+      bound: true
+      size: 14
+      expand: 8
+  _raw_plate:  [
+    +_base
+    , +_key_frame
+  ]
+  _with_fillets:
+    - what: outline
+      name: _raw_plate
+      fillet: 4
+  duality: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_rp2040,
+    -_battery,
+    -_sticks,
+    -_inlet_holes
+  ]
+
+  ### stuff on top of the switch plate
+  _switch_caps:
+    - what: polygon # all borders
+      operation: stack
+      points:
+        - ref: matrix_pinky_bottom
+          shift: [-10,-9]
+        - ref: matrix_pinky_top
+          shift: [-10, 10]
+        - ref: matrix_pinky_top
+          shift: [10, 10]
+        - ref: matrix_pinky_home
+          shift: [10, -1]
+        - ref: matrix_ring_top
+          shift: [-10,10]
+        - ref: matrix_ring_top
+          shift: [9,10]
+        - ref: matrix_middle_top
+          shift: [-10,10]
+        - ref: matrix_middle_top
+          shift: [10,10]
+        - ref: matrix_index_top
+          shift: [-9,10]
+        - ref: matrix_index_top
+          shift: [10,10]
+        - ref: matrix_inner_top
+          shift: [-9,10]
+        - ref: matrix_inner_top
+          shift: [10,10]
+        - ref: matrix_inner_bottom
+          shift: [10,-6]
+        - ref: thumb_reachy
+          shift: [15,15]
+        - ref: thumb_reachy
+          shift: [15,-15]
+        - ref: thumb_tucky
+          shift: [-10,-15]
+        - ref: thumb_tucky
+          shift: [-10,10]
+        - ref: matrix_middle_bottom
+          shift: [9,-13]
+        - ref: matrix_middle_bottom
+          shift: [9,-9]
+        - ref: matrix_middle_bottom
+          shift: [-9,-9]
+        - ref: matrix_ring_bottom
+          shift: [10,-9]
+        - ref: matrix_ring_bottom
+          shift: [-8,-9]
+        - ref: matrix_pinky_bottom
+          shift: [10,-9]
+
+  duality_top_frame: [
+    _with_fillets,
+    -_rp2040,
+    -_switch_caps,
+    -_magnet_holes,
+    -_sticks
+  ]
+
+  duality_top_frame_without_usb: [
+    _with_fillets,
+    -_rp2040_body,
+    -_switch_caps,
+    -_magnet_holes,
+    -_sticks
+  ]
+  
+
+  duality_top_cap:
+    - what: outline
+      name: _with_fillets
+    - what: outline
+      name: _switch_caps
+      operation: subtract
+    - what: outline
+      name: _sticks
+      operation: subtract
+    - what: outline
+      name: symbol
+      operation: subtract
+      origin: symbol
 
 
+  ### stuff below the the switch plate
+
+  _bottom_hollow:
+    - what: rectangle
+      size: [base_width-30, base_height-40]
+      where:
+        shift: [base_x, base_y+10]
+  _bottom_hollow_thumbs:
+    - what: rectangle
+      size: [4.2U, 1U-9]
+      where:
+        ref: thumb_reachy
+        shift: [-2.4U, 2]
+
+  duality_bottom_frame: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_bottom_hollow,
+    -_bottom_hollow_thumbs,
+    -_rp2040_body,
+    -_battery,
+    -_sticks,
+    -_inlet_holes
+  ]
+
+
+  duality_bottom_bottom: [
+    _with_fillets,
+    +_thumbs,
+    -_sticks,
+    -_screw_holes
+  ]
+
+
+  _key_pattern:
+    - what: circle
+      where: true
+      radius: 0.1
+
+  duality_bottom_pattern: [
+    _with_fillets,
+    +_thumbs,
+    # -_key_pattern,
+    -_outer_sticks,
+    -_screw_heads
+  ]
