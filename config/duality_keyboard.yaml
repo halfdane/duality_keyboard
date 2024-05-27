@@ -54,75 +54,6 @@ outlines:
       where:
         shift: [base_x, base_y]
   
-  ### holes for vertical sticks that stabilize the different layers
-  _stick_tl:
-    - what: circle
-    # todo: fiddling with radius
-      radius: stabilizer_stick_radius-0.1
-      where:
-        shift: [0, 68.5]
-
-  _stick_tt:
-    - what: circle
-    # todo: fiddling with radius
-      radius: stabilizer_stick_radius-0.2
-      where:
-        ref: matrix_middle_top
-        shift: [0, 13]
-
-  _stick_tr:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        shift: [70, 68.5]
-
-  _stick_bl:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        shift: [-16, 15]
-
-  _stick_bb:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        shift: [58, -10]
-
-  _stick_br:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        shift: [86.5, 15]
-
-  _stick_mr:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        shift: [86.5, 52]
-
-  _stick_mm:
-    - what: circle
-      radius: stabilizer_stick_radius
-      where:
-        ref: matrix_middle_bottom
-        shift: [0, -12]
-
-  
-  _outer_sticks: [
-    _stick_tl,
-    _stick_tt,
-    _stick_tr,
-    _stick_bl,
-    _stick_bb,
-    _stick_br,
-    _stick_mr,
-  ]
-
-  _sticks: [
-    _outer_sticks,
-    _stick_mm,
-  ]
-
   ### holes for magnets to hold the two sides together when transporting
   _magnet_hole_top_left:
     - what: circle
@@ -358,7 +289,6 @@ outlines:
     -_key_holes,
     -_rp2040,
     -_battery,
-    -_sticks,
     -_inlet_holes
   ]
 
@@ -419,7 +349,6 @@ outlines:
     -_rp2040,
     -_switch_caps,
     -_magnet_holes,
-    -_sticks
   ]
 
   duality_top_frame_without_usb: [
@@ -427,7 +356,6 @@ outlines:
     -_rp2040_body,
     -_switch_caps,
     -_magnet_holes,
-    -_sticks
   ]
   
 
@@ -436,9 +364,6 @@ outlines:
       name: _with_fillets
     - what: outline
       name: _switch_caps
-      operation: subtract
-    - what: outline
-      name: _sticks
       operation: subtract
     - what: outline
       name: symbol
@@ -468,7 +393,6 @@ outlines:
     -_bottom_hollow_thumbs,
     -_rp2040_body,
     -_battery,
-    -_sticks,
     -_inlet_holes
   ]
 
@@ -476,7 +400,6 @@ outlines:
   duality_bottom_bottom: [
     _with_fillets,
     +_thumbs,
-    -_sticks,
     -_screw_holes
   ]
 
@@ -490,6 +413,5 @@ outlines:
     _with_fillets,
     +_thumbs,
     # -_key_pattern,
-    -_outer_sticks,
     -_screw_heads
   ]
