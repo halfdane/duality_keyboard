@@ -10,7 +10,7 @@ units:
   stabilizer_stick_radius: 1.5
 
   m2_screw_radius: 1
-  m2_head_radius: 2
+  m2_head_radius: 1.8
   m2_inlet_radius: 1.5
 
   
@@ -63,15 +63,13 @@ outlines:
         shift: [0, 0.8U]
   _magnet_hole_top_right:
     - what: circle
-    # todo: fiddling with radius
-      radius: 3.9
+      radius: 4
       where:
         ref: matrix_inner_top
         shift: [5, 0.75U]
   _magnet_hole_bottom_left:
     - what: circle
-    # todo: fiddling with radius
-      radius: 3.8
+      radius: 4
       where:
         ref: matrix_pinky_bottom
         shift: [-15, -6]
@@ -84,38 +82,32 @@ outlines:
   ### holes&inlets for m2 screws 
   _screw_tl:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_screw_radius-0.1
+      radius: m2_screw_radius
       where:
         shift: [-16, 68.5]
   _head_tl:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_head_radius-0.1
+      radius: m2_head_radius
       where:
         shift: [-16, 68.5]
   _inlet_tl:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_inlet_radius-0.1
+      radius: m2_inlet_radius
       where:
         shift: [-16, 68.5]
   _screw_tr:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_screw_radius-0.2
+      radius: m2_screw_radius
       where:
         shift: [86, 68.5]
   _head_tr:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_head_radius-0.2
+      radius: m2_head_radius
       where:
         shift: [86, 68.5]
   _inlet_tr:
     - what: circle
-    # todo: fiddling with radius
-      radius: m2_inlet_radius-0.2
+      radius: m2_inlet_radius
       where:
         shift: [86, 68.5]
   _screw_thumb_top:
