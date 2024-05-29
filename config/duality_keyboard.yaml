@@ -16,6 +16,8 @@ units:
   m2_outer_distance: 2.5
 
   magnet_radius: 4.1
+
+  symbols_radius: 4
   
 
 points:
@@ -226,17 +228,17 @@ outlines:
   ### symbol 1
   _symbol_circle_bl:
     - what: circle
-      radius: 4
+      radius: symbols_radius
       where:
         shift: [0, 0]
   _symbol_circle_br:
     - what: circle
-      radius: 4
+      radius: symbols_radius
       where:
         shift: [12, 0]
   _symbol_circle_t:
     - what: circle
-      radius: 4
+      radius: symbols_radius
       where:
         shift: [6, 10.3]
   _symbol_triangle:
