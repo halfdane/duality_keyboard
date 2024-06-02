@@ -1,14 +1,17 @@
 units:
-  thumb_rotation: -8
-  pinky_rotation: 8
-
-  keyboard_tl_x: 35
-  keyboard_tl_y: 30
-  base_width: 108
-  base_height: 87
+  # MY KEYCAPS: 17.5mmx16.5mm
+  # cx and cy:  18.0mmx17.0mm for kailh choc
+  kx: cx
+  ky: cy
+  # with padding
+  px: kx + 1
+  py: ky + 1
 
   rp2040_body_width: 23.5
   rp2040_body_height: 18
+
+  thumb_rotation: -8
+  pinky_rotation: 8
 
   m2_screw_radius: 1
   m2_head_radius: 1.8
@@ -18,27 +21,39 @@ units:
   magnet_radius: 4.1
 
   symbols_radius: 4
+
+  base_width: 105
+  base_height: 80
+
+  middle_stagger: 0.7ky
+  
+  keyboard_tl_x: 0.5*base_width - rp2040_body_width + m2_outer_distance
+  keyboard_tl_y: 0.5*base_height - middle_stagger
   
 
 points:
-  zones:
+  zones:      
     symbol.anchor:
-      shift: [12, -55]
+      shift: [(rp2040_body_width + m2_outer_distance)/2, -base_height/2-middle_stagger+m2_outer_distance]
     keyboard_tl.anchor:
       shift: [keyboard_tl_x, keyboard_tl_y]
 
     matrix:
+      key:
+        padding: 1ky
+        spread: 1kx
+
       columns:
         pinky.key.splay: pinky_rotation
         ring.key.splay: -pinky_rotation
-        ring.key.stagger: 0.5U
-        middle.key.stagger: 0.5U
-        index.key.stagger: -0.25U
-        inner.key.stagger: -0.15U
+        ring.key.stagger: middle_stagger
+        middle.key.stagger: 0.5ky
+        index.key.stagger: -0.25ky
+        inner.key.stagger: -0.25ky
       rows:
-        bottom.padding: U
-        home.padding: U
-        top.padding: U
+        bottom:
+        home: 
+        top: 
     thumb:
       anchor:
         ref: matrix_inner_bottom
@@ -199,7 +214,7 @@ outlines:
     _inlet_bl,
   ]
         
-  ### xiao ble needs a place
+  ### rp2040 needs a place
   _rp2040_body:
     - what: rectangle
       size: [rp2040_body_width, rp2040_body_height]
@@ -298,56 +313,63 @@ outlines:
 
   ### frame around keycaps on top of switchplate
   _switch_caps:
-    - what: polygon # all borders
-      operation: stack
-      points:
-        - ref: matrix_pinky_bottom
-          shift: [-10,-10]
-        - ref: matrix_pinky_top
-          shift: [-10, 10]
-        - ref: matrix_pinky_top
-          shift: [10, 10]
-        - ref: matrix_pinky_home
-          shift: [10, 2]
-        - ref: matrix_ring_top
-          shift: [-10,10]
-        - ref: matrix_ring_top
-          shift: [9,10]
-        - ref: matrix_middle_top
-          shift: [-10,10]
-        - ref: matrix_middle_top
-          shift: [10,10]
-        - ref: matrix_index_top
-          shift: [-9,10]
-        - ref: matrix_index_top
-          shift: [10,10]
-        - ref: matrix_inner_top
-          shift: [-9,10]
-        - ref: matrix_inner_top
-          shift: [10,10]
-        - ref: matrix_inner_bottom
-          shift: [10,-6]
-        - ref: thumb_reachy
-          shift: [15,15]
-        - ref: thumb_reachy
-          shift: [15,-15]
-        - ref: thumb_middle
-          shift: [-10,-20]
-        - ref: thumb_middle
-          shift: [-10, 9]
-        - ref: matrix_index_bottom
-          shift: [-10,-10]
-        - ref: matrix_middle_bottom
-          shift: [9,-10]
-        - ref: matrix_middle_bottom
-          shift: [-9,-10]
-        - ref: matrix_ring_bottom
-          shift: [10,-10]
-        - ref: matrix_ring_bottom
-          shift: [-8,-10]
-        - ref: matrix_pinky_bottom
-          shift: [10,-10]
-
+    # - what: polygon # all borders
+    #   operation: stack
+    #   points:
+    #     - ref: matrix_pinky_bottom
+    #       shift: [-10,-10]
+    #     - ref: matrix_pinky_top
+    #       shift: [-10, 10]
+    #     - ref: matrix_pinky_top
+    #       shift: [10, 10]
+    #     - ref: matrix_pinky_home
+    #       shift: [10, 2]
+    #     - ref: matrix_ring_top
+    #       shift: [-10,10]
+    #     - ref: matrix_ring_top
+    #       shift: [9,10]
+    #     - ref: matrix_middle_top
+    #       shift: [-10,10]
+    #     - ref: matrix_middle_top
+    #       shift: [10,10]
+    #     - ref: matrix_index_top
+    #       shift: [-9,10]
+    #     - ref: matrix_index_top
+    #       shift: [10,10]
+    #     - ref: matrix_inner_top
+    #       shift: [-9,10]
+    #     - ref: matrix_inner_top
+    #       shift: [10,10]
+    #     - ref: matrix_inner_bottom
+    #       shift: [10,-6]
+    #     - ref: thumb_reachy
+    #       shift: [15,15]
+    #     - ref: thumb_reachy
+    #       shift: [15,-15]
+    #     - ref: thumb_middle
+    #       shift: [-10,-20]
+    #     - ref: thumb_middle
+    #       shift: [-10, 9]
+    #     - ref: matrix_index_bottom
+    #       shift: [-10,-10]
+    #     - ref: matrix_middle_bottom
+    #       shift: [9,-10]
+    #     - ref: matrix_middle_bottom
+    #       shift: [-9,-10]
+    #     - ref: matrix_ring_bottom
+    #       shift: [10,-10]
+    #     - ref: matrix_ring_bottom
+    #       shift: [-8,-10]
+    #     - ref: matrix_pinky_bottom
+    #       shift: [10,-10]
+    - what: rectangle
+      # operation: stack
+      where: /^matrix_.*/
+      size: [px, py]
+    - what: rectangle
+      # operation: stack
+      where: //
+      size: [px, py]
 
 
 ##########################################
