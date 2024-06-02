@@ -313,63 +313,14 @@ outlines:
 
   ### frame around keycaps on top of switchplate
   _switch_caps:
-    # - what: polygon # all borders
-    #   operation: stack
-    #   points:
-    #     - ref: matrix_pinky_bottom
-    #       shift: [-10,-10]
-    #     - ref: matrix_pinky_top
-    #       shift: [-10, 10]
-    #     - ref: matrix_pinky_top
-    #       shift: [10, 10]
-    #     - ref: matrix_pinky_home
-    #       shift: [10, 2]
-    #     - ref: matrix_ring_top
-    #       shift: [-10,10]
-    #     - ref: matrix_ring_top
-    #       shift: [9,10]
-    #     - ref: matrix_middle_top
-    #       shift: [-10,10]
-    #     - ref: matrix_middle_top
-    #       shift: [10,10]
-    #     - ref: matrix_index_top
-    #       shift: [-9,10]
-    #     - ref: matrix_index_top
-    #       shift: [10,10]
-    #     - ref: matrix_inner_top
-    #       shift: [-9,10]
-    #     - ref: matrix_inner_top
-    #       shift: [10,10]
-    #     - ref: matrix_inner_bottom
-    #       shift: [10,-6]
-    #     - ref: thumb_reachy
-    #       shift: [15,15]
-    #     - ref: thumb_reachy
-    #       shift: [15,-15]
-    #     - ref: thumb_middle
-    #       shift: [-10,-20]
-    #     - ref: thumb_middle
-    #       shift: [-10, 9]
-    #     - ref: matrix_index_bottom
-    #       shift: [-10,-10]
-    #     - ref: matrix_middle_bottom
-    #       shift: [9,-10]
-    #     - ref: matrix_middle_bottom
-    #       shift: [-9,-10]
-    #     - ref: matrix_ring_bottom
-    #       shift: [10,-10]
-    #     - ref: matrix_ring_bottom
-    #       shift: [-8,-10]
-    #     - ref: matrix_pinky_bottom
-    #       shift: [10,-10]
     - what: rectangle
       # operation: stack
       where: /^matrix_.*/
       size: [px, py]
     - what: rectangle
       # operation: stack
-      where: //
-      size: [px, py]
+      where: /^thumb_.*/
+      size: [px, py+10]
 
 
 ##########################################
