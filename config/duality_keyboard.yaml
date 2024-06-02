@@ -260,7 +260,9 @@ outlines:
     - what: outline
       name: _symbol_triangle
       operation: subtract
-  
+
+  ### parts that are used on different layers
+
   ### switch plate
   _thumbs:
     - what: rectangle
@@ -293,16 +295,8 @@ outlines:
     - what: outline
       name: _raw_plate
       fillet: 4
-  duality: [
-    _with_fillets,
-    +_thumbs,
-    -_key_holes,
-    -_rp2040,
-    -_battery,
-    -_inlet_holes
-  ]
 
-  ### stuff on top of the switch plate
+  ### frame around keycaps on top of switchplate
   _switch_caps:
     - what: polygon # all borders
       operation: stack
@@ -353,6 +347,92 @@ outlines:
           shift: [-8,-10]
         - ref: matrix_pinky_bottom
           shift: [10,-10]
+
+
+
+##########################################
+###
+###     The actual Layers
+###     ordered from bottom to top
+###
+###     Given conditions:
+###     - Each layer is 0.5mm high (thickness of the veneer I bought)
+###     - Height of USB-hole: 3mm
+###     - Height/width of halves'/mouse connectors holes: 5mm/10mm
+###     - M2-Screws and inlets
+###     - Kailh choc switches
+###     - Keycaps are 17mmx16mm
+###     - Keycaps are NOT 18mmx18mm as usual!!
+###
+###     TODO:
+###     - adjust for unusual keycaps size!
+###     - height of holes for halves'/mouse connectors
+###     - accurate positioning of loose parts between the holes below the switch plate
+###
+##########################################
+
+  ## bottom plate consists of three layers: 
+  ## 01: the voronoi pattern
+  ## 02: a blank outline (using a different wood) - maybe with space invaders inlay?
+  ## 03: the voronoi pattern again so that keys can be closer to the bottom
+  ## Layer 01 has larger holes to accomodate the screw heads, the other layers'
+  ##   holes are just large enough to the screws can fit through
+  ## 
+  ## body below the keyplate: no idea how many layers - let's  make it 6, but 
+  ##    maybe some can be skipped 
+  ##    Needs to be high enough to house:
+  ##    - inlets for screws
+  ##    - bottom part of the keys
+  ##    - part of battery?
+  ##    - most of the microcontroller
+  ##    - most of the holes for usb and halves'/mouse connectors
+  ## 04-06: several layers with just the hollow but not holes for usb, halves'/mouse connectors
+  ## 07-09: several layers with holes for usb and halves'/mouse connectors
+  ##
+  ## switch plate consists of three layers - goal is a total of 1.5mm for the 
+  ##    switch plate, and each layer is around 0.5-0.6mm 
+  ##    Might house a part of the holes for usb and halves'/mouse connectors?
+  ## 10: switch plate with holes for usb and halves'/mouse connectors
+  ## 11: switch plate with holes for usb and halves'/mouse connectors
+  ## 13: switch plate without any holes - no idea if that's necessary 
+  ##      or if we'll add another layer with holes
+  ##
+  ## body above the keyplate: no idea how many layers - let's make it another 6,
+  ##    with the option so skip some
+  ##    Needs to be high enough to 
+  ##    - house magnets
+  ##    - clear the keycaps: top of keycaps should be almost at top of body
+  ##    - topmost layer covers the magnets and holds the decorative inlay
+
+  _key_pattern:
+    - what: circle
+      # where: false
+      where: /^matrix_.*|^thumb_.*/
+      radius: 00
+  duality_bottom_pattern: [
+    _with_fillets,
+    +_thumbs,
+    -_key_pattern,
+    -_screw_heads
+  ]
+
+
+  duality_bottom_bottom: [
+    _with_fillets,
+    +_thumbs,
+    -_screw_holes
+  ]
+
+
+  # switch plate  
+  duality: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_rp2040,
+    -_battery,
+    -_inlet_holes
+  ]
 
   duality_top_frame: [
     _with_fillets,
@@ -409,24 +489,4 @@ outlines:
     -_rp2040_body,
     -_battery,
     -_inlet_holes
-  ]
-
-
-  duality_bottom_bottom: [
-    _with_fillets,
-    +_thumbs,
-    -_screw_holes
-  ]
-
-
-  _key_pattern:
-    - what: circle
-      where: true
-      radius: 0.1
-
-  duality_bottom_pattern: [
-    _with_fillets,
-    +_thumbs,
-    # -_key_pattern,
-    -_screw_heads
   ]
