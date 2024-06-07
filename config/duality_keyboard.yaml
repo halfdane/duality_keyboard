@@ -18,6 +18,8 @@ units:
   m2_inlet_radius: 1.5
   m2_outer_distance: 2.5
 
+  rubber_bumper_radius: 4
+
   magnet_radius: 4.1
 
   symbols_radius: 4
@@ -29,6 +31,9 @@ units:
   
   keyboard_tl_x: 0.5*base_width - rp2040_body_width + m2_outer_distance
   keyboard_tl_y: 0.5*base_height - middle_stagger
+
+  connector_width: 10
+  connector_length: 6
   
 
 points:
@@ -220,25 +225,35 @@ outlines:
       size: [rp2040_body_width, rp2040_body_height]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius]
+        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius-1]
   _rp2040_usb:
     - what: rectangle
       size: [8, 9.5]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius]
+        shift: [-base_width/2, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius-1]
   _rp2040: [
     _rp2040_body,
     _rp2040_usb
   ]
 
-  ### battery needs a place
-  _battery:
+  ### connectors to touchpad or between halves
+  _connector_hole_tr:
     - what: rectangle
-      size: [32, 14]
+      size: [connector_length, connector_width]
       where:
-        ref: matrix_ring_bottom
-        shift: [15, -17]
+        ref: keyboard_tl
+        shift: [base_width/2-connector_length/2+0.001, base_height/2-connector_width-ky/2]
+  _connector_hole_bt:
+    - what: rectangle
+      size: [connector_width, connector_length]
+      where:
+        ref: keyboard_tl
+        shift: [0, -base_height/2+connector_width-ky/3]
+  _connector_holes: [
+    _connector_hole_tr,
+    _connector_hole_bt
+  ]
   
   ### symbol 1
   _symbol_circle_bl:
@@ -277,6 +292,36 @@ outlines:
       operation: subtract
 
   ### parts that are used on different layers
+  _rubber_bumper_tl:
+    - what: circle
+      radius: rubber_bumper_radius
+      where: 
+        shift: [-base_width/2+m2_head_radius+m2_outer_distance+rubber_bumper_radius, base_height/2-m2_head_radius-m2_outer_distance-rubber_bumper_radius]
+        ref: keyboard_tl
+  _rubber_bumper_tr:
+    - what: circle
+      radius: rubber_bumper_radius
+      where:
+        shift: [base_width/2-m2_head_radius-m2_outer_distance-rubber_bumper_radius, base_height/2-m2_head_radius-m2_outer_distance-rubber_bumper_radius]
+        ref: keyboard_tl
+  _rubber_bumper_bl:
+    - what: circle
+      radius: rubber_bumper_radius
+      where:
+        shift: [-base_width/2+m2_head_radius+m2_outer_distance+rubber_bumper_radius, -base_height/2+m2_head_radius+m2_outer_distance+rubber_bumper_radius]
+        ref: keyboard_tl
+  _rubber_bumper_br:
+    - what: circle
+      radius: rubber_bumper_radius
+      where:
+        shift: [base_width/2, -base_height/2+rubber_bumper_radius+1.5]
+        ref: keyboard_tl
+  _rubber_bumpers: [
+    _rubber_bumper_tl,
+    _rubber_bumper_tr,
+    _rubber_bumper_bl,
+    _rubber_bumper_br
+  ]
 
   ### switch plate
   _thumbs:
@@ -321,7 +366,32 @@ outlines:
       # operation: stack
       where: /^thumb_.*/
       size: [px, py+10]
+  
 
+  _pre_bottom_hollow_0:
+    - what: rectangle
+      where: /^matrix_.*/
+      size: [px-1, py-1]
+    - what: rectangle
+      size: [60, 40]
+      where:
+        ref: keyboard_tl
+        shift: [-10, 8]
+    - what: rectangle
+      size: [60, 8]
+      where:
+        ref: thumb_reachy
+        shift: [-35, 3]
+    - what: rectangle
+      size: [20, 6]
+      where:
+        ref: matrix_pinky_bottom
+        shift: [15, 2]
+  _bottom_hollow:
+    - what: outline
+      name: _pre_bottom_hollow_0
+      fillet: 2
+      
 
 ##########################################
 ###
@@ -336,6 +406,7 @@ outlines:
 ###     - Kailh choc switches
 ###     - Keycaps are 17mmx16mm
 ###     - Keycaps are NOT 18mmx18mm as usual!!
+###     - Rubber bumpers are 4mm radius
 ###
 ###     TODO:
 ###     - adjust for unusual keycaps size!
@@ -345,65 +416,86 @@ outlines:
 ##########################################
 
   ## bottom plate consists of three layers: 
-  ## 01: the voronoi pattern
+  ## 01: the voronoi pattern with big holes for the screw heads and the rubber bumpers
   ## 02: a blank outline (using a different wood) - maybe with space invaders inlay?
   ## 03: the voronoi pattern again so that keys can be closer to the bottom
   ## Layer 01 has larger holes to accomodate the screw heads, the other layers'
   ##   holes are just large enough to the screws can fit through
   ## 
-  ## body below the keyplate: no idea how many layers - let's  make it 6, but 
-  ##    maybe some can be skipped 
-  ##    Needs to be high enough to house:
-  ##    - inlets for screws
-  ##    - bottom part of the keys
-  ##    - part of battery?
-  ##    - most of the microcontroller
-  ##    - most of the holes for usb and halves'/mouse connectors
-  ## 04-06: several layers with just the hollow but not holes for usb, halves'/mouse connectors
-  ## 07-09: several layers with holes for usb and halves'/mouse connectors
+  ## body below the keyplate: 
+  ##  to clear the lower part of the keys, it needs to be at least 5mm which is the same
+  ##  height as the halves'/mouse connectors.
+  ## So that's 10 layers
   ##
   ## switch plate consists of three layers - goal is a total of 1.5mm for the 
   ##    switch plate, and each layer is around 0.5-0.6mm 
-  ##    Might house a part of the holes for usb and halves'/mouse connectors?
-  ## 10: switch plate with holes for usb and halves'/mouse connectors
-  ## 11: switch plate with holes for usb and halves'/mouse connectors
+  ##    Might house a part of the holes for halves'/mouse connectors?
+  ## 10: switch plate with holes for halves'/mouse connectors
+  ## 11: switch plate with holes for halves'/mouse connectors
   ## 13: switch plate without any holes - no idea if that's necessary 
   ##      or if we'll add another layer with holes
   ##
-  ## body above the keyplate: no idea how many layers - let's make it another 6,
-  ##    with the option so skip some
-  ##    Needs to be high enough to 
-  ##    - house magnets
-  ##    - clear the keycaps: top of keycaps should be almost at top of body
+  ## body above the keyplate: 
+  ##    - to clear the keycaps (7.5 mm above switch plate), 15 layers are needed
   ##    - topmost layer covers the magnets and holds the decorative inlay
 
+  ## bottom plate
   _key_pattern:
     - what: circle
-      # where: false
-      where: /^matrix_.*|^thumb_.*/
-      radius: 00
-  duality_bottom_pattern: [
+      where: false
+      # where: /^matrix_.*|^thumb_.*/
+      radius: 01
+  layer_01: [
     _with_fillets,
     +_thumbs,
     -_key_pattern,
-    -_screw_heads
+    -_screw_heads,
+    -_rubber_bumpers
   ]
-
-
-  duality_bottom_bottom: [
+  layer_02: [
     _with_fillets,
     +_thumbs,
     -_screw_holes
   ]
+  layer_03: [
+    _with_fillets,
+    +_thumbs,
+    -_key_pattern,
+    -_screw_holes
+  ]
 
+  ## bottom hollow
+  layer_04_to_10: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_bottom_hollow,
+    -_rp2040_body,
+    -_inlet_holes,
+    -_connector_holes
+  ]
 
   # switch plate  
-  duality: [
+  layer_10: [
     _with_fillets,
     +_thumbs,
     -_key_holes,
     -_rp2040,
-    -_battery,
+    -_inlet_holes,
+    -_connector_holes
+  ]
+  layer_11: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_rp2040,
+    -_inlet_holes
+  ]
+  layer_12: [
+    _with_fillets,
+    +_thumbs,
+    -_key_holes,
+    -_rp2040_body,
     -_inlet_holes
   ]
 
@@ -433,33 +525,3 @@ outlines:
       operation: subtract
       origin: symbol
 
-
-  ### stuff below the the switch plate
-
-  _bottom_hollow:
-    - what: rectangle
-      size: [base_width-30, base_height-40]
-      where:
-        ref: keyboard_tl
-        shift: [0, 10]
-    - what: rectangle
-      size: [60, 8]
-      where:
-        ref: thumb_reachy
-        shift: [-35, 3]
-    - what: rectangle
-      size: [20, 8]
-      where:
-        ref: matrix_pinky_bottom
-        shift: [15, 0]
-
-
-  duality_bottom_frame: [
-    _with_fillets,
-    +_thumbs,
-    -_key_holes,
-    -_bottom_hollow,
-    -_rp2040_body,
-    -_battery,
-    -_inlet_holes
-  ]

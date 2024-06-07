@@ -5,9 +5,7 @@
     "author": "HalfDane <halfdane@gmx.net>",
     "license": "MIT",
     "scripts": {
-        "start": "ergogen config/duality_keyboard.yaml --debug -o generated_files",
-        "poststart": "cp -v generated_files/outlines/[!_]*.svg .",
-        "watch": "watch 'npm run start' ./config"
+        "start": "ergogen config/duality_keyboard.yaml --debug -o generated_files",        "watch": "watch 'npm run start' ./config"
     },
     "devDependencies": {
         "ergogen": "^4.0.2",
