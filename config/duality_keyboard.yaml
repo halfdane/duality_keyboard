@@ -27,6 +27,9 @@ units:
   px: kx + 1
   py: ky + 1
 
+  # size of holes in switch plate
+  sh: 14
+
   rp2040_body_width: 23.5
   rp2040_body_height: 18
 
@@ -304,19 +307,19 @@ outlines:
         - shift: [-6, 10.3]
 
   symbol_pieces:
-    - what: circle
+    - what: circle # left
       radius: symbols_radius_piece
       where:
         shift: [0, 0]
-    - what: circle
+    - what: circle # right
       radius: symbols_radius_piece+0.05
       where:
         shift: [12, 0]
-    - what: circle
+    - what: circle # top
       radius: symbols_radius_piece+0.1
       where:
         shift: [6, 10.3]
-    - what: polygon
+    - what: polygon # triangle
       operation: subtract
       points:
         - shift: [0,0]
@@ -374,7 +377,7 @@ outlines:
   _key_holes:
     - what: rectangle
       where: /^matrix_.*|^thumb_.*/
-      size: 14
+      size: sh
   _key_frame:
     - what: rectangle
       where: 
@@ -412,7 +415,11 @@ outlines:
     - what: rectangle
       fillet: 2
       where: /^matrix_.*/
-      size: [px-1, py-1]
+      size: [kx, ky]
+    - what: rectangle
+      fillet: 2
+      where: /^thumb_.*/
+      size: sh
     - what: rectangle
       size: [5, 10]
       where:
@@ -502,7 +509,6 @@ outlines:
   layer_04: [
     _with_fillets,
     +_thumbs,
-    -_key_holes,
     -_bottom_hollow,
     -_rp2040_body,
     -_inlet_holes,
@@ -511,7 +517,6 @@ outlines:
   layer_05_to_13: [
     _with_fillets,
     +_thumbs,
-    -_key_holes,
     -_bottom_hollow,
     -_rp2040_body,
     -_inlet_holes,
