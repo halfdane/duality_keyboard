@@ -1,3 +1,23 @@
+##########################################
+###
+###     Given conditions:
+###     - Each layer is 0.5mm high (thickness of the veneer I bought)
+###     - Height of USB-hole: 3mm (6 layers)
+###     - Height/width of halves'/mouse connectors holes: 5mm/10mm
+###     - M2-Screws and inlets
+###     - Kailh choc switches
+###     - Keycaps are 17mmx16mm
+###     - Keycaps are NOT 18mmx18mm as usual!!
+###     - Rubber bumpers are 4mm radius
+###     - Magnets have 4mm radius and almost 2mm thickness (4 layers)
+###     - Cirque Trackpad 40 - 39mm overlay / 41mm overlay lip
+###       Case needs a bit space around, so maybe 43mm in total?
+###       => 19.5mm overlay hole radius
+###       => 20.5mm overlay lip hole radius
+###       => 21.5mm outer casing radius
+###
+##########################################
+
 units:
   # MY KEYCAPS: 17.5mmx16.5mm
   # cx and cy:  18.0mmx17.0mm for kailh choc
@@ -22,7 +42,8 @@ units:
 
   magnet_radius: 4.1
 
-  symbols_radius: 4
+  symbols_radius_recess: 4
+  symbols_radius_piece: 4.05
 
   base_width: 105
   base_height: 80
@@ -35,6 +56,7 @@ units:
   connector_width: 10
   connector_length: 6
   
+  cirque_case_radius: 21.5
 
 points:
   zones:      
@@ -254,47 +276,60 @@ outlines:
       size: [connector_width, connector_length]
       where:
         ref: keyboard_tl
-        shift: [0, -base_height/2+connector_width-ky/3]
+        shift: [0, -base_height/2+connector_length/2-0.001]
   _connector_holes: [
     _connector_hole_tr,
     _connector_hole_bt
   ]
   
-  ### symbol 1
-  _symbol_circle_bl:
+  ### symbol
+  _symbol_recess:
     - what: circle
-      radius: symbols_radius
+      radius: symbols_radius_recess
       where:
         shift: [0, 0]
-  _symbol_circle_br:
     - what: circle
-      radius: symbols_radius
+      radius: symbols_radius_recess
       where:
         shift: [12, 0]
-  _symbol_circle_t:
     - what: circle
-      radius: symbols_radius
+      radius: symbols_radius_recess
       where:
         shift: [6, 10.3]
-  _symbol_triangle:
     - what: polygon
+      operation: subtract
       points:
         - shift: [0,0]
         - shift: [12, 0]
         - shift: [-6, 10.3]
 
-  symbol:
-    - what: outline
-      name: _symbol_circle_t
-    - what: outline
-      name: _symbol_circle_bl
-      operation: stack
-    - what: outline
-      name: _symbol_circle_br
-      operation: stack
-    - what: outline
-      name: _symbol_triangle
+  symbol_pieces:
+    - what: circle
+      radius: symbols_radius_piece
+      where:
+        shift: [0, 0]
+    - what: circle
+      radius: symbols_radius_piece+0.05
+      where:
+        shift: [12, 0]
+    - what: circle
+      radius: symbols_radius_piece+0.1
+      where:
+        shift: [6, 10.3]
+    - what: polygon
       operation: subtract
+      points:
+        - shift: [0,0]
+        - shift: [12, 0]
+        - shift: [-6, 10.3]
+
+  
+  _touchpad_case:
+    - what: circle
+      radius: cirque_case_radius
+      where:
+        ref: matrix_middle_bottom
+        shift: [-3, -40]
 
   ### parts that are used on different layers
   _rubber_bumper_tl:
@@ -397,17 +432,6 @@ outlines:
 
 ##########################################
 ###
-###     Given conditions:
-###     - Each layer is 0.5mm high (thickness of the veneer I bought)
-###     - Height of USB-hole: 3mm (6 layers)
-###     - Height/width of halves'/mouse connectors holes: 5mm/10mm
-###     - M2-Screws and inlets
-###     - Kailh choc switches
-###     - Keycaps are 17mmx16mm
-###     - Keycaps are NOT 18mmx18mm as usual!!
-###     - Rubber bumpers are 4mm radius
-###     - Magnets have 4mm radius and almost 2mm thickness (4 layers)
-###
 ###     The actual Layers ordered from bottom to top:
 ###     - 3 layers of bottom plate that can be screwed on and off
 ###     - 10 layers of bottom hollow that holds wiring etc
@@ -427,9 +451,10 @@ outlines:
 ###     - 2x layer_30 - for the top cap stuff
 ###
 ###   Test cut with cheap wood
-###     - all three switch plate layers
-###     - layer_02
-###     - 
+###     - layer_14, layer_15, layer_16 (all three switch plate layers)
+###     - layer_02 (second bottom layer - without voronoi)
+###     - layer_31 (top cap with symbol recess)
+###     - symbol_pieces
 ###
 ##########################################
 
@@ -513,7 +538,7 @@ outlines:
     +_thumbs,
     -_key_holes,
     -_rp2040_body,
-    -_inlet_holes
+    -_inlet_holes,
   ]
   layer_16: [
     _with_fillets,
@@ -539,12 +564,14 @@ outlines:
     _with_fillets,
     -_rp2040,
     -_switch_caps,
+    -_touchpad_case
   ]
 
   layer_23_to_25: [
     _with_fillets,
     -_rp2040_body,
     -_switch_caps,
+    -_touchpad_case
   ]
 
   layer_26_to_29: [
@@ -552,6 +579,7 @@ outlines:
     -_rp2040_body,
     -_switch_caps,
     -_magnet_holes,
+    -_touchpad_case
   ]
 
   layer_30:
@@ -559,6 +587,9 @@ outlines:
       name: _with_fillets
     - what: outline
       name: _switch_caps
+      operation: subtract
+    - what: outline
+      name: _touchpad_case
       operation: subtract
 
   layer_31:
@@ -568,7 +599,11 @@ outlines:
       name: _switch_caps
       operation: subtract
     - what: outline
-      name: symbol
+      name: _symbol_recess
       operation: subtract
       origin: symbol
+    - what: outline
+      name: _touchpad_case
+      operation: subtract
+    
 
