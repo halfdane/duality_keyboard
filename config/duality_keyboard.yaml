@@ -491,13 +491,18 @@ outlines:
 
   _key_pattern:
     - what: circle
-      where: false
-      # where: /^matrix_.*|^thumb_.*/
+      where: /^matrix_.*|^thumb_.*/
       radius: 01
-  layer_01: [
+  key_pattern: [
     _with_fillets,
     +_thumbs,
     -_key_pattern,
+    -_screw_heads,
+    -_rubber_bumpers
+  ]
+  layer_01: [
+    _with_fillets,
+    +_thumbs,
     -_screw_heads,
     -_rubber_bumpers
   ]
@@ -509,7 +514,6 @@ outlines:
   layer_03: [
     _with_fillets,
     +_thumbs,
-    -_key_pattern,
     -_screw_holes
   ]
 
