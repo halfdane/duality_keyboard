@@ -9,7 +9,7 @@
 ###     - Keycaps are 17mmx16mm
 ###     - Keycaps are NOT 18mmx18mm as usual!!
 ###     - Rubber bumpers are 4mm radius
-###     - Magnets have 4mm radius and almost 2mm thickness (4 layers)
+###     - Magnets have 5mm radius and almost 2mm thickness (4 layers)
 ###     - Cirque Trackpad 40 - 39mm overlay / 41mm overlay lip
 ###       Case needs a bit space around, so maybe 43mm in total?
 ###       => 19.5mm overlay hole radius
@@ -43,13 +43,13 @@ units:
 
   rubber_bumper_radius: 4
 
-  magnet_radius: 4.1
+  magnet_radius: 5.1
 
   symbols_radius_recess: 4
   symbols_radius_piece: 4.05
 
   base_width: 105
-  base_height: 80
+  base_height: 82
 
   middle_stagger: 0.7ky
   
@@ -268,21 +268,31 @@ outlines:
   ]
 
   ### connectors to touchpad or between halves
-  _connector_hole_tr:
+  _connector_hole_tt:
     - what: rectangle
-      size: [connector_length, connector_width]
+      size: [connector_width, connector_length]
       where:
         ref: keyboard_tl
-        shift: [base_width/2-connector_length/2+0.001, base_height/2-connector_width-ky/2]
+        shift: [base_width/2-px*2/3, base_height/2-connector_length/2+0.001]
+    - what: rectangle
+      size: [connector_width-1, connector_length+5]
+      where:
+        ref: keyboard_tl
+        shift: [base_width/2-px*2/3, base_height/2-connector_length*2+1]
   _connector_hole_bt:
     - what: rectangle
       size: [connector_width, connector_length]
       where:
         ref: keyboard_tl
-        shift: [0, -base_height/2+connector_length/2-0.001]
+        shift: [13, -base_height/2+connector_length/2-0.001]
+    - what: rectangle
+      size: [connector_width-1, connector_length+10]
+      where:
+        ref: keyboard_tl
+        shift: [13, -base_height/2+connector_length+(connector_length+10)/2-0.001]
   _connector_holes: [
-    _connector_hole_tr,
-    _connector_hole_bt
+    _connector_hole_bt,
+    _connector_hole_tt
   ]
   
   ### symbol
@@ -331,8 +341,14 @@ outlines:
     - what: circle
       radius: cirque_case_radius
       where:
-        ref: matrix_middle_bottom
-        shift: [-3, -40]
+        ref: keyboard_tl
+        shift: [0, -base_height/2-5]
+  _magnet_touchpad:
+    - what: circle
+      radius: magnet_radius
+      where:
+        ref: keyboard_tl
+        shift: [0, -base_height/2+cirque_case_radius/2-1]
 
   ### parts that are used on different layers
   _rubber_bumper_tl:
@@ -511,7 +527,7 @@ outlines:
     +_thumbs,
     -_bottom_hollow,
     -_rp2040_body,
-    -_inlet_holes,
+    -_screw_holes,
   ]
 
   layer_05_to_13: [
@@ -536,7 +552,8 @@ outlines:
     -_key_holes,
     -_rp2040_body,
     -_inlet_holes,
-    -_connector_holes
+    -_connector_holes,
+    -_magnet_touchpad
   ]
   layer_15: [
     _with_fillets,
@@ -544,6 +561,8 @@ outlines:
     -_key_holes,
     -_rp2040_body,
     -_inlet_holes,
+    -_connector_holes,
+    -_magnet_touchpad
   ]
   layer_16: [
     _with_fillets,
