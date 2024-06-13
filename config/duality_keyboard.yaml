@@ -565,7 +565,9 @@ outlines:
     +_thumbs,
     -_key_holes,
     -_rp2040_body,
-    -_inlet_holes
+    -_inlet_holes,
+    -_connector_holes,
+    -_magnet_touchpad
   ]
   layer_16: [
     _with_fillets,
@@ -583,8 +585,7 @@ outlines:
   ##    - 1 layer holds the inlay
   ## That allows to triple up the magnets for superior holding power
   ## 17-22: top frame with usb hole and magnet holes
-  ## 23-25: top frame with magnet holes
-  ## 26-29: top frame with magnet holes
+  ## 23-29: top frame with magnet holes
   ## 30: top layer without any holes
   ## 31: top layer with inlay
   layer_17_to_22: [
@@ -595,20 +596,12 @@ outlines:
     -_magnet_holes
   ]
 
-  layer_23_to_25: [
+  layer_23_to_29: [
     _with_fillets,
     -_rp2040_body,
     -_switch_caps,
     -_touchpad_case,
     -_magnet_holes
-  ]
-
-  layer_26_to_29: [
-    _with_fillets,
-    -_rp2040_body,
-    -_switch_caps,
-    -_magnet_holes,
-    -_touchpad_case
   ]
 
   layer_30:
