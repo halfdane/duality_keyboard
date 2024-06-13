@@ -247,21 +247,22 @@ outlines:
   ### rp2040 needs a place
   _rp2040_body:
     - what: rectangle
-      size: [rp2040_body_width, rp2040_body_height]
+      size: [rp2040_body_width, rp2040_body_height+2]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius]
+        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height+3]
     - what: rectangle
-      size: [10, 2]
+      size: [1, 13]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-4.2]
+        shift: [-base_width/2+rp2040_body_width+2.1, base_height/2-rp2040_body_height+3]
+
   _rp2040_usb:
     - what: rectangle
       size: [8, 9.5]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2, base_height/2-rp2040_body_height/2-1*m2_outer_distance-1.5*m2_head_radius]
+        shift: [-base_width/2, base_height/2-rp2040_body_height+3]
   _rp2040: [
     _rp2040_body,
     _rp2040_usb
