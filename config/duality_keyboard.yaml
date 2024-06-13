@@ -572,7 +572,6 @@ outlines:
     +_thumbs,
     -_key_holes,
     -_rp2040_body,
-    -_inlet_holes
   ]
 
   ## body above the keyplate: 
