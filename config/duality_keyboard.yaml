@@ -520,7 +520,10 @@ outlines:
   ##  There's a connector hole in the first switch plate layer instead.
   ##
   ## 04: bottom hollow without connector holes
-  ## 05-13: bottom hollow with connector holes (==9 Layers - missing space is cleared by the first switch plate layer)
+  ## 05-13: bottom hollow 
+  ##    - with connector holes (==9 Layers - missing space is cleared by the first switch plate layer)
+  ##    - with magnet holes -> double up the magnets for more holding power
+
 
   layer_04: [
     _with_fillets,
@@ -536,7 +539,8 @@ outlines:
     -_bottom_hollow,
     -_rp2040_body,
     -_inlet_holes,
-    -_connector_holes
+    -_connector_holes,
+    -_magnet_touchpad
   ]
 
   ## switch plate consists of three layers - goal is a total of 1.5mm for the 
@@ -560,9 +564,7 @@ outlines:
     +_thumbs,
     -_key_holes,
     -_rp2040_body,
-    -_inlet_holes,
-    -_connector_holes,
-    -_magnet_touchpad
+    -_inlet_holes
   ]
   layer_16: [
     _with_fillets,
@@ -574,13 +576,14 @@ outlines:
 
   ## body above the keyplate: 
   ##    - to clear the keycaps (7.5 mm above switch plate), 15 layers are needed in total:
-  ##    - 6 layers with space for the rp2040 and usb holes
-  ##    - 3 layers with just space for the rp2040
-  ##    - 4 layers that have additional holes for magnets
+  ##    - 6 layers with space for the rp2040, usb holes holes for magnets
+  ##    - 3 layers with just space for the rp2040 and holes for magnets
+  ##    - 4 layers with holes for magnets
   ##    - 1 layer to cover the magnets have something to glue the inlay to
   ##    - 1 layer holds the inlay
-  ## 17-22: top frame with usb hole
-  ## 23-25: top frame
+  ## That allows to triple up the magnets for superior holding power
+  ## 17-22: top frame with usb hole and magnet holes
+  ## 23-25: top frame with magnet holes
   ## 26-29: top frame with magnet holes
   ## 30: top layer without any holes
   ## 31: top layer with inlay
@@ -588,14 +591,16 @@ outlines:
     _with_fillets,
     -_rp2040,
     -_switch_caps,
-    -_touchpad_case
+    -_touchpad_case,
+    -_magnet_holes
   ]
 
   layer_23_to_25: [
     _with_fillets,
     -_rp2040_body,
     -_switch_caps,
-    -_touchpad_case
+    -_touchpad_case,
+    -_magnet_holes
   ]
 
   layer_26_to_29: [
