@@ -24,9 +24,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.5"
-     inkscape:cx="-770"
-     inkscape:cy="1059"
+     inkscape:zoom="0.35355339"
+     inkscape:cx="-1033.7901"
+     inkscape:cy="1192.182"
      inkscape:window-width="1920"
      inkscape:window-height="1144"
      inkscape:window-x="0"
@@ -277,4 +277,10 @@
            d="m 346,662 -94,-32 -32,-63 v -63 l 32,-63 63,-31 126,-32 95,-32 62,-62 32,-64 V 126 L 598,63 567,31.5 472,0 H 346 L 252,31.5 220,63 189,126 v 94 l 31,64 64,62 94,32 126,32 63,31 31,63 v 63 l -31,63 -95,32 H 346"
            style="stroke:#00ff00;stroke-width:0.5331in;stroke-opacity:1"
            transform="matrix(0.003175,0,0,-0.003175,2.00025,0)"
-           id="path25188" /></g></g></g></svg>
+           id="path25188" /></g></g></g><rect
+     style="fill:none;fill-opacity:0.512274;stroke:#0000ff;stroke-width:0.248852;stroke-linecap:round;stroke-opacity:1;stop-color:#000000"
+     id="rect41912"
+     width="123.2877"
+     height="585.01947"
+     x="3.3991549"
+     y="6.4250712" /></svg>
