@@ -46,7 +46,7 @@ units:
   magnet_radius: 5.1
 
   symbols_radius_recess: 4
-  symbols_radius_piece: 4.05
+  symbols_radius_piece: 4.15
 
   base_width: 105
   base_height: 82
