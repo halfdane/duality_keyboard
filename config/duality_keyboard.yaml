@@ -294,6 +294,11 @@ outlines:
         ref: keyboard_tl
         shift: [cx-5, -base_height/2+3-0.001]
       adjust.rotate: 180
+    - what: rectangle
+      size: [connector_width/2+1, connector_length+2]
+      where:
+        ref: keyboard_tl
+        shift: [cx-3, -base_height/2+19]
   _connector_holes: [
     _connector_hole_bt,
     _connector_hole_tt
@@ -438,10 +443,10 @@ outlines:
       where: /^thumb_.*/
       size: sh
     - what: rectangle
-      size: [5, 10]
+      size: [5, 8]
       where:
         ref: keyboard_tl
-        shift: [-25, 22]
+        shift: [-26, 23.25]
     - what: rectangle
       size: [8, 5]
       where:
