@@ -30,8 +30,8 @@ units:
   px: kx + 1
   py: ky + 1
 
-  # size of holes in switch plate
-  sh: 14
+  # size of holes in switch plate - a bit smaller to account for laser kerf
+  sh: 13.9
 
   rp2040_body_width: 23.5
   rp2040_body_height: 18
@@ -42,7 +42,7 @@ units:
   m2_screw_radius: 1
   m2_head_radius: 1.8
   m2_inlet_radius: 1.5
-  m2_outer_distance: 2.5
+  m2_outer_distance: 3
 
   rubber_bumper_radius: 4
 
@@ -51,13 +51,13 @@ units:
   symbols_radius_recess: 4
   symbols_radius_piece: 4.15
 
-  base_width: 105
-  base_height: 82
+  base_width: 107
+  base_height: 85
 
   middle_stagger: 0.7ky
   
-  keyboard_tl_x: 0.5*base_width - rp2040_body_width + m2_outer_distance
-  keyboard_tl_y: 0.5*base_height - middle_stagger
+  keyboard_tl_x: 0.5*base_width - rp2040_body_width + m2_outer_distance-1
+  keyboard_tl_y: 0.5*base_height - middle_stagger-1
 
   connector_width: 10
   connector_length: 6
@@ -114,19 +114,19 @@ outlines:
     - what: circle
       radius: magnet_radius
       where:
-        shift: [-base_width/2+magnet_radius+(m2_outer_distance*2.5)+rp2040_body_width, base_height/2-magnet_radius-(m2_outer_distance/2)]
+        shift: [-base_width/2+magnet_radius+(m2_outer_distance*2.5)+rp2040_body_width, base_height/2-magnet_radius-(m2_outer_distance*2/3)]
         ref: keyboard_tl
   _magnet_hole_top_right:
     - what: circle
       radius: magnet_radius
       where:
-        shift: [base_width/2-magnet_radius-(m2_outer_distance/2), base_height/2-magnet_radius-(m2_outer_distance/2)]
+        shift: [base_width/2-magnet_radius-m2_outer_distance, base_height/2-magnet_radius-(m2_outer_distance*2/3)]
         ref: keyboard_tl
   _magnet_hole_bottom_left:
     - what: circle
       radius: magnet_radius
       where:
-        shift: [-base_width/2+magnet_radius+(m2_outer_distance/2), -base_height/2+magnet_radius+(m2_outer_distance/2)]
+        shift: [-base_width/2+magnet_radius+(m2_outer_distance/2), -base_height/2+magnet_radius+(m2_outer_distance*2/3)]
         ref: keyboard_tl
   _magnet_holes: [
     _magnet_hole_top_left,
@@ -175,19 +175,19 @@ outlines:
     - what: circle
       radius: m2_screw_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height*0.3]
+        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
         ref: keyboard_tl
   _head_thumb_top:
     - what: circle
       radius: m2_head_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height*0.3]
+        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
         ref: keyboard_tl
   _inlet_thumb_top:
     - what: circle
       radius: m2_inlet_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height*0.3]
+        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
         ref: keyboard_tl
   _screw_thumb_bottom:
     - what: circle
@@ -253,47 +253,47 @@ outlines:
       size: [rp2040_body_width, rp2040_body_height+2]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height+3]
+        shift: [-base_width/2+rp2040_body_width/2+m2_outer_distance*2/3, base_height/2-rp2040_body_height+2]
     - what: rectangle
       size: [1, 13]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2+rp2040_body_width+2.1, base_height/2-rp2040_body_height+3]
+        shift: [-base_width/2+rp2040_body_width+2.1, base_height/2-rp2040_body_height+2]
 
   _rp2040_usb:
     - what: rectangle
       size: [8, 9.5]
       where:
         ref: keyboard_tl
-        shift: [-base_width/2, base_height/2-rp2040_body_height+3]
+        shift: [-base_width/2, base_height/2-rp2040_body_height+2]
   _rp2040: [
     _rp2040_body,
     _rp2040_usb
   ]
 
   ### connectors to touchpad or between halves
+  _connector_hole:
+    - what: rectangle
+      size: [connector_width, connector_length+4]
+      where:
+        shift: [0, 1]
+    - what: rectangle
+      size: [connector_width-1, connector_length+8]
+      where:
+        shift: [0, -(connector_length+8)/2]
   _connector_hole_tt:
-    - what: rectangle
-      size: [connector_width, connector_length]
+    - what: outline
+      name: _connector_hole
       where:
         ref: keyboard_tl
-        shift: [base_width/2-px*2/3, base_height/2-connector_length/2+0.001]
-    - what: rectangle
-      size: [connector_width-1, connector_length+5]
-      where:
-        ref: keyboard_tl
-        shift: [base_width/2-px*2/3, base_height/2-connector_length*2+1]
+        shift: [base_width/2-cx, base_height/2-3]
   _connector_hole_bt:
-    - what: rectangle
-      size: [connector_width, connector_length]
+    - what: outline
+      name: _connector_hole
       where:
         ref: keyboard_tl
-        shift: [13, -base_height/2+connector_length/2-0.001]
-    - what: rectangle
-      size: [connector_width-1, connector_length+10]
-      where:
-        ref: keyboard_tl
-        shift: [13, -base_height/2+connector_length+(connector_length+10)/2-0.001]
+        shift: [cx-5, -base_height/2+3-0.001]
+      adjust.rotate: 180
   _connector_holes: [
     _connector_hole_bt,
     _connector_hole_tt
@@ -387,37 +387,33 @@ outlines:
   ]
 
   ### switch plate
-  _thumbs:
-    - what: rectangle
-      size: [3U, 1U]
-      corner: 1
-      where:
-        ref: thumb_reachy
-        shift: [-1U, 0]
   _key_holes:
     - what: rectangle
       where: /^matrix_.*|^thumb_.*/
       size: sh
-  _key_frame:
-    - what: rectangle
-      where: 
-        ref: matrix_middle_top
-      bound: true
-      size: 14
-      expand: 8
 
-  _raw_plate:
+  _with_fillets:
+    - what: rectangle
+      size: [3U, 1.2U]
+      corner: 1
+      where:
+        ref: thumb_reachy
+        shift: [-0.9U, 0]
+    - what: rectangle
+      size: 1.8px
+      corner: 1
+      where:
+        ref: thumb_reachy
+        shift: [-6.3, py]
+    - what: circle
+      radius: 2.1px
+      operation: subtract
+      where:
+        ref: thumb_reachy
+        shift: [2px-0.5, 2.3py]
     - what: outline
       name: _base
-    - what: outline
-      name: _key_frame
-      operation: add
-      where:
-        shift: [0, 1]
-  _with_fillets:
-    - what: outline
-      name: _raw_plate
-      fillet: 4
+
 
   ### frame around keycaps on top of switchplate
   _switch_caps:
@@ -428,7 +424,8 @@ outlines:
     - what: rectangle
       # operation: stack
       where: /^thumb_.*/
-      size: [px, py+10]
+      size: [px+2, py+10]
+      adjust.shift: [1, 0]
   
 
   _bottom_hollow:
@@ -494,20 +491,17 @@ outlines:
       radius: 01
   key_pattern: [
     _with_fillets,
-    +_thumbs,
     -_key_pattern,
     -_screw_heads,
     -_rubber_bumpers
   ]
   layer_01: [
     _with_fillets,
-    +_thumbs,
     -_screw_heads,
     -_rubber_bumpers
   ]
   layer_02: [
     _with_fillets,
-    +_thumbs,
     -_screw_holes
   ]
 
@@ -521,7 +515,6 @@ outlines:
 
   layer_03_to_06: [
     _with_fillets,
-    +_thumbs,
     -_bottom_hollow,
     -_rp2040_body,
     -_inlet_holes,
@@ -537,50 +530,37 @@ outlines:
   
   layer_07: [
     _with_fillets,
-    +_thumbs,
     -_key_holes,
-    -_rp2040_body,
+    -_rp2040,
     -_inlet_holes,
     -_connector_holes,
     -_magnet_touchpad
   ]
   layer_08: [
     _with_fillets,
-    +_thumbs,
     -_key_holes,
-    -_rp2040_body,
+    -_rp2040,
   ]
 
   ## body above the keyplate: 
   ##    - to clear the keycaps (7.5-8 mm above switch plate), 8 layers are needed in total:
-  ##    - 4 layers with space for the rp2040, usb holes holes for magnets
-  ##    - 2 layers with just space for the rp2040 and holes for magnets
-  ##    - 1 layer to cover the magnets have something to glue the inlay to
-  ##    - 1 layer holds the inlay
+  ##    - 5 layers with holes for magnets
+  ##    - 1 layer to cover the magnets and have something to glue the inlay to
+  ##    - 1 single veneer holds the inlay
   ## Think about possibilities to reduce the two topmost layers (==4 sheets of veneer) to one (==2 sheets of veneer)
   ## That allows to triple up the magnets for superior holding power
   ##
-  ## 09-12: top frame with usb hole and magnet holes
-  ## 13-14: top frame without usb but with magnet holes
-  ## 15: top layer without any holes
-  ## 16: top layer with inlay
-  layer_09_to_12: [
+  ## 09 10 11 12 13: top frame with magnet holes
+  ## 14: top layer without any holes
+  ## 15: top layer with inlay
+  layer_09_to_13: [
     _with_fillets,
-    -_rp2040,
     -_switch_caps,
     -_touchpad_case,
     -_magnet_holes
   ]
 
-  layer_13_to_14: [
-    _with_fillets,
-    -_rp2040_body,
-    -_switch_caps,
-    -_touchpad_case,
-    -_magnet_holes
-  ]
-
-  layer_15:
+  layer_14:
     - what: outline
       name: _with_fillets
     - what: outline
@@ -590,7 +570,7 @@ outlines:
       name: _touchpad_case
       operation: subtract
 
-  layer_16:
+  layer_15:
     - what: outline
       name: _with_fillets
     - what: outline
