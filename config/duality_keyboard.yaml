@@ -175,37 +175,37 @@ outlines:
     - what: circle
       radius: m2_screw_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
+        shift: [base_width/2-(m2_outer_distance/2), -base_height/2+1.2py]
         ref: keyboard_tl
   _head_thumb_top:
     - what: circle
       radius: m2_head_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
+        shift: [base_width/2-(m2_outer_distance/2), -base_height/2+1.2py]
         ref: keyboard_tl
   _inlet_thumb_top:
     - what: circle
       radius: m2_inlet_radius
       where:
-        shift: [base_width/2-m2_head_radius-(m2_outer_distance/2), -base_height/2+1py]
+        shift: [base_width/2-(m2_outer_distance/2), -base_height/2+1.2py]
         ref: keyboard_tl
   _screw_thumb_bottom:
     - what: circle
       radius: m2_screw_radius
       where:
-        shift: [base_width/3+m2_head_radius+4, -base_height/2+m2_head_radius+(m2_outer_distance/2)]
+        shift: [base_width/3+m2_head_radius+2.5, -base_height/2+m2_head_radius+(m2_outer_distance/2)-3]
         ref: keyboard_tl
   _head_thumb_bottom:
     - what: circle
       radius: m2_head_radius
       where:
-        shift: [base_width/3+m2_head_radius+4, -base_height/2+m2_head_radius+(m2_outer_distance/2)]
+        shift: [base_width/3+m2_head_radius+2.5, -base_height/2+m2_head_radius+(m2_outer_distance/2)-3]
         ref: keyboard_tl
   _inlet_thumb_bottom:
     - what: circle
       radius: m2_inlet_radius
       where:
-        shift: [base_width/3+m2_head_radius+4, -base_height/2+m2_head_radius+(m2_outer_distance/2)]
+        shift: [base_width/3+m2_head_radius+2.5, -base_height/2+m2_head_radius+(m2_outer_distance/2)-3]
         ref: keyboard_tl
   _screw_bl:
     - what: circle
