@@ -460,27 +460,22 @@ outlines:
       
 
 ##########################################
-###   Two sheets of veneer must be glued together before cutting, so each "layer" consists of two sheets of veneer
+###   Two sheets of veneer are be glued together before cutting, so each "layer" consists of two sheets of veneer
 ###
-###     The actual Layers ordered from bottom to top:
+###     The Layers ordered from bottom to top:
 ###     - 2 layers of bottom plate that can be screwed on and off (one with voronoi pattern, one in walnut wood)
-###     - 5 layers of bottom hollow that holds wiring, connectors etc
+###     - 4 layers of bottom hollow that holds wiring, connectors etc
 ###     - 4 layers of switch plate
-###     - 8 layers of top cap that hold rp2040, magnets and inlay
+###     - 6-7 layers of top cap that hold rp2040, and magnets
+###     - 1 single veneer sheet holds the inlay
 ###
 ###   Gluing order:
 ###     - the two switch plates
-###     - the bottom plates
+###     - the two bottom plates
 ###     - bottom hollow to the switch plate
-###     - glue the two topmost layers
-###     - glue the top cap to the switch plate
-###     - glue two topmost layers to the rest
+###     - glue most of the top cap to the switch plate
+###     - glue the inlay to the topmost layer, than glue these to the rest
 ###
-###   Gluing help (use test cuts):
-###     - 4x a switch plate or layer_02 - everything but top cap
-###     - 2x layer_30 - for the top cap stuff
-###
-###   Test cut with cheap wood: TBD
 ###
 ##########################################
 
@@ -488,7 +483,7 @@ outlines:
   ## 01: the voronoi pattern with big holes for the screw heads and the rubber bumpers
   ## 02: a blank outline (using walnut wood) - maybe with space invaders inlay?
   ## Layer 01 has larger holes to accomodate the screw heads, the other layers'
-  ##   holes are just large enough to the screws can fit through
+  ##   holes are just large enough so the screws can fit through
 
   _key_pattern:
     - what: circle
@@ -513,9 +508,9 @@ outlines:
   ## body below the keyplate: 
   ##  to clear the lower part of the keys, it needs to be at least 5mm which is the same
   ##  height as the halves'/mouse connectors.
-  ## So that's 4 layers in total  ##
+  ## So that's 4 layers in total (missing space is cleared by the first switch plate layer)
   ## 03-06: bottom hollow 
-  ##    - with connector holes (==4 Layers - missing space is cleared by the first switch plate layer)
+  ##    - with connector holes
   ##    - with magnet holes -> double up the magnets for more holding power
 
   layer_03_to_06: [
@@ -550,14 +545,12 @@ outlines:
   ## body above the keyplate: 
   ##    - to clear the keycaps (7.5-8 mm above switch plate), 8 layers are needed in total:
   ##    - 5 layers with holes for magnets
-  ##    - 1 layer to cover the magnets and have something to glue the inlay to
-  ##    - 1 single veneer holds the inlay
-  ## Think about possibilities to reduce the two topmost layers (==4 sheets of veneer) to one (==2 sheets of veneer)
-  ## That allows to triple up the magnets for superior holding power
+  ##    - 1-2 layer to cover the magnets and have something to glue the inlay to
+  ##    - 1 single veneer sheet holds the inlay
   ##
   ## 09 10 11 12 13: top frame with magnet holes
-  ## 14: top layer without any holes
-  ## 15: top layer with inlay
+  ## 14: top layer without any holes - might need to double up, depending on the required height!
+  ## 15: top single sheet with inlay
   layer_09_to_13: [
     _with_fillets,
     -_switch_caps,
