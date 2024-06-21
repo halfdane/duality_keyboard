@@ -351,13 +351,13 @@ outlines:
       radius: cirque_case_radius
       where:
         ref: keyboard_tl
-        shift: [0, -base_height/2-5]
+        shift: [1, -base_height/2-5]
   _magnet_touchpad:
     - what: circle
       radius: magnet_radius
       where:
         ref: keyboard_tl
-        shift: [0, -base_height/2+cirque_case_radius/2-1]
+        shift: [1, -base_height/2+cirque_case_radius/2-1]
 
   ### parts that are used on different layers
   _rubber_bumper_tl:
