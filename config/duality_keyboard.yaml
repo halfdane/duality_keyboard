@@ -399,7 +399,7 @@ outlines:
 
   _with_fillets:
     - what: rectangle
-      size: [3U, 1.2U]
+      size: [3U, 1.1U]
       corner: 1
       where:
         ref: thumb_reachy
@@ -556,7 +556,6 @@ outlines:
     -_switch_caps,
     -_touchpad_case,
     -_magnet_holes,
-    ^_magnet_touchpad
   ]
 
   layer_14:
@@ -609,7 +608,7 @@ outlines:
     - what: circle
       radius: cirque_case_radius
     - what: rectangle
-      size: [cirque_case_radius*2, cirque_case_radius]
+      size: [cirque_case_radius*2, cirque_case_radius+5]
       where:
         shift: [0, -cirque_case_radius/2]
       corner: 5
@@ -630,7 +629,7 @@ outlines:
     - what: circle
       radius: cirque_case_radius
     - what: rectangle
-      size: [cirque_case_radius*2, cirque_case_radius]
+      size: [cirque_case_radius*2, cirque_case_radius+6]
       where:
         shift: [0, -cirque_case_radius/2]
       operation: subtract
@@ -645,5 +644,24 @@ outlines:
       radius: magnet_radius
       where:
         shift: [0, cirque_case_radius/2+4]
+  _trackpad_case_below_outline:
+    - what: outline
+      name: _trackpad_generic
+    - what: outline
+      name: layer_02
+      operation: subtract
+      where:
+        shift: [-33, 18]
+  trackpad_case_below:
+    - what: outline
+      name: _trackpad_case_below_outline
+    - what: rectangle
+      size: [cirque_case_radius*2-9, cirque_case_radius*2-5]
+      operation: subtract
+      where:
+        shift: [0, 4]
+      corner: 5
+  
+
       
       
