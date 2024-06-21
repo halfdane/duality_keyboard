@@ -114,7 +114,7 @@ outlines:
     - what: circle
       radius: magnet_radius
       where:
-        shift: [-base_width/2+magnet_radius+(m2_outer_distance*2.5)+rp2040_body_width, base_height/2-magnet_radius-(m2_outer_distance*2/3)]
+        shift: [-base_width/2+magnet_radius+m2_outer_distance, base_height/2-magnet_radius-(m2_outer_distance*2/3)]
         ref: keyboard_tl
   _magnet_hole_top_right:
     - what: circle
@@ -126,7 +126,7 @@ outlines:
     - what: circle
       radius: magnet_radius
       where:
-        shift: [-base_width/2+magnet_radius+(m2_outer_distance/2), -base_height/2+magnet_radius+(m2_outer_distance*2/3)]
+        shift: [-base_width/2+magnet_radius+m2_outer_distance/2, -base_height/2+magnet_radius+(m2_outer_distance*2/3)]
         ref: keyboard_tl
   _magnet_holes: [
     _magnet_hole_top_left,
