@@ -62,7 +62,7 @@ units:
   connector_width: 10
   connector_length: 6
   
-  cirque_case_radius: 21.5
+  cirque_case_radius: 44/2
 
 points:
   zones:      
@@ -555,7 +555,8 @@ outlines:
     _with_fillets,
     -_switch_caps,
     -_touchpad_case,
-    -_magnet_holes
+    -_magnet_holes,
+    ^_magnet_touchpad
   ]
 
   layer_14:
@@ -581,5 +582,68 @@ outlines:
     - what: outline
       name: _touchpad_case
       operation: subtract
-    
 
+## Cirque Trackpad 40 case that rests on top of the switch plate 
+## - Height of actual  trackpad is 5 mm
+## - 1.5 mm of which is the lip
+## - below the trackpad additional components of 3 mm
+## - assuming that the additional components don't need to be above the switchplate (depends on orientation)
+## so between actual trackpad and switchplate, 3mm space is needed
+
+## in total that's from the bottom:
+## - 2 layers of bottom plate that can be screwed on and off
+## - 8 layers of hollow with holes for loose connector
+
+## - 3 layers with holes for additional components and wires
+## - 1.5 layers around the lip
+## - 1 layer above the lip
+## - 
+    
+###     - Cirque Trackpad 40 - 39mm overlay / 41mm overlay lip
+###       Case needs a bit space around, so maybe 43mm in total?
+###       => 19.5mm overlay hole radius
+###       => 20.5mm overlay lip hole radius
+###       => 21.5mm outer casing radius
+
+  _trackpad_generic:
+    - what: circle
+      radius: cirque_case_radius
+    - what: rectangle
+      size: [cirque_case_radius*2, cirque_case_radius]
+      where:
+        shift: [0, -cirque_case_radius/2]
+      corner: 5
+
+  trackpad_case_top:
+    - what: outline
+      name: _trackpad_generic
+    - what: circle
+      radius: 39/2
+      operation: subtract
+  trackpad_case_lip:
+    - what: outline
+      name: _trackpad_generic
+    - what: circle
+      radius: 41/2
+      operation: subtract
+  _trackpad_half:
+    - what: circle
+      radius: cirque_case_radius
+    - what: rectangle
+      size: [cirque_case_radius*2, cirque_case_radius]
+      where:
+        shift: [0, -cirque_case_radius/2]
+      operation: subtract
+  trackpad_case_between:
+    - what: outline
+      name: trackpad_case_top
+    - what: outline
+      operation: add
+      name: _trackpad_half
+    - what: circle
+      operation: subtract
+      radius: magnet_radius
+      where:
+        shift: [0, cirque_case_radius/2+4]
+      
+      
