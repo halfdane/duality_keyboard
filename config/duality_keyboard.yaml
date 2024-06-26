@@ -405,11 +405,11 @@ outlines:
         ref: thumb_reachy
         shift: [-0.9U, 0]
     - what: rectangle
-      size: 1.8px
+      size: 1.85px
       corner: 1
       where:
         ref: thumb_reachy
-        shift: [-6.3, py]
+        shift: [-6.3, py+2]
     - what: circle
       radius: 2.1px
       operation: subtract
@@ -509,11 +509,21 @@ outlines:
   ##  to clear the lower part of the keys, it needs to be at least 5mm which is the same
   ##  height as the halves'/mouse connectors.
   ## So that's 4 layers in total (missing space is cleared by the first switch plate layer)
-  ## 03-06: bottom hollow 
   ##    - with connector holes
   ##    - with magnet holes -> double up the magnets for more holding power
+  ## 03: bottom hollow with just the screw holes to prevent the brass spacers from sliding out
+  ## 04-06: bottom hollow with bigger holes for the brass spacers
 
-  layer_03_to_06: [
+  layer_03: [
+    _with_fillets,
+    -_bottom_hollow,
+    -_rp2040_body,
+    -_screw_holes,
+    -_connector_holes,
+    -_magnet_touchpad
+  ]
+
+  layer_04_to_06: [
     _with_fillets,
     -_bottom_hollow,
     -_rp2040_body,
@@ -613,13 +623,13 @@ outlines:
         shift: [0, -cirque_case_radius/2]
       corner: 5
 
-  trackpad_case_top:
+  trackpad_layer_16:
     - what: outline
       name: _trackpad_generic
     - what: circle
       radius: 39/2
       operation: subtract
-  trackpad_case_lip:
+  trackpad_layer_14_to_15:
     - what: outline
       name: _trackpad_generic
     - what: circle
@@ -633,9 +643,9 @@ outlines:
       where:
         shift: [0, -cirque_case_radius/2]
       operation: subtract
-  trackpad_case_between:
+  trackpad_layer_11_to_13:
     - what: outline
-      name: trackpad_case_top
+      name: trackpad_layer_16
     - what: outline
       operation: add
       name: _trackpad_half
@@ -652,7 +662,7 @@ outlines:
       operation: subtract
       where:
         shift: [-33, 18]
-  trackpad_case_below:
+  trackpad_layer_04_to_10:
     - what: outline
       name: _trackpad_case_below_outline
     - what: rectangle
@@ -661,7 +671,83 @@ outlines:
       where:
         shift: [0, 4]
       corner: 5
+    - what: circle
+      radius: m2_inlet_radius
+      operation: subtract
+      where:
+        shift: [0, -cirque_case_radius+2]
+    - what: circle
+      radius: m2_inlet_radius
+      operation: subtract
+      where:
+        shift: [-(cirque_case_radius-2.2), 0]
+    - what: circle
+      radius: m2_inlet_radius
+      operation: stack
+      where:
+        shift: [+(cirque_case_radius-2.2), 0]
+  trackpad_layer_03:
+    - what: outline
+      name: _trackpad_case_below_outline
+    - what: rectangle
+      size: [cirque_case_radius*2-9, cirque_case_radius*2-5]
+      operation: subtract
+      where:
+        shift: [0, 4]
+      corner: 5
+    - what: circle
+      radius: m2_screw_radius
+      operation: subtract
+      where:
+        shift: [0, -cirque_case_radius+2]
+    - what: circle
+      radius: m2_screw_radius
+      operation: subtract
+      where:
+        shift: [-(cirque_case_radius-2.2), 0]
+    - what: circle
+      radius: m2_screw_radius
+      operation: stack
+      where:
+        shift: [+(cirque_case_radius-2.2), 0]
   
+  trackpad_layer_02:
+    - what: outline
+      name: _trackpad_case_below_outline
+    - what: circle
+      radius: m2_screw_radius
+      operation: subtract
+      where:
+        shift: [0, -cirque_case_radius+2]
+    - what: circle
+      radius: m2_screw_radius
+      operation: subtract
+      where:
+        shift: [-(cirque_case_radius-2.2), 0]
+    - what: circle
+      radius: m2_screw_radius
+      operation: stack
+      where:
+        shift: [+(cirque_case_radius-2.2), 0]
+  trackpad_layer_01:
+    - what: outline
+      name: _trackpad_case_below_outline
+    - what: circle
+      radius: m2_head_radius
+      operation: subtract
+      where:
+        shift: [0, -cirque_case_radius+2]
+    - what: circle
+      radius: m2_head_radius
+      operation: subtract
+      where:
+        shift: [-(cirque_case_radius-2.2), 0]
+    - what: circle
+      radius: m2_head_radius
+      operation: stack
+      where:
+        shift: [+(cirque_case_radius-2.2), 0]
+
 
       
       
