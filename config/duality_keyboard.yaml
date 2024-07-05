@@ -2,8 +2,8 @@
 ###
 ###     Given conditions:
 ###     - Each veneer sheet is 0.5mm thick
-###     - Initial tests show that single veneer sheets aren't stable enough so before cutting, 
-###         so each layer consists of two sheets glued  together
+###     - Initial tests show that single veneer sheets aren't stable enough for cutting, 
+###         so now each layer consists of two veneer sheets glued together as a 2-ply
 ###
 ###     - Height of USB-hole: 3mm (3 layers)
 ###     - Height/width of halves'/mouse connectors holes: 5mm/10mm (5 layers)
@@ -396,6 +396,16 @@ outlines:
     - what: rectangle
       where: /^matrix_.*|^thumb_.*/
       size: sh
+  _switch_hook_holes:
+    - what: rectangle
+      where: /^matrix_.*|^thumb_.*/
+      adjust.shift: [sh/2, 0]
+      size: [1.5, 11]
+    - what: rectangle
+      where: /^matrix_.*|^thumb_.*/
+      adjust.shift: [-sh/2, 0]
+      size: [1.5, 11]
+      
 
   _with_fillets:
     - what: rectangle
@@ -541,6 +551,7 @@ outlines:
   layer_07: [
     _with_fillets,
     -_key_holes,
+    -_switch_hook_holes,
     -_rp2040,
     -_inlet_holes,
     -_connector_holes,
