@@ -2,3 +2,9 @@ node_modules/
 generated_files
 .envrc
 .idea
+
+**/kmk/kmk
+kmk_firmware
+adafruit-circuitpython-bundle-*.x-mpy-*
+
+.vscode
