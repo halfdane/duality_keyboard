@@ -4,14 +4,6 @@ Generated using ergogen:
 
 ![Switch plate looks like this](https://raw.githubusercontent.com/halfdane/duality_keyboard/main/duality.svg)
 
-There are two options to generate this:
-- copy the content of `config/duality_keyboard.yaml` into https://ergogen.cache.works/ and start fiddling
-- run `npm install` and `npm run start` (or `npm run watch` for continuous build)
+To generate this, run `make`. That'll generate a whole bunch of svg files in `generated_files/outlines`. 
+They obviously need quite a bit of postprocessing before they can be sent to a lasercutter, so in `to_laser` you can find all the files I used to lasercut the veneer layers.
 
-
-# Install qmk
-https://docs.qmk.fm/#/getting_started_make_guide
-
-pamac install qmk
-
-`sudo pacman -Sy base-devel gcc unzip wget zip avr-gcc avr-binutils avr-libc dfu-util arm-none-eabi-gcc arm-none-eabi-binutils arm-none-eabi-newlib git dfu-programmer dfu-util`
