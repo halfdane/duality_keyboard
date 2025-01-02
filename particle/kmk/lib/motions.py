@@ -98,7 +98,6 @@ class MotionScanner:
     def _handle_mouse_movement(self, x, y):
         """Handles mouse movement or scrolling."""
         if self.tap_detector.is_tapping(): #Use the tap_detector function
-            debug("Mouse movement suppressed due to active tap timer")
             return
         
         relative_x = int(x - self.current_x)
