@@ -1,0 +1,149 @@
+import math
+from kmk.keys import AX, KC
+from kmk.utils import Debug
+from circularScroller import CircularScroller
+
+debug = Debug(__name__)
+
+class MotionScanner:
+    def __init__(self, keyboard,
+                 invert_x=False, invert_y=False, swap_xy=False, tap_timeout=200, fling_decay=0.95, fling_min_velocity=10,
+                 scroll_sensitivity=4, scroll_zone_percentage=20, touchpad_size=1024):
+        """Initializes the motion scanner."""
+
+        # Configuration values
+        self.keyboard = keyboard
+        self.invert_x = invert_x
+        self.invert_y = invert_y
+        self.swap_xy = swap_xy
+        self.tap_timeout = tap_timeout
+        self.fling_decay = fling_decay
+        self.fling_min_velocity = fling_min_velocity
+
+        # Coordinate variables
+        self.current_x = 0
+        self.current_y = 0
+        self.last_x = None
+        self.last_y = None
+        self.fling_x = 0
+        self.fling_y = 0
+
+        # Callbacks and state
+        self.touch_start_callback = None
+        self.touch_end_callback = None
+        self.is_touching = False
+        self.fling_timer = None
+
+        # Initialize scroller
+        self.scroller = CircularScroller(keyboard, touchpad_size, scroll_sensitivity, scroll_zone_percentage)
+
+    def set_touch_start_callback(self, callback):
+        self.touch_start_callback = callback
+
+    def set_touch_end_callback(self, callback):
+        self.touch_end_callback = callback
+
+    # Touch handling functions
+    def _handle_touch_start(self, x, y):
+        """Handles the start of a touch event."""
+        self.is_touching = True
+        self.current_x = x
+        self.current_y = y
+        self.last_x = x
+        self.last_y = y
+
+        if self.touch_start_callback:
+            self.touch_start_callback()
+
+        self.tap_timer = self.keyboard.set_timeout(self.tap_timeout, self._tap_timeout)
+
+        if self.fling_timer:
+            self.keyboard.cancel_timeout(self.fling_timer)
+            self.fling_timer = None
+            debug("Fling aborted due to new touch")
+
+        self.scroller.start_scroll(x, y)
+
+    def _handle_touch_end(self, x, y):
+        """Handles the end of a touch event."""
+        self.is_touching = False
+
+        if self.tap_timer:
+            self.keyboard.cancel_timeout(self.tap_timer)
+            self.tap_timer = None
+            self.keyboard.tap_key(KC.MB_LMB)
+            debug("Tap registered")
+        elif not self.scroller.scroll_active:
+            fling_magnitude = math.sqrt(self.fling_x**2 + self.fling_y**2)
+            debug(f"Fling magnitude: {fling_magnitude}")
+            if fling_magnitude > self.fling_min_velocity:
+                self.current_x = x
+                self.current_y = y
+                self.fling_timer = self.keyboard.set_timeout(10, self._handle_fling)
+                debug("Fling started")
+        self.scroller.end_scroll()
+
+        if self.touch_end_callback:
+            self.touch_end_callback()
+        debug("Touch ended")
+        self.last_x = None
+        self.last_y = None
+
+    def _tap_timeout(self):
+        """Handles a tap timeout event (only resets the timer)."""
+        self.tap_timer = None
+        debug("Tap timed out")
+
+      # Mouse movement and scroll handling
+    def _handle_mouse_movement(self, x, y):
+        """Handles mouse movement or scrolling."""
+        relative_x = int(x - self.current_x)
+        relative_y = int(y - self.current_y)
+
+        if self.invert_x:
+            relative_x *= -1
+        if self.invert_y:
+            relative_y *= -1
+
+        if self.scroller.scroll_active:
+            self.scroller.scroll(x, y)
+        else:
+            AX.X.move(self.keyboard, relative_x)
+            AX.Y.move(self.keyboard, relative_y)
+            debug(f"Moved mouse by relative coordinates: ({relative_x}, {relative_y})")
+            self.current_x = x
+            self.current_y = y
+            self.fling_x = relative_x
+            self.fling_y = relative_y
+        self.last_x = x
+        self.last_y = y
+
+    # Fling handling
+    def _handle_fling(self):
+        """Handles the fling motion."""
+        relative_x = int(self.fling_x)
+        relative_y = int(self.fling_y)
+
+        self.fling_x *= self.fling_decay
+        self.fling_y *= self.fling_decay
+
+        if abs(relative_x) > 0 or abs(relative_y) > 0:
+            AX.X.move(self.keyboard, relative_x)
+            AX.Y.move(self.keyboard, relative_y)
+            debug(f"Flinging by: ({relative_x}, {relative_y})")
+            self.fling_timer = self.keyboard.set_timeout(10, self._handle_fling)
+        else:
+            self.fling_timer = None
+            debug("Fling ended")
+
+    def scan(self, x, y, is_touching):
+        """Handles touch events and mouse movement."""
+        if self.swap_xy:
+            x, y = y, x
+
+        if is_touching and not self.is_touching:
+            self._handle_touch_start(x, y)
+        elif not is_touching and self.is_touching:
+            self._handle_touch_end(x, y)
+        elif is_touching and self.is_touching:
+            self._handle_mouse_movement(x, y)

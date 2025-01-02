@@ -1,4 +1,4 @@
-def miryokufy(keyboard, cirque):          
+def miryokufy(keyboard, motionscanner):          
      from kmk.keys import KC
      from kmk.modules.combos import Combos, Chord, Sequence
      from kmk.modules.layers import Layers;
@@ -16,11 +16,11 @@ def miryokufy(keyboard, cirque):
 
      # homerow mods
      def hm(tap, mod):
-          return KC.HT(tap, mod, prefer_hold=False, tap_interrupted=True, tap_time=125)
+          return KC.HT(tap, mod, prefer_hold=False, tap_interrupted=True, tap_time=150)
 
      # layer tap
      def lt(layer, tap):
-          return KC.HT(tap, KC.MO(layer), prefer_hold=True, tap_interrupted=False, tap_time=200)
+          return KC.HT(tap, KC.MO(layer), prefer_hold=True, tap_interrupted=False, tap_time=150)
 
      # dummy tapdance: first tap is noop
      def dtd(second_tap):     
@@ -37,9 +37,9 @@ def miryokufy(keyboard, cirque):
      SYM = 8
      FUN = 9
 
-     if cirque is not None:
-          cirque.on_touch_start(lambda: layers.activate_layer(keyboard, BUTTON))
-          cirque.on_touch_end(lambda: layers.deactivate_layer(keyboard, BUTTON))
+     if motionscanner is not None:
+          motionscanner.set_touch_start_callback(lambda: layers.activate_layer(keyboard, BUTTON))
+          motionscanner.set_touch_end_callback(lambda: layers.deactivate_layer(keyboard, BUTTON))
 
      both_lft = (17, 11)
      both_rgt = (29, 35)
@@ -55,12 +55,12 @@ def miryokufy(keyboard, cirque):
           KC.Q,              KC.W,              KC.F,              KC.P,              KC.B,
           hm(KC.A, KC.LGUI), hm(KC.R, KC.LALT), hm(KC.S, KC.LCTL), hm(KC.T, KC.LSFT), KC.G,
           KC.Z,              hm(KC.X, KC.RALT), KC.C,              KC.D,              KC.V,
-          lt(NAV, KC.SPC), lt(MEDIA, KC.TAB),
+          lt(NAV, KC.SPC),   lt(MEDIA, KC.TAB),
 
           KC.J,          KC.L,               KC.U,               KC.Y,                KC.QUOT,
           KC.M,          hm(KC.N, KC.RSFT),  hm(KC.E, KC.RCTL),  hm(KC.I, KC.LALT),   hm(KC.O, KC.RGUI),
           KC.K,          KC.H,               KC.COMM,            hm(KC.DOT, KC.RALT), KC.SLSH,
-          lt(NUM, KC.BSPC), lt(FUN, KC.ENT)
+          lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
      keyboard.keymap[EXTRA] =  [
           KC.Q,               KC.W,               KC.E,               KC.R,               KC.T,
@@ -71,7 +71,7 @@ def miryokufy(keyboard, cirque):
           KC.Y,          KC.U,               KC.I,               KC.O,               KC.P,
           KC.H,          hm(KC.J, KC.RSFT),  hm(KC.K, KC.RCTL),  hm(KC.L, KC.LALT),  hm(KC.QUOT, KC.RGUI),
           KC.N,          KC.M,               KC.COMM,            hm(KC.DOT, KC.RALT), KC.SLSH,
-          lt(NUM, KC.BSPC), lt(FUN, KC.ENT)
+          lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
      keyboard.keymap[TAP] =  [
           KC.Q,               KC.W,               KC.F,               KC.P,               KC.B,
@@ -82,7 +82,7 @@ def miryokufy(keyboard, cirque):
           KC.J,          KC.L,               KC.U,               KC.Y,               KC.QUOT,
           KC.M,          KC.N,               KC.E,               KC.I,               KC.O,
           KC.K,          KC.H,               KC.COMM,            KC.DOT,             KC.SLSH,
-          lt(NUM, KC.BSPC), lt(FUN, KC.ENT)
+          lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
      keyboard.keymap[BUTTON] =  [
           KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
@@ -104,7 +104,7 @@ def miryokufy(keyboard, cirque):
           KC.NO, KC.LSFT(KC.INS), KC.LCTL(KC.INS), KC.LSFT(KC.DEL), KC.NO,
           KC.CW, KC.LEFT,         KC.DOWN,         KC.UP,           KC.RGHT,
           KC.INS,KC.HOME,         KC.PGDN,         KC.PGUP,         KC.END,
-          lt(NUM, KC.BSPC), lt(FUN, KC.ENT)
+          lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
      keyboard.keymap[MOUSE] =  [
           dtd(KC.RELOAD), dtd(KC.DF(2)), dtd(KC.DF(1)), dtd(KC.DF(0)), dtd(KC.TO(0)),
