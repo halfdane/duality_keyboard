@@ -32,8 +32,6 @@ class Cirque(Module):
         while not i2c.try_lock():
             pass
         debug( "addresses found:" + str([hex(device_address) for device_address in i2c.scan()]) )
-        debug(f"using x range {self.CIRQUE_PINNACLE_X_RANGE}")
-        debug(f"using y range {self.CIRQUE_PINNACLE_Y_RANGE}")
         i2c.unlock()
         self._i2c_bus = i2c
 

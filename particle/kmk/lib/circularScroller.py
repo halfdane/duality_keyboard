@@ -29,18 +29,17 @@ class CircularScroller:
         self.scroll_scale = scroll_sensitivity * 5.72958
 
     def start_scroll(self, x, y):
-        """Starts a scroll action if in the scroll zone."""
-        distance_from_center = math.sqrt((x - self.center_x)**2 + (y - self.center_y)**2)
-        scroll_threshold = self.radius * (1 - self.scroll_zone_percentage / 100)
+        """Starts a scroll action if in the rightmost scroll zone (vertical strip)."""
+        scroll_zone_width = self.touchpad_size * (self.scroll_zone_percentage / 100)
+        scroll_zone_left = self.touchpad_size - scroll_zone_width
 
-        if distance_from_center > scroll_threshold:
+        if scroll_zone_left <= x <= self.touchpad_size:
             self.scroll_active = True
             self.scroll_start_angle = math.atan2(y - self.center_y, x - self.center_x)
             debug("Scroll started")
             return True
         else:
             self.scroll_active = False
-            debug("Touch started outside scroll zone")
             return False
 
     def scroll(self, x, y):

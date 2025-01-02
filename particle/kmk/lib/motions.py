@@ -2,6 +2,7 @@ import math
 from kmk.keys import AX, KC
 from kmk.utils import Debug
 from circularScroller import CircularScroller
+from tapDetector import TapDetector
 
 debug = Debug(__name__)
 
@@ -16,7 +17,6 @@ class MotionScanner:
         self.invert_x = invert_x
         self.invert_y = invert_y
         self.swap_xy = swap_xy
-        self.tap_timeout = tap_timeout
         self.fling_decay = fling_decay
         self.fling_min_velocity = fling_min_velocity
 
@@ -36,6 +36,8 @@ class MotionScanner:
 
         # Initialize scroller
         self.scroller = CircularScroller(keyboard, touchpad_size, scroll_sensitivity, scroll_zone_percentage)
+        self.tap_detector = TapDetector(keyboard, tap_timeout)
+
 
     def set_touch_start_callback(self, callback):
         self.touch_start_callback = callback
@@ -54,34 +56,32 @@ class MotionScanner:
 
         if self.touch_start_callback:
             self.touch_start_callback()
-
-        self.tap_timer = self.keyboard.set_timeout(self.tap_timeout, self._tap_timeout)
+        
+        if not self.scroller.start_scroll(x, y):
+            self.tap_detector.touch_start()
+        else:
+            self.tap_detector.tap_timer = None
 
         if self.fling_timer:
             self.keyboard.cancel_timeout(self.fling_timer)
             self.fling_timer = None
             debug("Fling aborted due to new touch")
 
-        self.scroller.start_scroll(x, y)
-
     def _handle_touch_end(self, x, y):
         """Handles the end of a touch event."""
         self.is_touching = False
 
-        if self.tap_timer:
-            self.keyboard.cancel_timeout(self.tap_timer)
-            self.tap_timer = None
-            self.keyboard.tap_key(KC.MB_LMB)
-            debug("Tap registered")
-        elif not self.scroller.scroll_active:
+        self.tap_detector.touch_end()
+        if self.scroller.scroll_active: #Only check for scrolling if it was started
+            debug("touch is ending while scrolling")
+            self.scroller.end_scroll()
+        else: #If no tap and no scroll, handle the fling
             fling_magnitude = math.sqrt(self.fling_x**2 + self.fling_y**2)
-            debug(f"Fling magnitude: {fling_magnitude}")
             if fling_magnitude > self.fling_min_velocity:
                 self.current_x = x
                 self.current_y = y
                 self.fling_timer = self.keyboard.set_timeout(10, self._handle_fling)
                 debug("Fling started")
-        self.scroller.end_scroll()
 
         if self.touch_end_callback:
             self.touch_end_callback()
@@ -97,6 +97,10 @@ class MotionScanner:
       # Mouse movement and scroll handling
     def _handle_mouse_movement(self, x, y):
         """Handles mouse movement or scrolling."""
+        if self.tap_detector.is_tapping(): #Use the tap_detector function
+            debug("Mouse movement suppressed due to active tap timer")
+            return
+        
         relative_x = int(x - self.current_x)
         relative_y = int(y - self.current_y)
 
@@ -110,7 +114,6 @@ class MotionScanner:
         else:
             AX.X.move(self.keyboard, relative_x)
             AX.Y.move(self.keyboard, relative_y)
-            debug(f"Moved mouse by relative coordinates: ({relative_x}, {relative_y})")
             self.current_x = x
             self.current_y = y
             self.fling_x = relative_x

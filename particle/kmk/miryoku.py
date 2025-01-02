@@ -87,7 +87,7 @@ def miryokufy(keyboard, motionscanner):
      keyboard.keymap[BUTTON] =  [
           KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
           KC.LGUI,        KC.LALT,       KC.LCTL,       KC.LSFT,       KC.NO,
-          KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
+          KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.MB_MMB,
           KC.MB_LMB, KC.MB_RMB,
 
           KC.NO,     KC.RSFT(KC.INS), KC.RCTL(KC.INS), KC.RSFT(KC.DEL), KC.NO,
@@ -161,9 +161,4 @@ def miryokufy(keyboard, motionscanner):
           KC.NO, dtd(KC.DF(9)), dtd(KC.DF(6)), KC.RALT,       KC.NO,
           KC.NO, KC.NO,
      ]
-
-     layer_names_list = [
-     "Base", "Extra", "Tap", "Button", "Nav", "Mouse", "Media", "Num", "Sym", "Fun",
-     ]
-
 
