@@ -10,7 +10,7 @@ split = Split(
     use_pio=True)
 keyboard.modules.append(split)
 
-cirque = None
+scan = None
 try:
     from cirque import Cirque   
     import busio

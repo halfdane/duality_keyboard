@@ -1,7 +1,7 @@
-def miryokufy(keyboard, motionscanner):          
+def miryokufy(keyboard, motionscanner):  
      from kmk.keys import KC
      from kmk.modules.combos import Combos, Chord, Sequence
-     from kmk.modules.layers import Layers;
+     from kmk.modules.layers import Layers
 
      from kmk.modules.mouse_keys import MouseKeys; keyboard.modules.append(MouseKeys())
      from kmk.modules.power import Power; keyboard.modules.append(Power())
@@ -23,7 +23,7 @@ def miryokufy(keyboard, motionscanner):
           return KC.HT(tap, KC.MO(layer), prefer_hold=True, tap_interrupted=False, tap_time=150)
 
      # dummy tapdance: first tap is noop
-     def dtd(second_tap):     
+     def dtd(second_tap):
           return KC.TD(KC.NO, second_tap, tap_time=200)
      
      BASE = 0 
@@ -44,8 +44,8 @@ def miryokufy(keyboard, motionscanner):
      both_lft = (17, 11)
      both_rgt = (29, 35)
      combos.combos = [
-          Chord(both_lft, lt(MOUSE, KC.ESC), timeout=200, match_coord=True),
-          Chord(both_rgt, lt(SYM, KC.DEL), timeout=200, match_coord=True)
+          Chord(both_lft, lt(MOUSE, KC.ESC), match_coord=True),
+          Chord(both_rgt, lt(SYM, KC.DEL), match_coord=True)
      ]
      keyboard.modules.append(combos)
 
