@@ -91,12 +91,12 @@ def miryokufy(keyboard, motionscanner):
           lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
      keyboard.keymap[BUTTON] =  [
-          KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
+          dtd(KC.DF(0)),    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
           KC.LGUI,        KC.LALT,       KC.LCTL,       KC.LSFT,       KC.NO,
           KC.NO,    KC.LSFT(KC.DEL), KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.MB_MMB,
           KC.MB_LMB, KC.MB_RMB,
 
-          KC.NO,     KC.RSFT(KC.INS), KC.RCTL(KC.INS), KC.RSFT(KC.DEL), KC.NO,
+          KC.NO,     KC.RSFT(KC.INS), KC.RCTL(KC.INS), KC.RSFT(KC.DEL), dtd(KC.DF(0)),
           KC.NO,     KC.RSFT,         KC.RCTL,         KC.LALT,         KC.RGUI,
           KC.NO,     KC.RSFT(KC.INS), KC.RCTL(KC.INS), KC.RSFT(KC.DEL), KC.NO,
           KC.MB_LMB, KC.MB_RMB

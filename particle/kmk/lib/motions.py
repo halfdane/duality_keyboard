@@ -71,6 +71,10 @@ class MotionScanner:
         """Handles the end of a touch event."""
         self.is_touching = False
 
+        if self.touch_end_callback:
+            self.touch_end_callback()
+        debug("Touch ended")
+
         self.tap_detector.touch_end()
         if self.scroller.scroll_active: #Only check for scrolling if it was started
             debug("touch is ending while scrolling")
@@ -83,9 +87,6 @@ class MotionScanner:
                 self.fling_timer = self.keyboard.set_timeout(10, self._handle_fling)
                 debug("Fling started")
 
-        if self.touch_end_callback:
-            self.touch_end_callback()
-        debug("Touch ended")
         self.last_x = None
         self.last_y = None
 
