@@ -4,7 +4,7 @@ from kmk.utils import Debug
 debug = Debug(__name__)
 
 class TapDetector:
-    def __init__(self, keyboard, tap_timeout):
+    def __init__(self, keyboard, tap_timeout=200):
         self.keyboard = keyboard
         self.tap_timeout = tap_timeout
         self.tap_timer = None
@@ -30,9 +30,7 @@ class TapDetector:
         if self.tap_timer:
             self.keyboard.cancel_timeout(self.tap_timer)
             self.tap_timer = None
-            self.keyboard.tap_key(KC.MB_LMB)
-            debug("Tap registered")
-
+            debug("might be a tap - better wait and see if it's a drag")
             self.drag_timer = self.keyboard.set_timeout(self.tap_timeout, self._drag_timeout)
         
 
@@ -45,4 +43,8 @@ class TapDetector:
 
     def _drag_timeout(self):
         self.drag_timer = None
-        debug("Tap drag timed out")
+        self.keyboard.add_key(KC.MB_LMB)
+        self.keyboard.set_timeout(2, lambda: self.keyboard.remove_key(KC.MB_LMB))
+        debug("Tap drag timed out - registering a tap instead")
+
+
