@@ -89,28 +89,24 @@ class MotionScanner:
         self.last_x = None
         self.last_y = None
 
-    def _tap_timeout(self):
-        """Handles a tap timeout event (only resets the timer)."""
-        self.tap_timer = None
-        debug("Tap timed out")
 
       # Mouse movement and scroll handling
     def _handle_mouse_movement(self, x, y):
         """Handles mouse movement or scrolling."""
-        if self.tap_detector.is_tapping(): #Use the tap_detector function
+        if self.tap_detector.is_tapping():
             return
-        
-        relative_x = int(x - self.current_x)
-        relative_y = int(y - self.current_y)
-
-        if self.invert_x:
-            relative_x *= -1
-        if self.invert_y:
-            relative_y *= -1
 
         if self.scroller.scroll_active:
             self.scroller.scroll(x, y)
         else:
+            relative_x = int(x - self.current_x)
+            relative_y = int(y - self.current_y)
+
+            if self.invert_x:
+                relative_x *= -1
+            if self.invert_y:
+                relative_y *= -1
+                
             AX.X.move(self.keyboard, relative_x)
             AX.Y.move(self.keyboard, relative_y)
             self.current_x = x
