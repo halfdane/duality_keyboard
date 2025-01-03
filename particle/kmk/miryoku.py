@@ -7,8 +7,8 @@ def miryokufy(keyboard, motionscanner):
      from kmk.modules.power import Power; keyboard.modules.append(Power())
      from kmk.modules.tapdance import TapDance; keyboard.modules.append(TapDance())
      from kmk.extensions.media_keys import MediaKeys; keyboard.extensions.append(MediaKeys())
-     from kmk.modules.capsword import CapsWord; keyboard.modules.append(CapsWord())
      from kmk.modules.holdtap import HoldTap; keyboard.modules.append(HoldTap())
+     from kmk.modules.capsword import CapsWord; keyboard.modules.append(CapsWord()) 
 
      layers = Layers()
      combos = Combos() 
@@ -21,6 +21,10 @@ def miryokufy(keyboard, motionscanner):
      # layer tap
      def lt(layer, tap):
           return KC.HT(tap, KC.MO(layer), prefer_hold=True, tap_interrupted=False, tap_time=150)
+
+     # home row mod tap dance
+     def hmtd(tap, hold, second_tap):
+          return KC.TD(hm(tap, hold), second_tap, tap_time=200) 
 
      # dummy tapdance: first tap is noop
      def dtd(second_tap):
@@ -49,7 +53,9 @@ def miryokufy(keyboard, motionscanner):
      ]
      keyboard.modules.append(combos)
 
-
+# QWFPBB
+# arstG
+# ZxCDV
      keyboard.keymap = [None] * 10
      keyboard.keymap[BASE] =  [
           KC.Q,              KC.W,              KC.F,              KC.P,              KC.B,
@@ -58,7 +64,7 @@ def miryokufy(keyboard, motionscanner):
           lt(NAV, KC.SPC),   lt(MEDIA, KC.TAB),
 
           KC.J,          KC.L,               KC.U,               KC.Y,                KC.QUOT,
-          KC.M,          hm(KC.N, KC.RSFT),  hm(KC.E, KC.RCTL),  hm(KC.I, KC.LALT),   hm(KC.O, KC.RGUI),
+          KC.M,          hmtd(KC.N, KC.RSFT, KC.CW),  hm(KC.E, KC.RCTL),  hm(KC.I, KC.LALT),   hm(KC.O, KC.RGUI),
           KC.K,          KC.H,               KC.COMM,            hm(KC.DOT, KC.RALT), KC.SLSH,
           lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
@@ -99,7 +105,7 @@ def miryokufy(keyboard, motionscanner):
           dtd(KC.RELOAD), dtd(KC.DF(2)), dtd(KC.DF(1)), dtd(KC.DF(0)), dtd(KC.TO(0)),
           KC.LGUI,        KC.LALT,       KC.LCTL,       KC.LSFT,       KC.NO,        
           KC.NO,          KC.RALT,       KC.LCTL(KC.INS), KC.LSFT(KC.INS), KC.NO,
-          lt(NAV, KC.NO), lt(MEDIA, KC.NO),
+          lt(NAV, KC.NO), lt(MEDIA, KC.NO), 
 
           KC.NO, KC.LSFT(KC.INS), KC.LCTL(KC.INS), KC.LSFT(KC.DEL), KC.NO,
           KC.CW, KC.LEFT,         KC.DOWN,         KC.UP,           KC.RGHT,
