@@ -3,13 +3,15 @@ from kmk.keys import AX, KC
 from kmk.utils import Debug
 from circularScroller import CircularScroller
 from tapDetector import TapDetector
+from debouncer import Debouncer
 
 debug = Debug(__name__)
 
 class MotionScanner:
     def __init__(self, keyboard,
                  invert_x=False, invert_y=False, swap_xy=False, tap_timeout=200, fling_decay=0.95, fling_min_velocity=10,
-                 scroll_sensitivity=4, scroll_zone_percentage=20, touchpad_size=1024):
+                 scroll_sensitivity=4, scroll_zone_percentage=20, invert_scroll=False, touchpad_size=1024,
+                 debounce_samples=3):
         """Initializes the motion scanner."""
 
         # Configuration values
@@ -19,6 +21,7 @@ class MotionScanner:
         self.swap_xy = swap_xy
         self.fling_decay = fling_decay
         self.fling_min_velocity = fling_min_velocity
+        self.touchpad_size = touchpad_size
 
         # Coordinate variables
         self.current_x = 0
@@ -35,9 +38,9 @@ class MotionScanner:
         self.fling_timer = None
 
         # Initialize scroller
-        self.scroller = CircularScroller(keyboard, touchpad_size, scroll_sensitivity, scroll_zone_percentage)
+        self.scroller = CircularScroller(keyboard, touchpad_size, scroll_sensitivity, scroll_zone_percentage, invert_scroll=invert_scroll)
         self.tap_detector = TapDetector(keyboard, tap_timeout)
-
+        self.debouncer = Debouncer(debounce_samples)
 
     def set_touch_start_callback(self, callback):
         self.touch_start_callback = callback
@@ -102,11 +105,6 @@ class MotionScanner:
         else:
             relative_x = int(x - self.current_x)
             relative_y = int(y - self.current_y)
-
-            if self.invert_x:
-                relative_x *= -1
-            if self.invert_y:
-                relative_y *= -1
                 
             AX.X.move(self.keyboard, relative_x)
             AX.Y.move(self.keyboard, relative_y)
@@ -139,10 +137,17 @@ class MotionScanner:
         """Handles touch events and mouse movement."""
         if self.swap_xy:
             x, y = y, x
+        
+        if self.invert_x:
+            x = self.touchpad_size - x
+        if self.invert_y:
+            y = self.touchpad_size - y
 
         if is_touching and not self.is_touching:
+            self.debouncer.start_debounce(x, y)
             self._handle_touch_start(x, y)
         elif not is_touching and self.is_touching:
             self._handle_touch_end(x, y)
         elif is_touching and self.is_touching:
+            x, y = self.debouncer.debounce(x, y)
             self._handle_mouse_movement(x, y)

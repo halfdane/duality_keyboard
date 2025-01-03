@@ -10,7 +10,9 @@ def normalize_angle(angle):
 
 class CircularScroller:
     """Handles circular scrolling logic, including fling."""
-    def __init__(self, keyboard, touchpad_size, scroll_sensitivity, scroll_zone_percentage, fling_decay=0.97, fling_min_velocity=1):
+    def __init__(self, keyboard, 
+            touchpad_size, scroll_sensitivity, scroll_zone_percentage, invert_scroll=False,
+            fling_decay=0.97, fling_min_velocity=1):
         self.keyboard = keyboard
         self.touchpad_size = touchpad_size
         self.scroll_zone_percentage = scroll_zone_percentage
@@ -21,6 +23,7 @@ class CircularScroller:
         self.fling_scroll_amount = 0
         self.fling_angle = 0
         self.fling_timer = None
+        self.invert_scroll = invert_scroll
 
         # Pre-calculate center, radius, and scroll_scale
         self.center_x = self.touchpad_size / 2
@@ -54,6 +57,9 @@ class CircularScroller:
         angle_delta = normalize_angle(current_angle - self.scroll_start_angle)
 
         scroll_amount = int(angle_delta * self.scroll_scale)
+
+        if self.invert_scroll:
+            scroll_amount *= -1
 
         if scroll_amount != 0:
             AX.W.move(self.keyboard, scroll_amount)
