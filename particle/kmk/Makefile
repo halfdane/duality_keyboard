@@ -38,3 +38,11 @@ cirquitpython:
 cirque:
 	wget https://raw.githubusercontent.com/2bndy5/CircuitPython_Cirque_Pinnacle/master/circuitpython_cirque_pinnacle.py -O lib/circuitpython_cirque_pinnacle.py
 
+mount_board:
+	@echo "Please reset the board into bootloader mode"
+	@while [ -z "$$(udisksctl status | grep 'Waveshar RP2040-Zero' | awk '{print $$NF}')" ]; do sleep 0.5; done
+	@echo "===> Trying to mount the board"
+	@udisksctl mount -b /dev/$$(udisksctl status | grep 'Waveshar RP2040-Zero' | awk '{print $$NF}')1
+
+follow:
+	tio --baudrate 115200 /dev/ttyACM0
