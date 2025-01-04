@@ -53,9 +53,6 @@ def miryokufy(keyboard, motionscanner):
      ]
      keyboard.modules.append(combos)
 
-# QWFPBB
-# arstG
-# ZxCDV
      keyboard.keymap = [None] * 10
      keyboard.keymap[BASE] =  [
           KC.Q,              KC.W,              KC.F,              KC.P,              KC.B,
@@ -64,7 +61,7 @@ def miryokufy(keyboard, motionscanner):
           lt(NAV, KC.SPC),   lt(MEDIA, KC.TAB),
 
           KC.J,          KC.L,               KC.U,               KC.Y,                KC.QUOT,
-          KC.M,          hmtd(KC.N, KC.RSFT, KC.CW),  hm(KC.E, KC.RCTL),  hm(KC.I, KC.LALT),   hm(KC.O, KC.RGUI),
+          KC.M,          hm(KC.N, KC.RSFT),  hm(KC.E, KC.RCTL),  hm(KC.I, KC.LALT),   hm(KC.O, KC.RGUI),
           KC.K,          KC.H,               KC.COMM,            hm(KC.DOT, KC.RALT), KC.SLSH,
           lt(NUM, KC.ENT), lt(FUN, KC.BSPC)
      ]
