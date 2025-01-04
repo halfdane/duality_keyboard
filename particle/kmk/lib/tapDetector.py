@@ -12,25 +12,25 @@ class TapDetector:
         self.dragging = False
 
     def touch_start(self):
-        self.tap_timer = self.keyboard.set_timeout(self.tap_timeout, self._tap_timeout)
         if self.drag_timer:
             self.keyboard.cancel_timeout(self.drag_timer)
             self.drag_timer = None
             self.dragging = True
-            self.keyboard.add_key(KC.MB_LMB)
-            debug("Drag started")
-
+            self._mouse_down("drag start", 30)
+        else:
+            self._mouse_up("starting over", 5)
+            self.tap_timer = self.keyboard.set_timeout(self.tap_timeout, self._tap_timeout)
+            
 
     def touch_end(self):
         if self.dragging:
             self.dragging = False
-            self.keyboard.remove_key(KC.MB_LMB)
-            debug("Drag finished")
-
-        if self.tap_timer:
+            self._mouse_up("drag finished")
+        
+        elif self.tap_timer:
             self.keyboard.cancel_timeout(self.tap_timer)
             self.tap_timer = None
-            debug("might be a tap - better wait and see if it's a drag")
+            self._mouse_down("drag / tap")
             self.drag_timer = self.keyboard.set_timeout(self.tap_timeout, self._drag_timeout)
         
 
@@ -43,8 +43,18 @@ class TapDetector:
 
     def _drag_timeout(self):
         self.drag_timer = None
-        self.keyboard.add_key(KC.MB_LMB)
-        self.keyboard.set_timeout(2, lambda: self.keyboard.remove_key(KC.MB_LMB))
-        debug("Tap drag timed out - registering a tap instead")
+        self._mouse_up("drag was tap")
 
+    def _mouse_up(self, message, timeout=0):
+        def handler():
+            self.keyboard.remove_key(KC.MB_LMB)
+            debug(f"mouse up {message }")
+        return  self.keyboard.set_timeout(timeout, handler)
+  
+    def _mouse_down(self, message, timeout=0):
+        def handler():
+            self.keyboard.add_key(KC.MB_LMB)
+            debug(f"mouse down {message }")
+        return  self.keyboard.set_timeout(timeout, handler)
+  
 

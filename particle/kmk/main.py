@@ -20,7 +20,7 @@ try:
     from motions import MotionScanner
     scan = MotionScanner(keyboard,
                  invert_x=False, invert_y=True, swap_xy=True,
-                 tap_timeout=110, fling_min_velocity=20,
+                 tap_timeout=100, fling_min_velocity=15,
                  scroll_zone_percentage=10, scroll_sensitivity=5, invert_scroll=True)
     cirque.set_motionscanner(scan)
 except RuntimeError:
