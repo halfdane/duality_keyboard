@@ -12,20 +12,21 @@ class TapDetector:
         self.dragging = False
 
     def touch_start(self):
+        self._mouse_up("starting over")
         if self.drag_timer:
             self.keyboard.cancel_timeout(self.drag_timer)
             self.drag_timer = None
             self.dragging = True
-            self._mouse_down("drag start", 30)
+            self._mouse_down("drag start", 1)
         else:
-            self._mouse_up("starting over", 5)
             self.tap_timer = self.keyboard.set_timeout(self.tap_timeout, self._tap_timeout)
             
 
     def touch_end(self):
         if self.dragging:
             self.dragging = False
-            self._mouse_up("drag finished")
+            # self._mouse_up("drag finished")
+            self.drag_timer = self.keyboard.set_timeout(self.tap_timeout, self._drag_timeout)
         
         elif self.tap_timer:
             self.keyboard.cancel_timeout(self.tap_timer)
@@ -35,7 +36,7 @@ class TapDetector:
         
 
     def is_tapping(self):
-        return self.tap_timer is not None or self.drag_timer is not None
+        return self.tap_timer is not None or self.drag_timer is not None 
 
     def _tap_timeout(self):
         self.tap_timer = None
