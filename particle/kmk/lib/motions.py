@@ -11,7 +11,7 @@ class MotionScanner:
     def __init__(self, keyboard,
                  invert_x=False, invert_y=False, swap_xy=False, tap_timeout=100, fling_decay=0.95, fling_min_velocity=10,
                  scroll_sensitivity=4, scroll_zone_percentage=20, invert_scroll=False, touchpad_size=1024,
-                 debounce_samples=3):
+                 debounce_samples=10):
         """Initializes the motion scanner."""
 
         # Configuration values
