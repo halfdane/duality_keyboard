@@ -121,7 +121,7 @@ def miryokufy(keyboard, motionscanner):
           KC.NO,         KC.NO
      ]
      keyboard.keymap[MEDIA] =  [
-          dtd(KC.RELOAD), dtd(KC.DF(2)), dtd(KC.DF(1)), dtd(KC.DF(0)), dtd(KC.TO(0)),
+          KC.RESET, dtd(KC.DF(2)), dtd(KC.DF(1)), dtd(KC.DF(0)), dtd(KC.TO(0)),
           KC.LGUI,        KC.LALT,       KC.LCTL,       KC.LSFT,       KC.NO,
           KC.NO,          KC.RALT,       dtd(KC.DF(9)), dtd(KC.DF(6)), KC.NO,
           KC.NO,         KC.NO,
@@ -137,7 +137,7 @@ def miryokufy(keyboard, motionscanner):
           KC.GRV,   KC.N1, KC.N2,  KC.N3, KC.BSLS,
           KC.N0, KC.MINS,
 
-          dtd(KC.TO(0)),      dtd(KC.DF(0)), dtd(KC.DF(1)), dtd(KC.DF(2)), dtd(KC.RELOAD),
+          dtd(KC.TO(0)),      dtd(KC.DF(0)), dtd(KC.DF(1)), dtd(KC.DF(2)), KC.RESET,
           KC.NO, KC.LSFT,       KC.LCTL,       KC.LALT,       KC.LGUI,
           KC.NO, dtd(KC.DF(7)), dtd(KC.DF(4)), KC.RALT,       KC.NO,
           KC.NO, KC.NO,
