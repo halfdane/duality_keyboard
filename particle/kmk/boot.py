@@ -28,11 +28,11 @@ def check(sense, source):
 
     return not result
 
-from kmk.hid_reports import pointer
-devices = []
-devices.append(usb_hid.Device.KEYBOARD)
-devices.append(usb_hid.Device.MOUSE) 
-usb_hid.enable(devices, 0)
+# from kmk.hid_reports import pointer
+# devices = []
+# devices.append(usb_hid.Device.KEYBOARD)
+# devices.append(usb_hid.Device.MOUSE) 
+# usb_hid.enable(devices, 0)
 
 # Hide storage on boot unless a thumb key is held during boot.
 if check(board.GP7, board.GP9) or check(board.GP7, board.GP10):
