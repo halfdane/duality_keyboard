@@ -45,4 +45,4 @@ mount_board:
 	@udisksctl mount -b /dev/$$(udisksctl status | grep 'Waveshar RP2040-Zero' | awk '{print $$NF}')1
 
 follow:
-	tio --baudrate 115200 /dev/ttyACM0
+	tio --baudrate 115200 /dev/ttyACM*
