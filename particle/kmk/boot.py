@@ -39,7 +39,7 @@ if check(board.GP7, board.GP9) or check(board.GP7, board.GP10):
     debug('keep everything enabled')
 else:
     debug('disable usb etc')
-    usb_cdc.enable(console=False)
+    # usb_cdc.enable(console=False)
     storage.disable_usb_drive()
 
 
