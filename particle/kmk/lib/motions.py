@@ -1,10 +1,11 @@
 import math
-from kmk.keys import AX, KC
+from kmk.keys import AX
 from kmk.utils import Debug
 from circularScroller import CircularScroller
 from tapDetector import TapDetector
 from debouncer import Debouncer
 from fling_handler import FlingHandler
+from automove import Automover
 
 debug = Debug(__name__)
 
@@ -27,8 +28,8 @@ class MotionScanner:
         self.current_y = 0
 
         # Callbacks and state
-        self.touch_start_callback = None
-        self.touch_end_callback = None
+        self.touch_start_callback = lambda *args: None
+        self.touch_end_callback = lambda *args: None
         self.is_touching = False
 
         # Initialize scroller
@@ -36,6 +37,7 @@ class MotionScanner:
         self.tap_detector = TapDetector(keyboard, tap_timeout)
         self.debouncer = Debouncer(debounce_samples)
         self.fling_handler = FlingHandler(keyboard, fling_decay, fling_min_velocity)
+        self.automover = Automover(keyboard, touchpad_size, scroll_zone_percentage)
 
 
     def set_touch_start_callback(self, callback):
@@ -50,9 +52,7 @@ class MotionScanner:
         self.is_touching = True
         self.current_x = x
         self.current_y = y
-
-        if self.touch_start_callback:
-            self.touch_start_callback()
+        self.touch_start_callback()
         
         if not self.scroller.start_scroll(x, y):
             self.tap_detector.touch_start()
@@ -64,17 +64,12 @@ class MotionScanner:
     def _handle_touch_end(self, x, y):
         """Handles the end of a touch event."""
         self.is_touching = False
-
-        if self.touch_end_callback:
-            self.touch_end_callback()
+        self.touch_end_callback()
         debug("Touch ended")
 
         self.tap_detector.touch_end()
-        if self.scroller.scroll_active: #Only check for scrolling if it was started
-            debug("touch is ending while scrolling")
-            self.scroller.end_scroll()
-        else: #If no tap and no scroll, handle the fling
-            self.fling_handler.fling(x, y)
+        self.scroller.end_scroll()
+        self.fling_handler.fling(x, y)
 
 
       # Mouse movement and scroll handling
@@ -85,6 +80,8 @@ class MotionScanner:
 
         if self.scroller.scroll_active:
             self.scroller.scroll(x, y)
+        elif self.automover.automove_active(x, y):
+            self.automover.automove()
         else:
             relative_x = int(x - self.current_x)
             relative_y = int(y - self.current_y)
@@ -94,6 +91,7 @@ class MotionScanner:
             self.current_x = x
             self.current_y = y
             self.fling_handler.move(relative_x, relative_y)
+            self.automover.move(relative_x, relative_y)
 
     def scan(self, x, y, is_touching):
         """Handles touch events and mouse movement."""
