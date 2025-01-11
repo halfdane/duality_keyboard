@@ -55,7 +55,7 @@ class Cirque(Module):
         '''
         if self.trackpad.available():  # is there new data?
             self.trackpad.read(self.data)
-            self.touchDown = (self.data.z > 10)
+            self.touchDown = (self.data.z > 15)
 
             (xTemp, yTemp) = self.ClipCoordinates(self.data)
 
