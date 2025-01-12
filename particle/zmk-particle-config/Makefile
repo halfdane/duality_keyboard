@@ -51,6 +51,8 @@ deep_clean: clean clean-venv
 mount_board:
 	@echo "Please reset the board into bootloader mode"
 	@while [ -z "$$(udisksctl status | grep '$(BOOTLOADER_NAME)' | awk '{print $$NF}')" ]; do sleep 0.5; done
+	@echo "===> Sleeping a bit to let the system settle"
+	@sleep 10
 	@echo "===> Trying to mount the board"
 	@udisksctl mount -b /dev/$$(udisksctl status | grep '$(BOOTLOADER_NAME)' | awk '{print $$NF}')1
 
