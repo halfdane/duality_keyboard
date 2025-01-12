@@ -4,9 +4,11 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: miketronic
       url-base: https://github.com/miketronic/
+    - name: halfdane
+      url-base: https://github.com/halfdane/
   projects:
     - name: zmk
-      remote: miketronic
+      remote: halfdane
       revision: rp2040zero
       import: app/west.yml
   self: 
