@@ -1,0 +1,12 @@
+file_format: "1"
+id: particle
+name: Particle
+type: shield
+url: https://github.com/halfdane/duality_keyboard/tree/main/particle
+requires: [waveshare_rp2040_zero]
+features:
+  - keys
+siblings:
+  - particle_left
+  - particle_right
+

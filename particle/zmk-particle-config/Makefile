@@ -25,7 +25,7 @@ verify-zmk:
 
 compile_app: west verify-zmk venv
 	@echo "===> Compiling app "
-	@$(VENV)/west build -p -s $(ZMK_APP) -b "$(BOARD_NAME)" -S zmk-usb-logging -- -DSHIELD="$(SHIELD_NAME)" -DZMK_CONFIG="$(CURDIR)/config"
+	@$(VENV)/west build -p -s $(ZMK_APP) -b "$(BOARD_NAME)" -S zmk-usb-logging -S studio-rpc-usb-uart -- -DSHIELD="$(SHIELD_NAME)" -DZMK_CONFIG="$(CURDIR)/config" -DCONFIG_ZMK_STUDIO=y 
 
 clean:
 	rm -rf $(BUILD)
