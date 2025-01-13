@@ -1,0 +1,40 @@
+#include <dt-bindings/zmk/matrix_transform.h>
+#include "particle-layouts.dtsi"
+
+&particle_layout {
+    transform = <&two_column_transform>;
+};
+
+/ {
+    chosen { 
+        zmk,kscan = &kscan0;
+        zmk,physical-layout = &particle_layout;
+    };
+
+    two_column_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <2>;
+        rows = <2>;
+// | SW1  | SW2  |
+// | SW3  | SW4  |
+        map = <
+RC(0,0) RC(0,1)
+RC(1,0) RC(1,1)
+        >;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+        wakeup-source;
+
+        diode-direction = "col2row";
+        row-gpios
+            = <&gpio0 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 1  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+
+    }; 
+
+};
+
+
