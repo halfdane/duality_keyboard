@@ -1,5 +1,5 @@
 ZMK_APP := $(CURDIR)/zmk/app
-SHIELD_NAME ?= particle
+SHIELD_NAME ?= particle_left
 BOARD_NAME ?= waveshare_rp2040_zero
 MOUNTPOINT_NAME ?= RPI-RP2
 BOOTLOADER_NAME := RPI RP2

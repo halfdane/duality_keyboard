@@ -1,3 +1,7 @@
-# No whitespace after the comma or in your keyboard name!
-config SHIELD_PARTICLE
-    def_bool $(shields_list_contains,particle)
+config SHIELD_PARTICLE_LEFT
+    def_bool $(shields_list_contains,particle_left)
+
+# No whitespace after the comma or in your part name!
+config SHIELD_PARTICLE_RIGHT
+    def_bool $(shields_list_contains,particle_right)
+

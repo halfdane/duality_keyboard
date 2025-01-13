@@ -3,7 +3,7 @@
 / {
     particle_layout: particle_layout {
         compatible = "zmk,physical-layout";
-        display-name = "2 Column";
+        display-name = "particle layout";
 
         keys  //                     w   h    x    y     rot    rx    ry
             = <&key_physical_attrs 100 100    0   37       0     0     0>
@@ -43,5 +43,24 @@
             , <&key_physical_attrs 100 100  750  312  (-1200)  850   412>
             , <&key_physical_attrs 100 100  850  312       0     0     0>
         ;
+    };
+};
+
+/ {
+    layouts_particle_position_map: layouts_particle_position_map {
+        compatible = "zmk,physical-layout-position-map";
+
+        complete;
+    };
+};
+
+&layouts_particle_position_map {
+    particle_posmap: five {
+        physical-layout = <&particle_layout>;
+        positions
+            = <36  0  1  2  3  4  5  6  7  8  9 37>
+            , <38 10 11 12 13 14 15 16 17 18 19 39>
+            , <40 20 21 22 23 24 25 26 27 28 29 41>
+            , <         30 31 32 33 34 35         >;
     };
 };
