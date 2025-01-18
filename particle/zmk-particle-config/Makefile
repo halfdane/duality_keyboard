@@ -5,14 +5,16 @@ MOUNTPOINT_NAME ?= RPI-RP2
 BOOTLOADER_NAME := RPI RP2
 RAW_BOARD_MOUNTPOINT := /media/$(USER)/$(MOUNTPOINT_NAME)
 BUILD := build
+SIDE := left
 
 REQUIREMENTS_TXT = zephyr/scripts/requirements.txt
 
-.PHONY: all update setup verify-zmk compile_app copy_zmk clean deep_clean mount_board follow
+.DEFAULT: left 
 
-.DEFAULT: all
-
-all: compile_app copy_zmk
+left:
+	SIDE=left $(MAKE) compile_app copy_zmk
+right:
+	SIDE=right $(MAKE) compile_app copy_zmk
 
 west: .west
 .west:
@@ -25,7 +27,11 @@ verify-zmk:
 
 compile_app: west verify-zmk venv
 	. .venv/bin/activate && \
-	west build -p -s $(ZMK_APP) -b "$(BOARD_NAME)" -S zmk-usb-logging -S studio-rpc-usb-uart -- -DSHIELD="$(SHIELD_NAME)" -DZMK_CONFIG="$(CURDIR)/config" -DCONFIG_ZMK_STUDIO=y 
+	west build -p -s $(ZMK_APP) -b "$(BOARD_NAME)" \
+		-d "$(BUILD)/$(SIDE)" \
+		-S zmk-usb-logging -S studio-rpc-usb-uart -- \
+		-DSHIELD="$(SHIELD_NAME)" -DZMK_CONFIG="$(CURDIR)/config" \
+		-DCONFIG_ZMK_STUDIO=y 
 
 clean:
 	rm -rf $(BUILD)
@@ -46,10 +52,10 @@ mount_board:
 
 copy_zmk: verify-zmk mount_board
 	@echo "===> Copying UF2 file to $(RAW_BOARD_MOUNTPOINT)"
-	cp $(BUILD)/zephyr/zmk.uf2 $(RAW_BOARD_MOUNTPOINT)/
+	cp $(BUILD)/$(SIDE)/zephyr/zmk.uf2 $(RAW_BOARD_MOUNTPOINT)/
 
 follow:
-	tio --baudrate 115200 /dev/ttyACM3
+	tio --baudrate 115200 /dev/ttyACM2
  
 
 
