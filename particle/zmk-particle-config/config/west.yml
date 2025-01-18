@@ -6,10 +6,15 @@ manifest:
       url-base: https://github.com/miketronic/
     - name: halfdane
       url-base: https://github.com/halfdane/
+    - name: miryoku
+      url-base: https://github.com/manna-harbour/
   projects:
     - name: zmk
       remote: halfdane
       revision: rp2040zero
       import: app/west.yml
+    - name: miryoku_zmk
+      remote: miryoku
+      revision: master
   self: 
     path: config
