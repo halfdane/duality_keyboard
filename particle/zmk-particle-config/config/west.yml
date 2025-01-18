@@ -6,6 +6,8 @@ manifest:
       url-base: https://github.com/miketronic/
     - name: halfdane
       url-base: https://github.com/halfdane/
+    - name: johanson
+      url-base: https://github.com/petejohanson
     - name: miryoku
       url-base: https://github.com/manna-harbour/
   projects:
@@ -13,6 +15,10 @@ manifest:
       remote: halfdane
       revision: rp2040zero
       import: app/west.yml
+    # - name: zmk
+    #   remote: johanson
+    #   revision: split/wired-split-first-pass
+    #   import: app/west.yml
     - name: miryoku_zmk
       remote: miryoku
       revision: master
