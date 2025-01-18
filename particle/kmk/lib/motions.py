@@ -37,7 +37,7 @@ class MotionScanner:
         self.tap_detector = TapDetector(keyboard, tap_timeout)
         self.debouncer = Debouncer(debounce_samples)
         self.fling_handler = FlingHandler(keyboard, fling_decay, fling_min_velocity)
-        self.automover = Automover(keyboard, touchpad_size, scroll_zone_percentage)
+        # self.automover = Automover(keyboard, touchpad_size, scroll_zone_percentage)
 
 
     def set_touch_start_callback(self, callback):
@@ -80,8 +80,8 @@ class MotionScanner:
 
         if self.scroller.scroll_active:
             self.scroller.scroll(x, y)
-        elif self.automover.automove_active(x, y):
-            self.automover.automove()
+        # elif self.automover.automove_active(x, y):
+        #     self.automover.automove()
         else:
             relative_x = int(x - self.current_x)
             relative_y = int(y - self.current_y)
@@ -91,7 +91,7 @@ class MotionScanner:
             self.current_x = x
             self.current_y = y
             self.fling_handler.move(relative_x, relative_y)
-            self.automover.move(relative_x, relative_y)
+            # self.automover.move(relative_x, relative_y)
 
     def scan(self, x, y, is_touching):
         """Handles touch events and mouse movement."""
