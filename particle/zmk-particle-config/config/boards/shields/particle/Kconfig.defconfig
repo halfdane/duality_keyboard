@@ -14,4 +14,7 @@ if SHIELD_PARTICLE_LEFT || SHIELD_PARTICLE_RIGHT
 config ZMK_SPLIT
     default y
 
+config ZMK_KEYBOARD_NAME
+    default "Particle"
+
 endif
