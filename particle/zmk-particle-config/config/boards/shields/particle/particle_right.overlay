@@ -14,3 +14,13 @@
         , <&gpio0 7  GPIO_ACTIVE_HIGH>
         ;
 };
+
+&uart0_default {
+	group1 {
+	    pinmux = <UART0_RX_P1>;
+	};
+	group2 {
+	    pinmux = <UART0_TX_P0>;
+	    input-enable;
+	};
+};
