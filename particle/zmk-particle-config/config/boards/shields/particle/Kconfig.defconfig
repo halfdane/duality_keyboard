@@ -1,9 +1,5 @@
 if SHIELD_PARTICLE_LEFT
 
-# Name must be less than 16 characters long!
-config ZMK_KEYBOARD_NAME
-    default "Particle_L"
-
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
 
