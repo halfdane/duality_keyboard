@@ -4,23 +4,5 @@
 #include <dt-bindings/zmk/outputs.h>
 #include "./helper.h"
 
-/ {
+#include "miryoku_config.h"
 
-    keymap {
-        compatible = "zmk,keymap";
-
-        default_layer {
-// -----------------------------------------------------------------------------------------
-// |  Q  |  W  |  E  |  R  |  T  |   |  Y  |  U   |  I  |  O  |  P  |
-// |  A  |  S  |  D  |  F  |  G  |   |  H  |  J   |  K  |  L  |  ;  |
-// |  Z  |  X  |  C  |  V  |  B  |   |  N  |  M   |  ,  |  .  |  /  |
-//                    | GUI | LWR | SPC |   | ENT | RSE  | ALT |
-                        bindings = <
-   &bootloader &studio_unlock &kp F &kp P &kp B   &kp J &kp L  &kp U  &kp Y &kp SQT
-   &kp A &kp R &kp S &kp T &kp G   &kp M &kp N  &kp E     &kp I   &kp O
-   &kp Z &kp X &kp C &kp D &kp V   &kp K &kp H  &kp COMMA &kp DOT &kp FSLH
-                 &kp TAB &kp SPACE   &kp RET &kp BSPC
-                        >;
-                };
-    };
-};
