@@ -18,11 +18,11 @@
 
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        columns = <10>;
-        rows = <4>;
-// | SW1  | SW2  | SW3  | SW4  | SW5  |   | SW5  | SW4  | SW3  | SW2  | SW1  |
-// | SW7  | SW8  | SW9  | SW10 | SW11 |   | SW11 | SW10 | SW9  | SW8  | SW7  |
-// | SW13 | SW14 | SW15 | SW16 | SW17 |   | SW17 | SW16 | SW15 | SW14 | SW13 |
+        columns = <12>;
+        rows = <3>;
+// | SW1  | SW2  | SW3  | SW4  | SW5  |   | SW1  | SW2  | SW3  | SW4  | SW5  |
+// | SW7  | SW8  | SW9  | SW10 | SW11 |   | SW7  | SW8  | SW9  | SW10 | SW11 |
+// | SW13 | SW14 | SW15 | SW16 | SW17 |   | SW13 | SW14 | SW15 | SW16 | SW17 |
 //                      | SW18 | SW12 |   | SW12 | SW18 |
         map = <
 RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4)  RC(0,7) RC(0,8) RC(0,9) RC(0,10) RC(0,11) 
