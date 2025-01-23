@@ -5,3 +5,5 @@ zephyr
 zmk
 modules
 miryoku_zmk
+central.log
+peripheral.log
