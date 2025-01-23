@@ -19,6 +19,9 @@ manifest:
       remote: johanson
       revision: split/wired-split-first-pass
       import: app/west.yml
+    - name: cirque-input-module
+      remote: johanson
+      revision: main
     - name: miryoku_zmk
       remote: miryoku
       revision: master
