@@ -21,6 +21,7 @@ west: .west
 	uvx west init -l config
 	uvx west update
 	uvx west zephyr-export
+	cd zephyr && git remote add johanson git@github.com:petejohanson/zephyr.git && git fetch johanson && git checkout v3.5.0+zmk-fixes+rp2040-uart-fifo
 
 verify-zmk:
 	@ls $(ZMK_APP) >/dev/null 2>&1 || ( echo "Expected zmk code at $(ZMK_APP), but didn't find anything" && exit 1 )	
