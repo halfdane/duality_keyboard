@@ -10,7 +10,3 @@
         , <&gpio0 7  GPIO_ACTIVE_HIGH>
         ;
 };
-
-&glidepoint_listener {
-    status = "okay";
-};
