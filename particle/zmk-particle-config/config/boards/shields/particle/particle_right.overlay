@@ -14,3 +14,34 @@
         , <&gpio0 2  GPIO_ACTIVE_HIGH>
         ;
 };
+
+&i2c0_default {
+    group1 {
+	    pinmux = <I2C0_SDA_P12>, <I2C0_SCL_P13>;
+	    input-enable;
+	    input-schmitt-enable;
+	};
+    status = "okay";
+
+    glidepoint: glidepoint@0 {
+        compatible = "cirque,pinnacle";
+        reg = <0>;
+        spi-max-frequency = <1000000>;
+        status = "okay";
+        dr-gpios = <&gpio0 5 (GPIO_ACTIVE_HIGH)>;
+
+        sensitivity = "4x";
+        sleep;
+        no-taps;
+    };
+};
+
+// Overrides for the input-split child node
+&glidepoint_split {
+    device = <&glidepoint>;
+
+    // Optional
+    //input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
+};
+
+

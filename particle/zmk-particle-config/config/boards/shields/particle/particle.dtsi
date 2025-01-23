@@ -9,13 +9,22 @@
     status = "okay";
 };
 
-&i2c0_default {
-    group1 {
-	    pinmux = <I2C0_SDA_P12>, <I2C0_SCL_P13>;
-	    input-enable;
-	    input-schmitt-enable;
-	};
-    status = "okay";
+/ {
+    split_inputs {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        glidepoint_split: glidepoint_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
+    };
+
+    glidepoint_listener: glidepoint_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&glidepoint_split>;
+    };
 };
 
 / {
