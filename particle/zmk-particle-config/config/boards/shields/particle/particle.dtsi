@@ -9,6 +9,15 @@
     status = "okay";
 };
 
+&i2c0_default {
+    group1 {
+	    pinmux = <I2C0_SDA_P12>, <I2C0_SCL_P13>;
+	    input-enable;
+	    input-schmitt-enable;
+	};
+    status = "okay";
+};
+
 / {
     chosen { 
         zmk,kscan = &kscan0;
