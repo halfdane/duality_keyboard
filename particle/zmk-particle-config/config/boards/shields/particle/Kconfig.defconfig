@@ -13,4 +13,11 @@ config ZMK_SPLIT
 config ZMK_KEYBOARD_NAME
     default "Particle"
 
+config ZMK_POINTING
+    default y
+
+
+config I2C
+    default y
+
 endif
