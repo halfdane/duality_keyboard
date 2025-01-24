@@ -29,8 +29,12 @@
     status = "okay";
     glidepoint: glidepoint@0 {
         compatible = "cirque,pinnacle";
-        reg = <0>;
-        status = "okay";
+        reg = <0x2a>;
+        status = "disabled";
+
+        sensitivity = "4x";
+        //sleep; 
+        no-taps;
     };
 };
 
@@ -38,5 +42,4 @@
     status = "okay";
     device = <&glidepoint>;
 };
-
 
