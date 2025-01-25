@@ -23,7 +23,7 @@ manifest:
       remote: johanson
       revision: main
     - name: miryoku_zmk
-      remote: miryoku
+      remote: halfdane
       revision: master
   self: 
     path: config
