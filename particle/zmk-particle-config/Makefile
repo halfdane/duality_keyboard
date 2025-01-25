@@ -22,7 +22,6 @@ west: .west
 	uvx west update
 	uvx west zephyr-export
 	cd zephyr && git remote add johanson git@github.com:petejohanson/zephyr.git && git fetch johanson && git checkout v3.5.0+zmk-fixes+rp2040-uart-fifo
-	cp patches/miryoku_kludge_mousekeyspr.h miryoku_zmk/miryoku/miryoku_kludge_mousekeyspr.h
 
 
 verify-zmk:
