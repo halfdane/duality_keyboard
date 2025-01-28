@@ -18,4 +18,25 @@ K20  K21  K22  K23  K24       K25  K26  K27  K28  K29 \
 
 #define MIRYOKU_MAPPING MIRYOKU_LAYOUTMAPPING_FERRIS
  
-#include "../../../../miryoku_zmk/miryoku/miryoku.dtsi"
+#include "../miryoku_zmk/miryoku/miryoku.dtsi"
+
+
+
+// #include <behaviors.dtsi>
+// #include <dt-bindings/zmk/keys.h>
+// #include <dt-bindings/zmk/bt.h>
+// #include <dt-bindings/zmk/outputs.h>
+// 
+// 
+// / {
+//   keymap {
+//     compatible = "zmk,keymap";
+//     LOL {
+//       display-name = "lol";
+//       bindings = < &bootloader >;
+//     };
+//   };
+// };
+// 
+
+
