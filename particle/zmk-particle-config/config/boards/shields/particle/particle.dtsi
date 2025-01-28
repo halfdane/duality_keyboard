@@ -10,13 +10,6 @@
 };
 
 / {
-    glidepoint_listener: glidepoint_listener {
-        compatible = "zmk,input-listener";
-        status = "disabled";
-    };
-};
-
-/ {
     chosen { 
         zmk,kscan = &kscan0;
         zmk,physical-layout = &particle_layout;
@@ -52,6 +45,32 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)  RC(2,7) RC(2,8) RC(2,9) RC(2,10) RC(2,1
 
     }; 
 
+};
+
+
+
+&i2c0 {
+    status = "okay";
+
+    glidepoint: glidepoint@2a {
+        compatible = "cirque,pinnacle";
+        reg = <0x2a>;
+        status = "disabled";
+        dr-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH)>;
+
+        sensitivity = "4x";
+        //sleep; 
+        no-taps;
+    };
+
+};
+
+/ {
+    glidepoint_listener: glidepoint_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&glidepoint>;
+    };
 };
 
 

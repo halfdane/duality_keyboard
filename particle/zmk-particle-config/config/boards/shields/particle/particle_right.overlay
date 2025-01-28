@@ -25,21 +25,11 @@
     status = "okay";
 };
 
-&i2c0 {
+&glidepoint  {
     status = "okay";
-    glidepoint: glidepoint@0 {
-        compatible = "cirque,pinnacle";
-        reg = <0x2a>;
-        status = "disabled";
-
-        sensitivity = "4x";
-        //sleep; 
-        no-taps;
-    };
 };
 
 &glidepoint_listener {
     status = "okay";
-    device = <&glidepoint>;
 };
 
