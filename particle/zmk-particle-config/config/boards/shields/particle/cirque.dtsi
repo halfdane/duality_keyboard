@@ -1,0 +1,40 @@
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+
+
+&i2c0 {
+    status = "okay";
+
+    glidepoint: glidepoint@2a {
+        compatible = "cirque,pinnacle";
+        reg = <0x2a>;
+        status = "disabled";
+        dr-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH)>;
+
+        sensitivity = "1x";
+        //sleep;             
+        // no-taps;
+    };
+
+};
+
+/ {
+    glidepoint_listener: glidepoint_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&glidepoint>;
+        input-processors = <
+            &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
+            &zip_xy_scaler 3 1
+            &zip_temp_layer 3 200
+        >;
+        scroller {
+            layers = <5>;
+            input-processors = <
+                &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
+                &zip_xy_scaler 1 2
+                &zip_xy_to_scroll_mapper
+            >;
+        };
+    };
+};
