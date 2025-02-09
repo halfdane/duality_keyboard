@@ -34,7 +34,7 @@ compile_app: west verify-zmk venv
 		-S zmk-usb-logging -S studio-rpc-usb-uart \
 		-- \
 		-DSHIELD="$(SHIELD_NAME)_$(SIDE)" -DZMK_CONFIG="$(CURDIR)/config" \
-		-DCONFIG_ZMK_STUDIO=y 
+		-DCONFIG_ZMK_STUDIO=n 
 
 clean:
 	rm -rf $(BUILD)
