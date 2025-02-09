@@ -40,10 +40,7 @@ clean:
 	rm -rf $(BUILD)
 
 deep_clean: clean clean-venv
-	rm -rf zmk
-	rm -rf zephyr
-	rm -rf .west
-	rm -rf modules
+	rm -rf zmk zephyr .west modules miryoku_zmk cirque-input-module
 
 mount_board:
 	@echo "Please reset the $(SIDE) board into bootloader mode"
