@@ -14,6 +14,7 @@
         sensitivity = "1x";
         //sleep;             
         // no-taps;
+        absolute-mode;
     };
 
 };
@@ -24,15 +25,14 @@
         status = "disabled";
         device = <&glidepoint>;
         input-processors = <
-            &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
-            &zip_xy_scaler 3 1
-            &zip_temp_layer 3 5
+            &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_Y_INVERT)
+            &zip_temp_layer 3 100
         >;
         scroller {
             layers = <5>;
             input-processors = <
                 &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT)
-                &zip_xy_scaler 1 4
+                &zip_xy_scaler 3 1
                 &zip_xy_to_scroll_mapper
             >;
         };

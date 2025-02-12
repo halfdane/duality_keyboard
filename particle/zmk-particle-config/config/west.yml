@@ -20,8 +20,8 @@ manifest:
     #   revision: split/wired-split-first-pass
     #   import: app/west.yml
     - name: cirque-input-module
-      remote: johanson
-      revision: main
+      remote: halfdane
+      revision: absolute_mode
     - name: miryoku_zmk
       remote: halfdane
       revision: master
