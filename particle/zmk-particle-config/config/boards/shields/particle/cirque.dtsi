@@ -1,6 +1,8 @@
 #include <input/processors.dtsi>
 #include <dt-bindings/zmk/input_transform.h>
-
+// #include <behaviors/input_processor_tap.dtsi>
+// #include <behaviors/input_processor_absolute_to_relative.dtsi>
+// #include <behaviors/input_processor_gestures.dtsi>
 
 &i2c0 {
     status = "okay";
@@ -11,13 +13,18 @@
         status = "disabled";
         dr-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH)>;
 
-        sensitivity = "1x";
-        //sleep;             
-        // no-taps;
+        sensitivity = "2x";
+        // sleep;
+        no-taps;
         absolute-mode;
     };
 
 };
+
+// &zip_gestures {
+//     tap-detection;
+//     inertial-cursor;
+// };
 
 / {
     glidepoint_listener: glidepoint_listener {
@@ -25,6 +32,8 @@
         status = "disabled";
         device = <&glidepoint>;
         input-processors = <
+            // &zip_gestures
+            // &zip_absolute_to_relative
             &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_Y_INVERT)
             &zip_temp_layer 3 100
         >;
@@ -32,7 +41,7 @@
             layers = <5>;
             input-processors = <
                 &zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT)
-                &zip_xy_scaler 3 1
+                &zip_xy_scaler 1 20
                 &zip_xy_to_scroll_mapper
             >;
         };

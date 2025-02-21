@@ -12,16 +12,18 @@ manifest:
       url-base: https://github.com/manna-harbour/
   projects:
     - name: zmk
-      remote: halfdane
-      revision: main
+      remote: johanson
+      revision: split/wired-split-first-pass
       import: app/west.yml
-    # - name: zmk
-    #   remote: johanson
-    #   revision: split/wired-split-first-pass
-    #   import: app/west.yml
-    - name: cirque-input-module
-      remote: halfdane
-      revision: absolute_mode
+#    - name: cirque-input-module
+#      remote: halfdane
+#      revision: absolute_mode
+#    - name: zmk-input-processors
+#      remote: halfdane
+#      revision: main
+#    - name: zmk-input-gestures
+#      remote: halfdane
+#      revision: main
     - name: miryoku_zmk
       remote: halfdane
       revision: master

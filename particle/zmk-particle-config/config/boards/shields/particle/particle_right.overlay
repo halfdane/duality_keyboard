@@ -25,11 +25,11 @@
     status = "okay";
 };
 
-&glidepoint  {
-    status = "okay";
-};
-
-&glidepoint_listener {
-    status = "okay";
-};
+// &glidepoint  {
+//     status = "okay";
+// };
+// 
+// &glidepoint_listener {
+//     status = "okay";
+// };
 
