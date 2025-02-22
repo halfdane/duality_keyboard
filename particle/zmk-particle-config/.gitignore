@@ -6,5 +6,5 @@ zmk
 modules
 miryoku_zmk
 cirque-input-module
-central.log
-peripheral.log
+zmk-input-gestures
+zmk-input-processors
