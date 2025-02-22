@@ -15,17 +15,22 @@ manifest:
       remote: johanson
       revision: split/wired-split-first-pass
       import: app/west.yml
-#    - name: cirque-input-module
+#    - name: zmk
 #      remote: halfdane
-#      revision: absolute_mode
-#    - name: zmk-input-processors
-#      remote: halfdane
-#      revision: main
-#    - name: zmk-input-gestures
-#      remote: halfdane
-#      revision: main
+#      revision: rp2040zero
+#      import: app/west.yml
+    - name: cirque-input-module
+      remote: halfdane
+      revision: absolute_mode
+    - name: zmk-input-processors
+      remote: halfdane
+      revision: main
+    - name: zmk-input-gestures
+      remote: halfdane
+      revision: main
     - name: miryoku_zmk
       remote: halfdane
       revision: master
   self: 
     path: config
+
