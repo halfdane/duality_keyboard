@@ -16,6 +16,11 @@
         // sleep;
         no-taps;
         absolute-mode;
+
+        absolute-mode-clamp-min-x=<271>;
+        absolute-mode-clamp-max-x=<1713>;
+        absolute-mode-clamp-min-y=<199>;
+        absolute-mode-clamp-max-y=<1388>;
     };
 
 };
