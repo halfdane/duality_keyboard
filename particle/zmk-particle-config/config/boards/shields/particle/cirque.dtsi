@@ -23,6 +23,7 @@
 &zip_gestures {
     tap-detection;
     prevent_movement_during_tap;
+    circular-scroll;
 };
 
 / {
