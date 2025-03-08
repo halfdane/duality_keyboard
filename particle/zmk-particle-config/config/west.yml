@@ -18,6 +18,7 @@ manifest:
     - name: zephyr
       remote: johanson
       revision: v3.5.0+zmk-fixes+rp2040-uart-fifo
+      import: west.yml
 #    - name: zmk
 #      remote: halfdane
 #      revision: rp2040zero
