@@ -15,6 +15,9 @@ manifest:
       remote: johanson
       revision: split/wired-split-first-pass
       import: app/west.yml
+    - name: zephyr
+      remote: johanson
+      revision: v3.5.0+zmk-fixes+rp2040-uart-fifo
 #    - name: zmk
 #      remote: halfdane
 #      revision: rp2040zero
