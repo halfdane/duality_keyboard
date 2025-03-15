@@ -9,7 +9,7 @@
     glidepoint: glidepoint@2a {
         compatible = "cirque,pinnacle";
         reg = <0x2a>;
-        status = "disabled";
+        status = "okay";
         dr-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH)>;
 
         sensitivity = "2x";
@@ -36,7 +36,7 @@
 / {
     glidepoint_listener: glidepoint_listener {
         compatible = "zmk,input-listener";
-        status = "disabled";
+        status = "okay";
         device = <&glidepoint>;
         input-processors = <
             &zip_gestures
