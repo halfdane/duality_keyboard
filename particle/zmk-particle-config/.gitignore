@@ -8,3 +8,5 @@ miryoku_zmk
 cirque-input-module
 zmk-input-gestures
 zmk-input-processors
+bootloader
+tools
