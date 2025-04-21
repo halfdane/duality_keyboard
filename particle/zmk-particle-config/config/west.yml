@@ -12,17 +12,9 @@ manifest:
       url-base: https://github.com/manna-harbour/
   projects:
     - name: zmk
-      remote: johanson
-      revision: split/wired-split-first-pass
+      remote: zmkfirmware
+      revision: main
       import: app/west.yml
-    - name: zephyr
-      remote: johanson
-      revision: v3.5.0+zmk-fixes+rp2040-uart-fifo
-      import: west.yml
-#    - name: zmk
-#      remote: halfdane
-#      revision: rp2040zero
-#      import: app/west.yml
     - name: cirque-input-module
       remote: halfdane
       revision: absolute_mode
