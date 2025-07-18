@@ -1,0 +1,11 @@
+file_format: "1"
+id: wave
+name: Wave
+type: shield
+url: https://github.com/halfdane/duality_keyboard/wave
+requires: [pro_micro]
+features:
+  - keys
+siblings:
+  - wave_left
+  - wave_right
