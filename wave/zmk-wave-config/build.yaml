@@ -21,8 +21,10 @@ include:
     snippet: zmk-usb-logging
   - board: seeeduino_xiao_ble
     shield: settings_reset
+    display_name: reset_xiao
   - board: nrf52840dongle_nrf52840
     shield: wave_dongle
     snippet: zmk-usb-logging
   - board: nrf52840dongle_nrf52840
     shield: settings_reset
+    display_name: reset_dongle
