@@ -10,3 +10,6 @@ adafruit-circuitpython-bundle-*.x-mpy-*
 .vscode
 upstream
 *.FCBak
+
+__pycache__
+.venv

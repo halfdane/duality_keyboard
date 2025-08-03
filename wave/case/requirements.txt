@@ -1,0 +1,9 @@
+build123d
+jupyter
+notebook
+ipykernel
+ipywidgets
+numpy
+matplotlib
+pythreejs
+
