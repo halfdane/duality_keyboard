@@ -65,25 +65,25 @@ class Xiao:
                             Circle(self.solder_holes.radius, mode=Mode.SUBTRACT)
                 extrude(amount=self.board.thickness_z)
 
-            with BuildPart(board.faces().sort_by(Axis.Z)[-1]):
-                with Locations((0, self.usb.forward_y, self.usb.height_z/2)):
+            with BuildPart(board.faces().sort_by(Axis.Z)[-1]) as parts:
+                with Locations((0, self.usb.forward_y, self.usb.height_z/2)) as usb:
                     Box(self.usb.width_x, self.usb.depth_y, self.usb.height_z)
                 fillet(edges().filter_by(Axis.Y), self.usb.radius)
 
-                with Locations((0, self.processor.forward_y, self.processor.height_z/2)):
+                with Locations((0, self.processor.forward_y, self.processor.height_z/2)) as processor:
                     Box(self.processor.width_x, 
                         self.processor.depth_y, 
                         self.processor.height_z)
 
-                with Locations((self.components.reset_button_x, self.components.reset_button_y, self.components.reset_button_height_z/2)):
+                with Locations((self.components.reset_button_x, self.components.reset_button_y, self.components.reset_button_height_z/2)) as reset_button:
                     Box(self.components.reset_button_width_x, self.components.reset_button_depth_y, self.components.reset_button_height_z)
             
-                with Locations((self.components.led_x, self.components.led_y, self.components.led_height_z/2)):
+                with Locations((self.components.led_x, self.components.led_y, self.components.led_height_z/2)) as led:
                     Box(self.components.led_width_x, self.components.led_depth_y, self.components.led_height_z) 
 
 
 # main method
 if __name__ == "__main__":
     from ocp_vscode import show, show_object, show_all, reset_show, set_port, set_defaults, get_defaults, Camera
-    xiao = Xiao()
-    show_object(xiao.model.part, name="Builder Xiao", reset_camera=Camera.KEEP)
+    xiao = Xiao().model
+    show_all()

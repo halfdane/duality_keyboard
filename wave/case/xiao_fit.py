@@ -29,8 +29,8 @@ class SingleSwitchXiaoCase:
     dims = CaseDimensions()
 
     def __init__(self):
-        self.width = Xiao.board.depth_y + 3 * self.dims.wall_thickness + Choc.bottom_housing.width_x
-        self.length = Xiao.board.width_x + 2 * self.dims.wall_thickness
+        self.width_y = Xiao.board.depth_y + 3 * self.dims.wall_thickness + Choc.bottom_housing.width_x
+        self.length_x = Xiao.board.width_x + 2 * self.dims.wall_thickness
         
         self.switchplate = self.create_switchplate()
         self.keywell = self.create_keywell()
@@ -38,12 +38,13 @@ class SingleSwitchXiaoCase:
 
     def create_switchplate(self):
         choc_hole_size = Choc.bottom_housing.width_x + 2 * self.dims.clearance
-        key_x = self.width/2 - choc_hole_size/2 - self.dims.wall_thickness
-        wall_height = Choc.bottom_housing.height_z + Choc.posts.post_height_z + self.dims.wall_thickness
+        key_x = self.width_y/2 - choc_hole_size/2 - self.dims.wall_thickness
+        wall_height = Choc.bottom_housing.height_z + Choc.posts.post_height_z
+        print(f"wall_height = {wall_height}  ({Choc.bottom_housing.height_z} + {Choc.posts.post_height_z} + {self.dims.wall_thickness})")
 
         with BuildPart() as switchplate:
             with BuildSketch() as base:
-                Rectangle(self.length, self.width)
+                Rectangle(self.length_x, self.width_y)
             extrude(amount=self.dims.wall_thickness)
 
             with BuildSketch() as keyhole:
@@ -52,47 +53,58 @@ class SingleSwitchXiaoCase:
             extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
             with BuildSketch() as walls:
-                outer=Rectangle(self.length, self.width)
+                outer=Rectangle(self.length_x, self.width_y)
                 offset(
                     outer,
                     -self.dims.wall_thickness,
                     mode=Mode.SUBTRACT,
                     kind=Kind.INTERSECTION,
                 )
-            extrude(amount=wall_height)
+            extrude(amount=-wall_height)
+        
+        with BuildPart() as keywell:
+            top_left = (-self.length_x/2, -self.width_y/2 )
+            top_right = (self.length_x/2, -self.width_y/2)  
+            bottom_right = (self.length_x/2, self.width_y/2)
 
-        with BuildPart(Plane(base.faces().sort_by(Axis.Z)[0])) as keywell:
-            top_left = (-self.length/2, -self.width/2)
-            top_right = (self.length/2, -self.width/2)
-            bottom_right = (self.length/2, self.width/2)
+            keywell_bottom_right = (Choc.cap.width_x/2, self.width_y/2)
+            keywell_top_right = (Choc.cap.width_x/2, self.width_y/2 - Choc.cap.length_y)
+            keywell_top_left = (-Choc.cap.width_x/2, self.width_y/2 - Choc.cap.length_y)
+            keywell_bottom_left = (-Choc.cap.width_x/2, self.width_y/2)
 
-            keywell_bottom_right = (Choc.cap.width_x/2, self.width/2)
-            keywell_top_right = (Choc.cap.width_x/2, self.width/2 - Choc.cap.length_y)
-            keywell_top_left = (-Choc.cap.width_x/2, self.width/2 - Choc.cap.length_y)
-            keywell_bottom_left = (-Choc.cap.width_x/2, self.width/2)
+            bottom_left = (-self.length_x/2, self.width_y/2)
+                
+            
+            with Locations(): 
+                with BuildSketch():
+                    Polygon(
+                        top_left, top_right, bottom_right, 
+                        keywell_bottom_right, keywell_top_right,
+                        keywell_top_left, keywell_bottom_left,
+                        bottom_left
+                    )
 
-            bottom_left = (-self.length/2, self.width/2)
+            extrude(amount=5)
+        
+        with BuildPart() as bottom:
             with BuildSketch():
-                Polygon(
-                    top_left, top_right, bottom_right, 
-                    keywell_bottom_right, keywell_top_right,
-                    keywell_top_left, keywell_bottom_left,
-                    bottom_left
-                )
-
-            extrude(amount=-5)
+                Rectangle(self.length_x-2*self.dims.wall_thickness - 2*self.dims.clearance, self.width_y - 2*self.dims.wall_thickness - 2*self.dims.clearance)
+            extrude(amount=self.dims.wall_thickness)
 
 
-
+        keywell.part = keywell.part.translate((0, 0, self.dims.wall_thickness))
+        bottom.part = bottom.part.translate((0, 0, -wall_height))
 
 
         innerFrontSide = Plane(switchplate.faces().sort_by(Axis.Y)[1])
         xiao = Xiao()
-        xiao = innerFrontSide*xiao.model.part \
-            .translate((0, xiao.board.depth_y/2, -wall_height/2+self.dims.wall_thickness/2)) \
-            .rotate(axis=Axis.X, angle=90)
+        xiao = xiao.model.part \
+            .translate((0, innerFrontSide.location.position.Y + xiao.board.depth_y/2 + self.dims.clearance, self.dims.clearance)) \
+            .rotate(axis=Axis.Y, angle=180) \
+        
         choc = Choc()
-        choc = choc.model.part.translate((0, key_x, Choc.base.thickness_z)).rotate(axis=Axis.Y, angle=180)
+        choc = choc.model.part\
+            .translate((0, key_x, Choc.base.thickness_z + self.dims.wall_thickness))
         show_all()
 
         return switchplate
