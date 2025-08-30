@@ -17,10 +17,10 @@ class ProcessorDimensions:
 @dataclass
 class UsbDimensions:
     width_x: float = 8.940
-    depth_y: float = 7.3
+    depth_y: float = 7.0
     height_z: float = 3.21
     radius: float = 1.25
-    forward_y: float = -8.359
+    forward_y: float = 1
 
 @dataclass
 class SolderHoleDimensions:
@@ -42,6 +42,12 @@ class ComponentDimensions:
     led_x: float = -5.7
     led_y: float = -7.7
 
+    loading_light_width_x: float = 1.1
+    loading_light_depth_y: float = 0.5
+    loading_light_height_z: float = 0.1
+    loading_light_x: float = -5.65
+    loading_light_y: float = -9.7
+
 class Xiao:
     board = BoardDimensions()
     processor = ProcessorDimensions()
@@ -49,7 +55,7 @@ class Xiao:
     solder_holes = SolderHoleDimensions()
     components = ComponentDimensions()
 
-    def __init__(self):
+    def __init__(self, show_model=False, show_step_file=False):
         # Calculate solder hole positions
         with BuildPart() as self.model:
             with BuildPart() as board:
@@ -66,7 +72,7 @@ class Xiao:
                 extrude(amount=self.board.thickness_z)
 
             with BuildPart(board.faces().sort_by(Axis.Z)[-1]) as parts:
-                with Locations((0, self.usb.forward_y, self.usb.height_z/2)) as usb:
+                with Locations((0, self.usb.depth_y/2-self.board.depth_y/2-self.usb.forward_y, self.usb.height_z/2)) as usb:
                     Box(self.usb.width_x, self.usb.depth_y, self.usb.height_z)
                 fillet(edges().filter_by(Axis.Y), self.usb.radius)
 
@@ -79,11 +85,19 @@ class Xiao:
                     Box(self.components.reset_button_width_x, self.components.reset_button_depth_y, self.components.reset_button_height_z)
             
                 with Locations((self.components.led_x, self.components.led_y, self.components.led_height_z/2)) as led:
-                    Box(self.components.led_width_x, self.components.led_depth_y, self.components.led_height_z) 
+                    Box(self.components.led_width_x, self.components.led_depth_y, self.components.led_height_z)
+
+                with Locations((self.components.loading_light_x, self.components.loading_light_y, self.components.loading_light_height_z/2)) as loading_light:
+                    Box(self.components.loading_light_width_x, self.components.loading_light_depth_y, self.components.loading_light_height_z)
+
+        if show_model:
+            from ocp_vscode import show, show_object, show_all, reset_show, set_port, set_defaults, get_defaults, Camera
+            set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
+            show_object(self.model, name="Xiao Board", options={"color": "blue", "opacity": 0.5}) 
+
+
 
 
 # main method
 if __name__ == "__main__":
-    from ocp_vscode import show, show_object, show_all, reset_show, set_port, set_defaults, get_defaults, Camera
-    xiao = Xiao().model
-    show_all()
+    xiao = Xiao(show_model=True, show_step_file=True).model

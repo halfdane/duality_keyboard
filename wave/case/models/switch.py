@@ -44,9 +44,9 @@ class StemDimensions:
 
 @dataclass
 class CapDimensions:
-    width_x: float = 15
-    length_y: float = 20
-    height_z: float = 1.5
+    width_x: float = 17.5
+    length_y: float = 16.5
+    height_z: float = 2.6
 
 class Choc:
     base = BaseDimensions()
@@ -57,7 +57,7 @@ class Choc:
     stem = StemDimensions()
     cap = CapDimensions()
 
-    def __init__(self):
+    def __init__(self, show_model=False, show_step_file=False):
         with BuildPart() as self.model:
             with BuildPart() as main_housing_base:
                 with Locations((0, 0, -self.base.thickness_z / 2)):
@@ -89,10 +89,24 @@ class Choc:
                 with Locations((0, -(self.stem.depth_y+self.stem.ext_depth_y)/2, self.stem.height_z / 2)):
                     Box(self.stem.ext_width_x, self.stem.ext_depth_y, self.stem.height_z)
 
+            with BuildPart(stem.faces().sort_by(Axis.Z)[-1]) as cap:
+                with Locations((0, 0, self.cap.height_z / 2)):
+                    Box(self.cap.width_x, self.cap.length_y, self.cap.height_z)
+
+        if show_model:
+            from ocp_vscode import show_all
+            if show_step_file:
+                step_file = import_step('/home/tvollert/Downloads/MBK_Keycap_-_1u.step')
+                step_file = step_file.translate((0, -0.15, 3.6))
+                pass
+                
+            show_all()
+
+
 
 # main method
 if __name__ == "__main__":
-    from ocp_vscode import show_object
-    
-    switch = Choc()
-    show_object(switch.model, name="Kailh Choc Switch")
+    from ocp_vscode import show_object, set_defaults, Camera
+    set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
+    switch = Choc(show_model=True, show_step_file=True)
+    # show_object(switch.model, name="Kailh Choc Switch")

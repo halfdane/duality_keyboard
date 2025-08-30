@@ -40,9 +40,8 @@ class SingleSwitchXiaoCase:
         choc_hole_size = Choc.bottom_housing.width_x + 2 * self.dims.clearance
         key_x = self.width_y/2 - choc_hole_size/2 - self.dims.wall_thickness
         wall_height = Choc.bottom_housing.height_z + Choc.posts.post_height_z
-        print(f"wall_height = {wall_height}  ({Choc.bottom_housing.height_z} + {Choc.posts.post_height_z} + {self.dims.wall_thickness})")
 
-        with BuildPart() as switchplate:
+        with BuildPart() as case:
             with BuildSketch() as base:
                 Rectangle(self.length_x, self.width_y)
             extrude(amount=self.dims.wall_thickness)
@@ -61,45 +60,60 @@ class SingleSwitchXiaoCase:
                     kind=Kind.INTERSECTION,
                 )
             extrude(amount=-wall_height)
-        
+
+            usb_face = case.faces().sort_by(Axis.Y)[0]
+            with BuildSketch(usb_face) as usb_hole:
+                usb_z_position = wall_height/2 - Xiao.usb.height_z/2 - self.dims.wall_thickness - Xiao.board.thickness_z/2
+                with Locations((0, usb_z_position)):
+                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
+                with Locations((Xiao.usb.width_x/2+1, usb_z_position+1)):
+                    Circle(0.5)
+            extrude(amount=-7, mode=Mode.SUBTRACT)
+
         with BuildPart() as keywell:
-            top_left = (-self.length_x/2, -self.width_y/2 )
-            top_right = (self.length_x/2, -self.width_y/2)  
-            bottom_right = (self.length_x/2, self.width_y/2)
+            bottom_left = (-self.length_x/2, -self.width_y/2 )
+            bottom_right = (self.length_x/2, -self.width_y/2)  
 
-            keywell_bottom_right = (Choc.cap.width_x/2, self.width_y/2)
-            keywell_top_right = (Choc.cap.width_x/2, self.width_y/2 - Choc.cap.length_y)
-            keywell_top_left = (-Choc.cap.width_x/2, self.width_y/2 - Choc.cap.length_y)
-            keywell_bottom_left = (-Choc.cap.width_x/2, self.width_y/2)
+            top_right = (self.length_x/2, self.width_y/2)
 
-            bottom_left = (-self.length_x/2, self.width_y/2)
+            keywell_top_right = (Choc.cap.width_x/2-self.dims.clearance, self.width_y/2)
+            keywell_bottom_right = (Choc.cap.width_x/2-self.dims.clearance, self.width_y/2 - Choc.cap.length_y)
+            keywell_top_left = (-Choc.cap.width_x/2+self.dims.clearance, self.width_y/2)
+            keywell_bottom_left = (-Choc.cap.width_x/2+self.dims.clearance, self.width_y/2 - Choc.cap.length_y)
+
+            top_left = (-self.length_x/2, self.width_y/2)
                 
             
             with Locations(): 
                 with BuildSketch():
                     Polygon(
-                        top_left, top_right, bottom_right, 
-                        keywell_bottom_right, keywell_top_right,
-                        keywell_top_left, keywell_bottom_left,
-                        bottom_left
+                        bottom_left, bottom_right, top_right,
+                        keywell_top_right, keywell_bottom_right, 
+                        keywell_bottom_left, keywell_top_left,
+                        top_left
                     )
 
-            extrude(amount=5)
+            extrude(amount=Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z)
         
         with BuildPart() as bottom:
             with BuildSketch():
                 Rectangle(self.length_x-2*self.dims.wall_thickness - 2*self.dims.clearance, self.width_y - 2*self.dims.wall_thickness - 2*self.dims.clearance)
             extrude(amount=self.dims.wall_thickness)
+            usb_face_bottom = bottom.faces().sort_by(Axis.Y)[0]
+            with BuildSketch(usb_face_bottom) as usb_hole_bottom:
+                with Locations((0, - Xiao.usb.height_z/2 - self.dims.wall_thickness/2 + wall_height - Xiao.board.thickness_z - self.dims.clearance)):
+                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
+            extrude(amount=-6+2*self.dims.clearance, mode=Mode.SUBTRACT)
+
+
 
 
         keywell.part = keywell.part.translate((0, 0, self.dims.wall_thickness))
         bottom.part = bottom.part.translate((0, 0, -wall_height))
 
-
-        innerFrontSide = Plane(switchplate.faces().sort_by(Axis.Y)[1])
         xiao = Xiao()
         xiao = xiao.model.part \
-            .translate((0, innerFrontSide.location.position.Y + xiao.board.depth_y/2 + self.dims.clearance, self.dims.clearance)) \
+            .translate((0, -self.width_y/2 + xiao.board.depth_y/2 + self.dims.wall_thickness + self.dims.clearance, self.dims.clearance)) \
             .rotate(axis=Axis.Y, angle=180) \
         
         choc = Choc()
@@ -107,7 +121,7 @@ class SingleSwitchXiaoCase:
             .translate((0, key_x, Choc.base.thickness_z + self.dims.wall_thickness))
         show_all()
 
-        return switchplate
+        return case
     
 
     def create_keywell(self):
@@ -118,3 +132,5 @@ class SingleSwitchXiaoCase:
 if __name__ == "__main__":
     from ocp_vscode import show, show_object, show_all, reset_show, set_port, set_defaults, get_defaults, Camera
     case = SingleSwitchXiaoCase().switchplate
+
+    # show_all()
