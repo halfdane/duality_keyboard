@@ -81,19 +81,18 @@ class SingleSwitchXiaoCase:
                     Circle(self.dims.pin_diameter + 2*self.dims.clearance)
             extrude(amount=-self.width_y+self.dims.wall_thickness/2, mode=Mode.SUBTRACT)
 
-            with BuildSketch(usb_face) as power_switch_holder_front:
-                with Locations((self.length_x/2-3.5*self.dims.wall_thickness- PowerSwitch.dims.width_x -3*self.dims.clearance, -Xiao.board.thickness_z)):
-                    Rectangle(self.dims.wall_thickness, wall_height/3)
-            extrude(amount=-self.dims.wall_thickness-PowerSwitch.dims.thickness_z/3, mode=Mode.ADD)
-
-            with BuildSketch() as power_switch_holder_top:
-                power_switch_holder_top_y = -self.width_y/2 + 1.5*self.dims.wall_thickness + PowerSwitch.dims.length_y + 2*self.dims.clearance
-                with Locations(
-                    (self.length_x/2-2.5*self.dims.wall_thickness-PowerSwitch.dims.width_x, power_switch_holder_top_y),
-                    (self.length_x/2-3.5*self.dims.wall_thickness - 2*self.dims.clearance , power_switch_holder_top_y)):
-                    Rectangle(self.dims.wall_thickness, self.dims.wall_thickness)
-            extrude(amount=-2*self.dims.wall_thickness, mode=Mode.ADD)
-
+            with BuildSketch() as power_switch_hole:
+                with Locations((
+                    self.length_x/2 - PowerSwitch.dims.width_x/2 - 3*self.dims.wall_thickness - 2*self.dims.clearance, 
+                    -self.width_y/2 + PowerSwitch.dims.length_y/2 + self.dims.wall_thickness + self.dims.clearance)):
+                    Rectangle(PowerSwitch.dims.width_x + 2*self.dims.clearance, PowerSwitch.dims.length_y + 2*self.dims.clearance)
+            extrude(amount=wall_height - self.dims.wall_thickness/3 - PowerSwitch.dims.thickness_z + 3*self.dims.clearance, mode=Mode.SUBTRACT)
+            with BuildSketch() as power_switch_pin_holes:
+                with Locations((
+                    self.length_x/2 - PowerSwitch.dims.width_x/2 - 3*self.dims.wall_thickness - 2*self.dims.clearance, 
+                    -self.width_y/2 + PowerSwitch.dims.length_y + self.dims.wall_thickness + self.dims.clearance)):
+                    Rectangle(0.75*PowerSwitch.dims.width_x, 1)
+            extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
 
         with BuildPart() as keywell:
@@ -191,12 +190,6 @@ class SingleSwitchXiaoCase:
                     Rectangle(PowerSwitch.dims.lever_clearance + 2*self.dims.clearance, PowerSwitch.dims.lever_width_x + PowerSwitch.dims.lever_offset_y)
             extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
-            with BuildSketch(usb_hole_bottom_face) as power_switch_hole:
-                with Locations((self.length_x/2 - PowerSwitch.dims.width_x/2 - 3*self.dims.wall_thickness - 2*self.dims.clearance, -PowerSwitch.dims.length_y/2 + wall_height  - Xiao.board.thickness_z + 3*self.dims.clearance)):
-                    Rectangle(PowerSwitch.dims.width_x + 2*self.dims.clearance, PowerSwitch.dims.length_y)
-            extrude(amount=-PowerSwitch.dims.length_y - self.dims.clearance, mode=Mode.SUBTRACT)
-
-
 
         keywell.part = keywell.part.translate((0, 0, self.dims.wall_thickness))
         bottom.part = bottom.part.translate((0, 0, -wall_height))
@@ -217,7 +210,7 @@ class SingleSwitchXiaoCase:
             .translate((
                 self.length_x/2 - PowerSwitch.dims.width_x/2 - 3*self.dims.wall_thickness - 2*self.dims.clearance, 
                 -(self.width_y/2 - PowerSwitch.dims.length_y/2 - self.dims.wall_thickness- self.dims.clearance), 
-                -PowerSwitch.dims.thickness_z/2- self.dims.clearance))
+                -wall_height + PowerSwitch.dims.thickness_z/2+self.dims.wall_thickness+self.dims.clearance))
     
         show_all()
 
