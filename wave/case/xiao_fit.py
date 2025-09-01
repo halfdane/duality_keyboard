@@ -57,9 +57,9 @@ class SingleSwitchXiaoCase:
             extrude(amount=-wall_height)
 
             with BuildSketch() as xiao_holder:
-                with Locations((0, -self.width_y/2 + Xiao.board.depth_y+2*self.dims.wall_thickness+2*self.dims.clearance)):
-                    Rectangle(Xiao.board.width_x, 2*self.dims.wall_thickness)
-            extrude(amount=-2)
+                with Locations((0, -self.width_y/2 + Xiao.board.depth_y/2 + self.dims.wall_thickness + self.dims.clearance)):
+                    Rectangle(Xiao.board.width_x+2*self.dims.clearance, Xiao.board.depth_y+2*self.dims.clearance)
+            extrude(amount=self.dims.wall_thickness/2, mode=Mode.SUBTRACT)
 
             with BuildSketch() as xiao_hole:
                 with Locations((0, -self.width_y/2 + Xiao.board.depth_y/2 + self.dims.wall_thickness + self.dims.clearance)):
@@ -68,7 +68,7 @@ class SingleSwitchXiaoCase:
 
             usb_face = case.faces().sort_by(Axis.Y)[0]
             with BuildSketch(usb_face) as usb_hole:
-                usb_z_position = wall_height/2 - Xiao.usb.height_z/2 - self.dims.wall_thickness - Xiao.board.thickness_z/2
+                usb_z_position = wall_height/2 - Xiao.usb.height_z/2 - self.dims.wall_thickness/2 - Xiao.board.thickness_z/2
                 with Locations((0, usb_z_position)):
                     RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
                 with Locations((Xiao.usb.width_x/2+1, usb_z_position+1)):
@@ -96,7 +96,6 @@ class SingleSwitchXiaoCase:
 
 
 
-
         with BuildPart() as keywell:
             bottom_left = (-self.length_x/2, -self.width_y/2 )
             bottom_right = (self.length_x/2, -self.width_y/2)  
@@ -117,7 +116,6 @@ class SingleSwitchXiaoCase:
                     keywell_bottom_left, keywell_top_left,
                     top_left
                 )
-
             extrude(amount=Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z)
 
             keywell_holder_width_y = 20
@@ -143,7 +141,7 @@ class SingleSwitchXiaoCase:
 
             usb_hole_bottom_face = bottom.faces().sort_by(Axis.Y)[0]
             with BuildSketch(usb_hole_bottom_face) as usb_hole_bottom:
-                with Locations((0, - Xiao.usb.height_z/2 - self.dims.wall_thickness/2 + wall_height - Xiao.board.thickness_z - self.dims.clearance)):
+                with Locations((0, - Xiao.usb.height_z/2 + wall_height - Xiao.board.thickness_z - self.dims.clearance)):
                     RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
             extrude(amount=-6+2*self.dims.clearance, mode=Mode.SUBTRACT)
 
@@ -178,13 +176,13 @@ class SingleSwitchXiaoCase:
 
             with BuildSketch() as reset_push:
                 with BuildLine():
-                    l1 = Line((-lever_width_x/2+lever_pos_x, 4+lever_pos_y), (-lever_width_x/2+lever_pos_x, -1+lever_pos_y))
-                    l2 = Line((lever_width_x/2+lever_pos_x, 4+lever_pos_y), (lever_width_x/2+lever_pos_x, -1+lever_pos_y))
+                    l1 = Line((-lever_width_x/2+lever_pos_x, lever_pos_y), (-lever_width_x/2+lever_pos_x, -1+lever_pos_y))
+                    l2 = Line((lever_width_x/2+lever_pos_x, lever_pos_y), (lever_width_x/2+lever_pos_x, -1+lever_pos_y))
                     RadiusArc(l1@1, l2@1, 1, short_sagitta=False)
                     Line(l1@0, l2@0)
                     offset(amount=-0.15)
                 make_face()
-            extrude(amount=2.8, mode=Mode.ADD)
+            extrude(amount=3.5-self.dims.clearance, mode=Mode.ADD)
 
             with BuildSketch() as power_switch_lever_hole:
                 pswitch_x = self.length_x/2 - PowerSwitch.dims.width_x/2 - 3*self.dims.wall_thickness - 2*self.dims.clearance
@@ -205,7 +203,7 @@ class SingleSwitchXiaoCase:
 
         xiao = Xiao()
         xiao = xiao.model.part \
-            .translate((0, -self.width_y/2 + xiao.board.depth_y/2 + self.dims.wall_thickness + self.dims.clearance, self.dims.clearance)) \
+            .translate((0, -self.width_y/2 + xiao.board.depth_y/2 + self.dims.wall_thickness + self.dims.clearance, self.dims.clearance-self.dims.wall_thickness/2)) \
             .rotate(axis=Axis.Y, angle=180)
         
 
