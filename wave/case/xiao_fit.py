@@ -12,7 +12,15 @@ from models.power_switch import PowerSwitch
 class CaseDimensions:
     clearance: float = 0.02
     wall_thickness: float = 1.3
-    pin_diameter: float = 1.0
+    pin_radius: float = 0.5
+    magnet_radius: float = 5
+    magnet_thickness_z: float = 2
+    weight_x: float = 19
+    weight_y: float = 11.5
+    weight_z: float = 4
+    battery_x: float = 31
+    battery_y: float = 17
+    battery_z: float = 5.5
 
 class SingleSwitchXiaoCase:
     dims = CaseDimensions()
@@ -28,8 +36,8 @@ class SingleSwitchXiaoCase:
 
 
     def create_switchplate(self):
-        choc_hole_size = Choc.bottom_housing.width_x + 2 * self.dims.clearance
-        key_y = self.width_y/2 - (self.rows*Choc.cap.length_y)/2 + 10 * self.dims.clearance
+        choc_hole_size = Choc.bottom_housing.width_x + self.dims.clearance
+        key_y = self.width_y/2 - (self.rows*Choc.cap.length_y)/2 - self.dims.wall_thickness/2
         wall_height = Choc.bottom_housing.height_z + Choc.posts.post_height_z
 
         with BuildPart() as case:
@@ -42,7 +50,7 @@ class SingleSwitchXiaoCase:
 
             with BuildSketch() as keyhole:
                 with Locations((0, key_y)):
-                    with GridLocations(Choc.cap.width_x, Choc.cap.length_y, self.cols, self.rows):
+                    with GridLocations(Choc.cap.width_x + self.dims.clearance, Choc.cap.length_y + self.dims.clearance, self.cols, self.rows):
                         Rectangle(choc_hole_size, choc_hole_size)
             extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
@@ -77,9 +85,15 @@ class SingleSwitchXiaoCase:
 
             with BuildSketch(usb_face) as case_pin_holes:
                 pin_y_position = 0
-                with Locations((self.length_x/2-2*self.dims.wall_thickness, pin_y_position), (-self.length_x/2+2*self.dims.wall_thickness, pin_y_position)):
-                    Circle(self.dims.pin_diameter + 2*self.dims.clearance)
+                with Locations((self.length_x/2-2*self.dims.wall_thickness, pin_y_position), 
+                               (-self.length_x/2+2*self.dims.wall_thickness, pin_y_position)):
+                    Circle(self.dims.pin_radius + self.dims.clearance)
             extrude(amount=-self.width_y+self.dims.wall_thickness/2, mode=Mode.SUBTRACT)
+            with BuildSketch(usb_face) as case_pin_recess:
+                with Locations((self.length_x/2-2*self.dims.wall_thickness - 2, pin_y_position), 
+                               (-self.length_x/2+2*self.dims.wall_thickness + 2, pin_y_position)):
+                    RectangleRounded(5, 2*self.dims.pin_radius + 2*self.dims.clearance, self.dims.pin_radius)
+            extrude(amount=-1.5*self.dims.pin_radius, mode=Mode.SUBTRACT)
 
             with BuildSketch() as power_switch_hole:
                 with Locations((
@@ -101,13 +115,13 @@ class SingleSwitchXiaoCase:
 
             top_right = (self.length_x/2, self.width_y/2)
 
-            keywell_top_right = (self.cols*(Choc.cap.width_x/2+self.dims.clearance), self.width_y/2)
-            keywell_bottom_right = (self.cols*(Choc.cap.width_x/2+self.dims.clearance), self.width_y/2 - self.rows*(Choc.cap.length_y +self.dims.clearance))
-            keywell_top_left = (-self.cols*(Choc.cap.width_x/2+self.dims.clearance), self.width_y/2)
-            keywell_bottom_left = (-self.cols*(Choc.cap.width_x/2+self.dims.clearance), self.width_y/2 - self.rows*(Choc.cap.length_y +self.dims.clearance))
+            keywell_top_right = (self.cols*(Choc.cap.width_x/2+2*self.dims.clearance), self.width_y/2)
+            keywell_bottom_right = (self.cols*(Choc.cap.width_x/2+2*self.dims.clearance), self.width_y/2 - self.rows*(Choc.cap.length_y +self.dims.clearance) - 0.75*self.dims.wall_thickness)
+            keywell_top_left = (-self.cols*(Choc.cap.width_x/2+2*self.dims.clearance), self.width_y/2)
+            keywell_bottom_left = (-self.cols*(Choc.cap.width_x/2+2*self.dims.clearance), self.width_y/2 - self.rows*(Choc.cap.length_y +self.dims.clearance) - 0.75*self.dims.wall_thickness)
 
             top_left = (-self.length_x/2, self.width_y/2)
-            
+            keywell_height_z = Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z
             with BuildSketch():
                 Polygon(
                     bottom_left, bottom_right, top_right,
@@ -115,7 +129,7 @@ class SingleSwitchXiaoCase:
                     keywell_bottom_left, keywell_top_left,
                     top_left
                 )
-            extrude(amount=Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z)
+            extrude(amount=keywell_height_z)
 
             keywell_holder_width_y = 20
             with BuildSketch() as keywell_holder_sketch:
@@ -127,9 +141,26 @@ class SingleSwitchXiaoCase:
 
             with BuildSketch(keywell_holder_front_face) as keywell_pin_holes:
                 pin_y_position = -self.dims.wall_thickness/2 - 0.58*self.dims.clearance
-                with Locations((-self.dims.clearance, pin_y_position)):
-                    Circle(self.dims.pin_diameter + 2*self.dims.clearance)
+                with Locations((self.dims.clearance, pin_y_position)):
+                    Circle(self.dims.pin_radius + self.dims.clearance)
             extrude(amount=-self.width_y+self.dims.wall_thickness/2, mode=Mode.SUBTRACT)
+
+            with BuildSketch() as keywell_magnets:
+                with Locations((0, -self.width_y/2 + self.dims.magnet_radius + self.dims.wall_thickness + 2*self.dims.clearance, 0)):
+                    Circle(self.dims.magnet_radius + self.dims.clearance)
+            extrude(amount=keywell_height_z-self.dims.wall_thickness, mode=Mode.SUBTRACT)
+
+            with BuildSketch() as keywell_weight:
+                with Locations((0, -self.width_y/2 + self.dims.weight_y/2 + self.dims.wall_thickness + self.dims.clearance, 0)):
+                    Rectangle(self.dims.weight_x + self.dims.clearance, self.dims.weight_y + self.dims.clearance)
+            extrude(amount=keywell_height_z-self.dims.wall_thickness-0.3, mode=Mode.SUBTRACT)
+
+            with BuildSketch() as keywell_battery:
+                with Locations((0, -self.width_y/2 + self.dims.battery_y/2 + self.dims.wall_thickness  + self.dims.clearance, 0)):
+                    Rectangle(self.dims.battery_x + self.dims.clearance, self.dims.battery_y + self.dims.clearance)
+            extrude(amount=keywell_height_z-self.dims.wall_thickness-0.6, mode=Mode.SUBTRACT)
+
+
         
         with BuildPart() as bottom:
             bottom_width_y = self.width_y - 2*self.dims.wall_thickness - 2*self.dims.clearance
@@ -155,9 +186,9 @@ class SingleSwitchXiaoCase:
 
             bottom_front_face = bottom.faces().sort_by(Axis.Y)[0]
             with BuildSketch(bottom_front_face) as bottom_pin_holes:
-                pin_y_position = (wall_height-self.dims.wall_thickness)/2-0.75*self.dims.clearance
+                pin_y_position = (wall_height-self.dims.wall_thickness)/2+1.5*self.dims.clearance
                 with Locations((self.length_x/2-2*self.dims.wall_thickness, pin_y_position), (-self.length_x/2+2*self.dims.wall_thickness, pin_y_position)):
-                    Circle(self.dims.pin_diameter + 2*self.dims.clearance)
+                    Circle(self.dims.pin_radius + self.dims.clearance)
             extrude(amount=-self.width_y+self.dims.wall_thickness/2, mode=Mode.SUBTRACT)
 
             lever_width_x = 1
@@ -202,7 +233,7 @@ class SingleSwitchXiaoCase:
 
         choc = Choc()
 
-        locs = GridLocations(Choc.cap.width_x+self.dims.clearance, Choc.cap.length_y+self.dims.clearance, self.cols, self.rows).local_locations
+        locs = GridLocations(Choc.cap.width_x+self.dims.clearance/2, Choc.cap.length_y+self.dims.clearance/2, self.cols, self.rows).local_locations
         chocs = [copy.copy(choc.model.part).locate(loc * Location((0, key_y, Choc.base.thickness_z + self.dims.wall_thickness))) for loc in locs]
         power_switch = PowerSwitch()
         pswitch = power_switch.model.part \
