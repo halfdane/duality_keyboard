@@ -22,6 +22,9 @@ class CaseDimensions:
     battery_y: float = 17
     battery_z: float = 5.5
 
+    shadow_line_height_z: float = 0.3
+    shadow_line_depth_x: float = 0.3
+
 class SingleSwitchXiaoCase:
     dims = CaseDimensions()
 
@@ -108,6 +111,17 @@ class SingleSwitchXiaoCase:
                     Rectangle(0.75*PowerSwitch.dims.width_x, 1)
             extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
+            chamfer(case.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[-1], length=self.dims.shadow_line_depth_x/2)
+
+            chamfer(case.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.Y)[-1].edges().sort_by(Axis.Z)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[0].edges().sort_by(Axis.Z)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[0].edges().sort_by(Axis.Y)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[0].edges().sort_by(Axis.Y)[-1], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[-1].edges().sort_by(Axis.Z)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[-1].edges().sort_by(Axis.Y)[0], length=self.dims.wall_thickness/3)
+            chamfer(case.faces().sort_by(Axis.X)[-1].edges().sort_by(Axis.Y)[-1], length=self.dims.wall_thickness/3)
+
 
         with BuildPart() as keywell:
             bottom_left = (-self.length_x/2, -self.width_y/2 )
@@ -137,8 +151,8 @@ class SingleSwitchXiaoCase:
                                (self.length_x/2-2*self.dims.wall_thickness-self.dims.clearance, 0)):
                     Rectangle(2*self.dims.wall_thickness, keywell_holder_width_y)
             keywell_holder = extrude(amount=-wall_height + self.dims.clearance)
-            keywell_holder_front_face = keywell_holder.faces().filter_by(Axis.Y)[0:3:2]
 
+            keywell_holder_front_face = keywell_holder.faces().filter_by(Axis.Y)[0:3:2]
             with BuildSketch(keywell_holder_front_face) as keywell_pin_holes:
                 pin_y_position = -self.dims.wall_thickness/2 - 0.58*self.dims.clearance
                 with Locations((self.dims.clearance, pin_y_position)):
@@ -160,8 +174,37 @@ class SingleSwitchXiaoCase:
                     Rectangle(self.dims.battery_x + self.dims.clearance, self.dims.battery_y + self.dims.clearance)
             extrude(amount=keywell_height_z-self.dims.wall_thickness-0.6, mode=Mode.SUBTRACT)
 
+            shadowline_y = -keywell_height_z/2 + self.dims.shadow_line_height_z/2
+            keywell_left_outer_face = keywell.faces().sort_by(Axis.X)[0]
+            keywell_front_outer_face = keywell.faces().sort_by(Axis.Y)[0]
+            keywell_left_back_face = keywell.faces().filter_by(Axis.Y).sort_by(Axis.X)[0]
 
-        
+            with BuildSketch(keywell_left_outer_face) as left_shadow_line:
+                with Locations((0, shadowline_y)):
+                    Rectangle(self.width_y, self.dims.shadow_line_height_z)
+            extrude(amount=-self.dims.shadow_line_depth_x, mode=Mode.SUBTRACT)
+
+            with BuildSketch(keywell_left_back_face) as left_back_shadow_line:
+                with BuildLine():
+                    backleft_shadowline_y = shadowline_y + self.dims.shadow_line_height_z/2
+                    top=Line((3*self.dims.wall_thickness, backleft_shadowline_y), (-1.5*self.dims.wall_thickness, backleft_shadowline_y))
+                    right=Line((3*self.dims.wall_thickness, backleft_shadowline_y), (3*self.dims.wall_thickness, backleft_shadowline_y-self.dims.shadow_line_height_z))
+                    bottom=Line((3*self.dims.wall_thickness, backleft_shadowline_y-self.dims.shadow_line_height_z), (-1.5*self.dims.wall_thickness-0.28, backleft_shadowline_y-self.dims.shadow_line_height_z))
+                    left=RadiusArc(bottom@1, top@1, self.dims.shadow_line_height_z, short_sagitta=True)
+                make_face()
+            extrude(amount=-self.dims.shadow_line_depth_x, mode=Mode.SUBTRACT)
+
+            chamfer(keywell.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0], length=self.dims.shadow_line_depth_x/2)
+
+            chamfer(keywell.faces().sort_by(Axis.Z)[-1].edges(), length=self.dims.wall_thickness/3)
+
+            chamfer(keywell.faces().sort_by(Axis.X)[0].edges().sort_by(Axis.Y)[0], length=self.dims.wall_thickness/3)
+            chamfer(keywell.faces().sort_by(Axis.X)[0].edges().sort_by(Axis.Y)[-1], length=self.dims.wall_thickness/3)
+            chamfer(keywell.faces().sort_by(Axis.X)[-1].edges().sort_by(Axis.Y)[0], length=self.dims.wall_thickness/3)
+            chamfer(keywell.faces().sort_by(Axis.X)[-1].edges().sort_by(Axis.Y)[-1], length=self.dims.wall_thickness/3)
+
+
+
         with BuildPart() as bottom:
             bottom_width_y = self.width_y - 2*self.dims.wall_thickness - 2*self.dims.clearance
             bottom_length_x = self.length_x - 2*self.dims.wall_thickness - 2*self.dims.clearance
