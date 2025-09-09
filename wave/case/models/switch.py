@@ -44,9 +44,12 @@ class StemDimensions:
 
 @dataclass
 class CapDimensions:
-    width_x: float = 17.5
-    length_y: float = 16.5
+    width_x: float = 17.92
+    length_y: float = 16.92
     height_z: float = 2.6
+
+    width_x_without_space: float = 17.45
+    length_y_without_space: float = 16.571
 
 class Choc:
     base = BaseDimensions()
@@ -89,9 +92,15 @@ class Choc:
                 with Locations((0, -(self.stem.depth_y+self.stem.ext_depth_y)/2, self.stem.height_z / 2)):
                     Box(self.stem.ext_width_x, self.stem.ext_depth_y, self.stem.height_z)
 
-            with BuildPart(stem.faces().sort_by(Axis.Z)[-1]) as cap:
-                with Locations((0, 0, self.cap.height_z / 2)):
-                    Box(self.cap.width_x, self.cap.length_y, self.cap.height_z)
+            with BuildPart() as cap:
+                with BuildSketch(stem.faces().sort_by(Axis.Z)[-1]):
+                    with Locations((0, 0.05)):
+                        RectangleRounded(self.cap.width_x_without_space, self.cap.length_y_without_space, 2)
+                extrude(amount=self.cap.height_z)
+                fillet(cap.faces().sort_by(Axis.Z)[-1].edges(), 1.5)
+                s = 80
+                with Locations((0, 0, s+7)):
+                    Sphere(s, mode=Mode.SUBTRACT, rotation=(90, 0, 0))
 
         if show_model:
             from ocp_vscode import show_all
