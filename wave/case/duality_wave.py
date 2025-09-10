@@ -10,6 +10,65 @@ from models.symbol import Symbol
 
 from ocp_vscode import *
 
+class KeyCol:
+    rotation: float = 0
+    locs: list[Location] = []
+
+@dataclass
+class PinkieDimensions(KeyCol):
+    x: float = 0
+    y: float = 0
+    offset: float = -2
+    rotation: float = 8
+    locs: list[Location] = (
+        Location((0, 0)), 
+        Location((-Choc.cap.width_x/rotation, Choc.cap.length_y)), 
+        Location((-2*Choc.cap.width_x/rotation, 2*Choc.cap.length_y))
+    )
+
+@dataclass
+class RingFingerDimensions(KeyCol):
+    x: float = Choc.cap.width_x + PinkieDimensions.offset
+    y: float = 14
+    rotation: float = 0
+    locs: list[Location] = (
+        Location((x, y)), 
+        Location((x, Choc.cap.length_y + y)), 
+        Location((x, 2*Choc.cap.length_y + y))
+    )
+
+@dataclass
+class MiddleFingerDimensions(KeyCol):
+    x: float = 2*Choc.cap.width_x + PinkieDimensions.offset
+    y: float = 22.4
+    rotation: float = 0
+    locs: list[Location] = (
+        Location((x, y)), 
+        Location((x, Choc.cap.length_y + y)), 
+        Location((x, 2*Choc.cap.length_y + y))
+    )
+
+@dataclass
+class PointerFingerDimensions(KeyCol):
+    x: float = 3*Choc.cap.width_x + PinkieDimensions.offset
+    y: float = 18
+    rotation: float = 0
+    locs: list[Location] = (
+        Location((x, y)), 
+        Location((x, Choc.cap.length_y + y)), 
+        Location((x, 2*Choc.cap.length_y + y))
+    )
+
+@dataclass
+class InnerFingerDimensions(KeyCol):
+    x: float = 4*Choc.cap.width_x + PinkieDimensions.offset
+    y: float = 14
+    rotation: float = 0
+    locs: list[Location] = (
+        Location((x, y)), 
+        Location((x, Choc.cap.length_y + y)), 
+        Location((x, 2*Choc.cap.length_y + y))
+    )
 
 @dataclass
 class CaseDimensions:
@@ -36,6 +95,11 @@ class CaseDimensions:
 
 class DualityWaveCase:
     dims = CaseDimensions()
+    pinkie = PinkieDimensions()
+    ring = RingFingerDimensions()
+    middle = MiddleFingerDimensions()
+    pointer = PointerFingerDimensions()
+    inner = InnerFingerDimensions()
 
     def __init__(self, with_knurl=False, debug=False):
         self.with_knurl = with_knurl
@@ -47,34 +111,27 @@ class DualityWaveCase:
         with BuildPart() as self.case:
             self.case.name = "Case"
 
-            Box(200, 200, self.dims.wall_thickness)
-
-            pinkie_y = -Choc.cap.length_y / 2
-            with BuildSketch() as pinkie:
-                with Locations((0, pinkie_y), (0, Choc.cap.length_y + pinkie_y), (0, 2*Choc.cap.length_y + pinkie_y)):
-                    Rectangle(Choc.base.width_x, Choc.base.length_y)
-                pinkie = pinkie.sketch.rotate(Axis.Z, 8)
-            ring_y = Choc.cap.length_y / 3
-            middle_y = 15
-            pointer_y = 10
-            inner_y = 5
-            with BuildSketch() as fingers:
-                with Locations(
-                    (Choc.cap.width_x, ring_y), (Choc.cap.width_x, Choc.cap.length_y + ring_y), (Choc.cap.width_x, 2*Choc.cap.length_y + ring_y),
-                    (2*Choc.cap.width_x, middle_y), (2*Choc.cap.width_x, Choc.cap.length_y + middle_y), (2*Choc.cap.width_x, 2*Choc.cap.length_y + middle_y),
-                    (3*Choc.cap.width_x, pointer_y), (3*Choc.cap.width_x, Choc.cap.length_y + pointer_y), (3*Choc.cap.width_x, 2*Choc.cap.length_y + pointer_y),
-                    (4*Choc.cap.width_x, inner_y), (4*Choc.cap.width_x, Choc.cap.length_y + inner_y), (4*Choc.cap.width_x, 2*Choc.cap.length_y + inner_y)
-                ):
-                    Rectangle(Choc.base.width_x, Choc.base.length_y)
-                fingers = fingers.sketch
-
-            with BuildSketch(self.case.faces().sort_by(Axis.Z)[-1]) as outline:
-                add(pinkie)
-                add(fingers)
+            plate = Box(200, 200, self.dims.wall_thickness, mode=Mode.PRIVATE)
+            plate = plate.translate((80, 90, -self.dims.wall_thickness/2))
+            add(plate)
+            
+            
+            with BuildSketch() as outline:
+                for keycol in [self.pinkie, self.ring, self.middle, self.pointer, self.inner]:
+                    with Locations(*keycol.locs):
+                        Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
             extrude(amount=-self.dims.wall_thickness, mode=Mode.SUBTRACT)
-
             if (self.debug):
                 push_object(outline, name="outline")
+
+            choc = Choc()
+            for keycol in [self.pinkie, self.ring, self.middle, self.pointer, self.inner]:
+                with Locations(*keycol.locs):
+                    add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
+
+
+
+            
 
 if __name__ == "__main__":
     set_port(3939)

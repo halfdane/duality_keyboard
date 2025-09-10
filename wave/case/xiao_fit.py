@@ -51,7 +51,7 @@ class SingleSwitchXiaoCase:
         self.keywell_holder_width_y = 20
 
         if self.with_knurl:
-            distance = 1
+            distance = 2
         else:
             distance = 15
 
@@ -88,7 +88,7 @@ class SingleSwitchXiaoCase:
                 polyline_points.extend([start_point, end_point])
             
             FilletPolyline(*polyline_points, radius=distance/3)
-        snake_face = offset(line.line, 0.25*distance+2*self.dims.clearance)
+        snake_face = offset(line.line, 0.2*distance)
         with BuildSketch() as sketch:
             add(snake_face.rotate(Axis.Z, rotation_angle))
             make_face()
@@ -113,7 +113,7 @@ class SingleSwitchXiaoCase:
             with BuildSketch() as keyhole:
                 with Locations((0, self.key_y)):
                     with GridLocations(Choc.cap.width_x, Choc.cap.length_y, self.cols, self.rows):
-                        Rectangle(self.choc_hole_size, self.choc_hole_size)
+                        Rectangle(self.choc_hole_size + self.dims.clearance, self.choc_hole_size + self.dims.clearance)
             extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
             with BuildSketch() as walls:
@@ -404,17 +404,17 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
 
-    knurl = False
+    knurl = True
 
     proto = SingleSwitchXiaoCase(with_knurl=knurl)
-    push_object(proto.snake) if hasattr(proto, "snake") else None
-    push_object(proto.keywell) if hasattr(proto, "keywell") else None
-    push_object(proto.case) if hasattr(proto, "case") else None
-    push_object(proto.bottom) if hasattr(proto, "bottom") else None
-    if hasattr(proto, "accessories"):
-        for accessory in proto.accessories:
-            push_object(accessory)
-    show_objects()
+    # push_object(proto.snake) if hasattr(proto, "snake") else None
+    # push_object(proto.keywell) if hasattr(proto, "keywell") else None
+    # push_object(proto.case) if hasattr(proto, "case") else None
+    # push_object(proto.bottom) if hasattr(proto, "bottom") else None
+    # if hasattr(proto, "accessories"):
+    #     for accessory in proto.accessories:
+    #         push_object(accessory)
+    # show_objects()
 
     if knurl:
         export_stl(proto.case.part, "wave_case.stl", tolerance=0.01) if hasattr(proto, "case") else None
