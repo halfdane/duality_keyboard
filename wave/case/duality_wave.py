@@ -7,78 +7,9 @@ from models.xiao import Xiao
 from models.power_switch import PowerSwitch
 from models.knurl import Knurl
 from models.symbol import Symbol
+from models.keys import Keys
 
 from ocp_vscode import *
-
-class KeyCol:
-    rotation: float = 0
-    locs: list[Location] = []
-
-@dataclass
-class PinkieDimensions(KeyCol):
-    x: float = 0
-    y: float = 0
-    offset_x: float = -1
-    rotation: float = 8
-    locs: list[Location] = (
-        Location((0, 0)), 
-        Location((-Choc.cap.width_x/rotation, Choc.cap.length_y)), 
-        Location((-2*Choc.cap.width_x/rotation, 2*Choc.cap.length_y))
-    )
-
-@dataclass
-class RingFingerDimensions(KeyCol):
-    x: float = Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 14
-    rotation: float = 0
-    locs: list[Location] = (
-        Location((x, y)), 
-        Location((x, Choc.cap.length_y + y)), 
-        Location((x, 2*Choc.cap.length_y + y))
-    )
-
-@dataclass
-class MiddleFingerDimensions(KeyCol):
-    x: float = 2*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 22.4
-    rotation: float = 0
-    locs: list[Location] = (
-        Location((x, y)), 
-        Location((x, Choc.cap.length_y + y)), 
-        Location((x, 2*Choc.cap.length_y + y))
-    )
-
-@dataclass
-class PointerFingerDimensions(KeyCol):
-    x: float = 3*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 18
-    rotation: float = 0
-    locs: list[Location] = (
-        Location((x, y)), 
-        Location((x, Choc.cap.length_y + y)), 
-        Location((x, 2*Choc.cap.length_y + y))
-    )
-
-@dataclass
-class InnerFingerDimensions(KeyCol):
-    x: float = 4*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 14
-    rotation: float = 0
-    locs: list[Location] = (
-        Location((x, y)), 
-        Location((x, Choc.cap.length_y + y)), 
-        Location((x, 2*Choc.cap.length_y + y))
-    )
-
-@dataclass
-class ThumbDimensions(KeyCol):
-    x: float = InnerFingerDimensions.locs[0].position.X - 6.5
-    y: float = InnerFingerDimensions.locs[0].position.Y - 18
-    rotation: float = -8
-    locs: list[Location] = (
-        Location((x, y)), 
-        Location((Choc.cap.width_x + x, y + Choc.cap.length_y/rotation)), 
-    )
 
 @dataclass
 class CaseDimensions:
@@ -95,13 +26,7 @@ class CaseDimensions:
 
 class DualityWaveCase:
     dims = CaseDimensions()
-    pinkie = PinkieDimensions()
-    ring = RingFingerDimensions()
-    middle = MiddleFingerDimensions()
-    pointer = PointerFingerDimensions()
-    inner = InnerFingerDimensions()
-    thumb = ThumbDimensions()
-    keycols = [pinkie, ring, middle, pointer, inner, thumb]
+    keys = Keys()
 
     def __init__(self, with_knurl=False, debug=False):
         self.with_knurl = with_knurl
@@ -118,8 +43,8 @@ class DualityWaveCase:
 
         with BuildSketch() as key_holes:
             with Locations((21.5, 12.9)):
-                for keycol in self.keycols:
-                    with Locations(*keycol.locs):
+                for keycol in self.keys.keycols:
+                    with Locations(keycol.locs):
                         Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
             push_object(key_holes, name="key_holes") if self.debug else None
             
@@ -129,11 +54,13 @@ class DualityWaveCase:
             thumb_container_height_y = 25
             circle_radius = 39.9
 
+            thumb = self.keys.thumb
+
             with Locations((base_width_x/2, base_length_y/2)):
                 Rectangle(base_width_x, base_length_y)
-            with Locations((self.thumb.locs[1].position.X+11.5, self.thumb.locs[1].position.Y + thumb_container_height_y/2 + 14.4)):
-                Rectangle(2*Choc.cap.width_x + 10, thumb_container_height_y + 21.5, rotation=self.thumb.rotation)
-            with Locations((base_width_x + circle_radius, self.thumb.locs[1].position.Y + 48.4)):
+            with Locations((thumb.locs[1].position.X+11.5, thumb.locs[1].position.Y + thumb_container_height_y/2 + 14.4)):
+                Rectangle(2*Choc.cap.width_x + 10, thumb_container_height_y + 21.5, rotation=thumb.rotation)
+            with Locations((base_width_x + circle_radius, thumb.locs[1].position.Y + 48.4)):
                 Circle(circle_radius, mode=Mode.SUBTRACT)
 
             outline = outline.sketch
@@ -232,7 +159,7 @@ class DualityWaveCase:
             self.chocs.name = "Choc Switches"
 
             with Locations((21.5, 12.9)):
-                for keycol in self.keycols:
+                for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
                         add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
         push_object(self.chocs, name="chocs")
