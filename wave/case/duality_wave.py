@@ -98,6 +98,22 @@ class DualityWaveCase:
                 )
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
+            with BuildSketch(Plane(self.keyplate_dims.xiao_position)) as xiao_hole:
+                Rectangle(Xiao.board.width_x - 1.5, Xiao.board.depth_y - 1.5)
+            extrude(amount=self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
+            with BuildSketch(Plane(self.keyplate_dims.xiao_position)) as xiao_cut:
+                Rectangle(Xiao.board.width_x + 2*self.dims.clearance, Xiao.board.depth_y + 2*self.dims.clearance)
+            extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
+            with BuildSketch(Plane(self.keyplate_dims.xiao_position).rotated((90, 0, 0)).offset(-Xiao.board.depth_y/2)) as usb_cut:
+                usb_z_position = -Xiao.board.thickness_z - Xiao.usb.height_z/2
+                with Locations((0, usb_z_position)):
+                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
+                with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
+                    Circle(0.5)
+
+            extrude(amount=-10, mode=Mode.SUBTRACT)
+            push_object(usb_cut, name="usb_cut") if self.debug else None
+
 
 
     def project_to_face(self, pattern, face: Face) -> Vector:
