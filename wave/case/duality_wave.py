@@ -52,17 +52,17 @@ class DualityWaveCase:
         self.with_knurl = with_knurl
         self.debug = debug
 
-        self.keyplate = self.create_keyplate()
+        self.keyplate_left = self.create_keyplate()
 
         self.create_accessories()
-            
-        self.keyplate2 = mirror(self.keyplate, about=Plane.YZ)
-        usb_cut = self.create_usb_cut()
-        self.keyplate = self.keyplate - usb_cut.translate(self.keyplate_dims.xiao_position)
-        self.keyplate2 = self.keyplate2 - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
 
-        push_object(self.keyplate2, name="keyplate2") if self.debug else None
-        push_object(self.keyplate, name="keyplate") if self.debug else None
+        self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
+        usb_cut = self.create_usb_cut()
+        self.keyplate_left = self.keyplate_left - usb_cut.translate(self.keyplate_dims.xiao_position)
+        self.keyplate_right = self.keyplate_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
+
+        push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
+        push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
 
     def create_usb_cut(self):
         with BuildPart() as usb_cut:
@@ -125,7 +125,7 @@ class DualityWaveCase:
                 top_y = self.keys.middle.locs[2].position.Y+Choc.cap.length_y/2
                 with BuildLine() as top_line:
                     FilletPolyline(
-                        (self.keys.inner.locs[2].position.X-3, top_y),
+                        (self.keys.pinkie.locs[2].position.X, top_y),
                         (self.keys.inner.locs[2].position.X, top_y),
                         (self.keys.inner.locs[2].position.X, self.keys.inner.locs[0].position.Y),
                         radius=2
@@ -135,8 +135,8 @@ class DualityWaveCase:
 
                 for row in range(3):
                     with BuildLine() as row_line:
-                        pts = [ keycol.locs[row] * Location((0, -3)) for keycol in self.keys.finger_cols]
-                        Polyline(*[pt.position for pt in pts])
+                        pts = [ keycol.locs[row].position + Vector((Choc.pins.pin2_x, -Choc.pins.pin2_y)) for keycol in self.keys.finger_cols]
+                        Polyline(*pts)
                         offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
                     make_face()
 
@@ -151,7 +151,10 @@ class DualityWaveCase:
                     offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
                 make_face()
 
-                l = Line(self.keys.thumb.locs[0].position, self.keys.thumb.locs[1].position)
+                l = Line(self.keys.thumb.locs[0].position+ Vector((Choc.pins.pin2_x, -Choc.pins.pin2_y)), self.keys.thumb.locs[1].position+ Vector((Choc.pins.pin2_x, -Choc.pins.pin2_y)))
+                offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+                l = Line(self.keys.thumb.locs[0].position+ Vector((Choc.pins.pin2_x, Choc.pins.pin2_y)), self.keys.thumb.locs[1].position+ Vector((Choc.pins.pin2_x, Choc.pins.pin2_y)))
                 offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
                 make_face()
                 for t in self.keys.thumb.locs:
@@ -165,30 +168,15 @@ class DualityWaveCase:
             extrude(to_extrude=connector_sketch, amount=self.keyplate_dims.connector_depth_z, mode=Mode.SUBTRACT)
             push_object(connector_sketch, name="connector_sketch") if self.debug else None
 
-            with BuildSketch() as topline_sketch:
-                topline = Line(
-                    (self.keys.pinkie.locs[2].position.X, top_y),
-                    (self.keys.inner.locs[2].position.X-2, top_y),
-                )
-                offset(objects=topline, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                make_face()
-            topline_sketch = topline_sketch.sketch \
-                .translate(self.outline.dims.switch_offset)\
-                .translate((0,0, -self.keyplate_dims.size_z + self.bottom_dims.size_z))
-            topline_extruded = extrude(to_extrude=topline_sketch, amount=self.keyplate_dims.connector_depth_z, mode=Mode.SUBTRACT) 
-
-            with BuildSketch(topline_extruded.faces().sort_by(Axis.Y)[-1]) as connector_holder1:
-                with Locations((-2.5, -self.keyplate_dims.connector_depth_z/2 + 0.25)):
-                    Rectangle(20, 0.5)
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as connector_holder1:
+                with Locations(
+                    self.keys.middle.locs[2].position + Vector((0, Choc.cap.length_y/2 + self.keyplate_dims.connector_width/2)) + Vector(self.outline.dims.switch_offset),
+                    self.keys.middle.locs[2].position + Vector((-25, Choc.cap.length_y/2 -self.keyplate_dims.connector_width/2)) + Vector(self.outline.dims.switch_offset),
+                    self.keys.middle.locs[2].position + Vector((25, Choc.cap.length_y/2 -self.keyplate_dims.connector_width/2)) + Vector(self.outline.dims.switch_offset),
+                    ):
+                    RectangleRounded(10, 1.5*self.keyplate_dims.connector_width, radius=0.5*self.keyplate_dims.connector_width)
             push_object(connector_holder1, name="connector_holder1") if self.debug else None
-            extrude(to_extrude=connector_holder1.sketch, amount=-0.75*self.keyplate_dims.connector_width, mode=Mode.ADD)
-
-            with BuildSketch(topline_extruded.faces().sort_by(Axis.Y)[0]) as connector_holder2:
-                with Locations((-25, -self.keyplate_dims.connector_depth_z/2 + 0.25),
-                               (30, -self.keyplate_dims.connector_depth_z/2 + 0.25)):
-                    Rectangle(10, 0.5)
-            push_object(connector_holder2, name="connector_holder2") if self.debug else None
-            extrude(to_extrude=connector_holder2.sketch, amount=-0.75*self.keyplate_dims.connector_width, mode=Mode.ADD)
+            extrude(to_extrude=connector_holder1.sketch, amount=0.25, mode=Mode.ADD)
         
         return keyplate.part
 
@@ -238,6 +226,9 @@ class DualityWaveCase:
 
 
     def create_accessories(self):
+        if not self.debug:
+            return
+        
         choc = Choc()
         with BuildPart() as self.chocs:
             self.chocs.name = "Choc Switches"

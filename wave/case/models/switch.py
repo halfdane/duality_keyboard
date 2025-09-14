@@ -25,6 +25,7 @@ class PostDimensions:
 class PinsDimensions:
     pin1_x: float = 0
     pin1_y: float = 5.9
+    
     pin2_x: float = -5
     pin2_y: float = 3.8
 
