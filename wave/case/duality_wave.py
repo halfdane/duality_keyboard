@@ -21,8 +21,13 @@ class BottomDimensions:
 class KeyplateDimensions:
     size_z: float = Choc.bottom_housing.height_z + Choc.posts.post_height_z + BottomDimensions.size_z
     switch_clamp_clearance: float = size_z - Choc.clamps.clearance_z
+
     xiao_offset: float = BottomDimensions.keyplate_offset
-    xiao_position: Location = (xiao_offset + Xiao.board.width_x/2, Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset, -(Choc.bottom_housing.height_z + Choc.posts.post_height_z - Xiao.board.thickness_z - Xiao.usb.height_z))
+    xiao_pos_x: float = xiao_offset + Xiao.board.width_x/2
+    xiao_pos_y: float = Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset
+    xiao_pos_z: float = -(Choc.bottom_housing.height_z + Choc.posts.post_height_z - Xiao.board.thickness_z - Xiao.usb.height_z)
+    xiao_position: Location = (xiao_pos_x, xiao_pos_y, xiao_pos_z)
+    xiao_mirror_position: Location = (-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
     connector_width: float = 2
     connector_depth_z: float = Choc.posts.post_height_z
@@ -47,24 +52,42 @@ class DualityWaveCase:
         self.with_knurl = with_knurl
         self.debug = debug
 
-        self.create_keyplate()
+        self.keyplate = self.create_keyplate()
 
         self.create_accessories()
+            
+        self.keyplate2 = mirror(self.keyplate, about=Plane.YZ)
+        usb_cut = self.create_usb_cut()
+        self.keyplate = self.keyplate - usb_cut.translate(self.keyplate_dims.xiao_position)
+        self.keyplate2 = self.keyplate2 - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
+
+        push_object(self.keyplate2, name="keyplate2") if self.debug else None
+        push_object(self.keyplate, name="keyplate") if self.debug else None
+
+    def create_usb_cut(self):
+        with BuildPart() as usb_cut:
+            with BuildSketch(Plane.XZ.offset(-Xiao.board.depth_y/2)) as usb_sketch:
+                usb_z_position = -Xiao.board.thickness_z - Xiao.usb.height_z/2
+                with Locations((0, usb_z_position)):
+                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
+                with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
+                    Circle(0.5)
+            extrude(amount=-10, mode=Mode.ADD)
+        return usb_cut.part
+
 
     def create_keyplate(self):
         print("Creating keyplate...")
 
-        with BuildPart() as self.keyplate:
-            self.keyplate.name = "Keyplate"
-
+        with BuildPart() as keyplate:
             with BuildSketch() as walls:
                 add(self.outline.sketch)
             extrude(amount=-self.keyplate_dims.size_z)
 
             if self.with_knurl: 
                 print("Adding knurl...")
-                tops = self.keyplate.faces().filter_by(Axis.Z)
-                walls = self.keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
+                tops = keyplate.faces().filter_by(Axis.Z)
+                walls = keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
                 self.create_knurl(distance=10 if self.debug else 1.5, width_x=200, height_y=50)
                 for i, wall in enumerate(walls):
                     print(f"  Projecting pattern to wall {i+1} of {len(walls)}")
@@ -96,14 +119,6 @@ class DualityWaveCase:
             with BuildSketch(Plane(self.keyplate_dims.xiao_position)) as xiao_cut:
                 Rectangle(Xiao.board.width_x + 2*self.dims.clearance, Xiao.board.depth_y + 2*self.dims.clearance)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
-            with BuildSketch(Plane(self.keyplate_dims.xiao_position).rotated((90, 0, 0)).offset(-Xiao.board.depth_y/2)) as usb_cut:
-                usb_z_position = -Xiao.board.thickness_z - Xiao.usb.height_z/2
-                with Locations((0, usb_z_position)):
-                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
-                with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
-                    Circle(0.5)
-            extrude(amount=-10, mode=Mode.SUBTRACT)
-            push_object(usb_cut, name="usb_cut") if self.debug else None
 
 
             with BuildSketch() as connector_sketch:
@@ -174,7 +189,8 @@ class DualityWaveCase:
                     Rectangle(10, 0.5)
             push_object(connector_holder2, name="connector_holder2") if self.debug else None
             extrude(to_extrude=connector_holder2.sketch, amount=-0.75*self.keyplate_dims.connector_width, mode=Mode.ADD)
-
+        
+        return keyplate.part
 
 
 
@@ -230,13 +246,15 @@ class DualityWaveCase:
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
                         add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
+        self.chocs = self.chocs.part + mirror(self.chocs.part, about=Plane.YZ)
         push_object(self.chocs, name="chocs")
 
         xiao = Xiao()
-        xiao.model = xiao.model.part\
+        xiao = xiao.model.part\
             .rotate(Axis.X, 180)\
             .translate(self.keyplate_dims.xiao_position)
-        push_object(xiao.model, name="xiao")
+        xiao = xiao + mirror(xiao, about=Plane.YZ)
+        push_object(xiao, name="xiao")
 
             
 
@@ -249,5 +267,4 @@ if __name__ == "__main__":
     knurl = False
     case = DualityWaveCase(with_knurl=knurl, debug=True)
 
-    push_object(case.keyplate) if hasattr(case, "keyplate") else None
     show_objects() 

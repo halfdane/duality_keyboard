@@ -18,8 +18,18 @@ class BottomHousingDimensions:
 class PostDimensions:
     post_height_z: float = 2.65
     center_post_radius: float = 1.6
-    alignment_pin_radius: float = 0.8
+    alignment_pin_radius: float = 0.9
     alignment_pin_x_offset: float = 5.5
+
+@dataclass
+class PinsDimensions:
+    pin1_x: float = 0
+    pin1_y: float = 5.9
+    pin2_x: float = -5
+    pin2_y: float = 3.8
+
+    radius: float = 0.2
+    height_z: float = 3
 
 @dataclass
 class ClampDimensions:
@@ -57,6 +67,7 @@ class Choc:
     base = BaseDimensions()
     bottom_housing = BottomHousingDimensions()
     posts = PostDimensions()
+    pins = PinsDimensions()
     clamps = ClampDimensions()
     upper_housing = UpperHousingDimensions()
     stem = StemDimensions()
@@ -78,6 +89,9 @@ class Choc:
                 with Locations((self.posts.alignment_pin_x_offset, 0, self.posts.post_height_z / 2), 
                             (-self.posts.alignment_pin_x_offset, 0, self.posts.post_height_z / 2)):
                     Cylinder(self.posts.alignment_pin_radius, self.posts.post_height_z)
+                with Locations((self.pins.pin1_x, self.pins.pin1_y, self.pins.height_z / 2),
+                            (self.pins.pin2_x, self.pins.pin2_y, self.pins.height_z / 2)):
+                    Cylinder(self.pins.radius, self.pins.height_z)
 
             with BuildPart(bottom_housing.faces().filter_by(Axis.X)) as snap_in_clamps:
                 with Locations(((self.bottom_housing.height_z-self.clamps.height_z)/2, self.clamps.offset_between, self.clamps.width_x/2), 
