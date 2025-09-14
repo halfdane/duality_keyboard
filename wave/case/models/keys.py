@@ -79,12 +79,6 @@ class Keys:
     pointer = PointerFingerDimensions()
     inner = InnerFingerDimensions()
     thumb = ThumbDimensions()
-    keycols: list[KeyCol] = [
-        pinkie,
-        ring,
-        middle,
-        pointer,
-        inner,
-        thumb,
-    ]
+    finger_cols = [pinkie, ring, middle, pointer, inner]
+    keycols: list[KeyCol] = [*finger_cols, thumb]
     

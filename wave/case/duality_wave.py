@@ -24,6 +24,9 @@ class KeyplateDimensions:
     xiao_offset: float = BottomDimensions.keyplate_offset
     xiao_position: Location = (xiao_offset + Xiao.board.width_x/2, Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset, -(Choc.bottom_housing.height_z + Choc.posts.post_height_z - Xiao.board.thickness_z - Xiao.usb.height_z))
 
+    connector_width: float = 2
+    connector_depth_z: float = Choc.posts.post_height_z
+
 @dataclass
 class CaseDimensions:
     clearance: float = 0.02
@@ -83,7 +86,6 @@ class DualityWaveCase:
                             Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
             push_object(key_holes, name="key_holes") if self.debug else None
             extrude(amount=-Choc.clamps.clearance_z, mode=Mode.SUBTRACT)
-
             with BuildSketch(Plane.XY.offset(-Choc.clamps.clearance_z)) as keyholes_with_space:
                 offset(key_holes.sketch, 1)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
@@ -104,6 +106,50 @@ class DualityWaveCase:
             push_object(usb_cut, name="usb_cut") if self.debug else None
 
 
+            with BuildSketch() as connector_sketch:
+                top_y = self.keys.middle.locs[2].position.Y+Choc.cap.length_y/2
+                with BuildLine():
+                    FilletPolyline(
+                        (self.keys.pinkie.locs[2].position.X, top_y),
+                        (self.keys.inner.locs[2].position.X, top_y),
+                        (self.keys.inner.locs[2].position.X, self.keys.inner.locs[0].position.Y),
+                        radius=2
+                    )
+                    offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+
+                for row in range(3):
+                    with BuildLine():
+                        pts = [ keycol.locs[row] * Location((0, -3)) for keycol in self.keys.finger_cols]
+                        Polyline(*[pt.position for pt in pts])
+                        offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                    make_face()
+
+                for col in [self.keys.pointer, self.keys.middle, self.keys.ring]:
+                    l = Line(col.locs[0].position, (col.locs[0].position.X, top_y))
+                    offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                    make_face()
+                
+                with BuildLine():
+                    pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2], Location((self.keys.pinkie.locs[2].position.X, top_y)) ]
+                    Polyline(*[pt.position for pt in pts])
+                    offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+
+                l = Line(self.keys.thumb.locs[0].position, self.keys.thumb.locs[1].position)
+                offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+                for t in self.keys.thumb.locs:
+                    l = Line(t.position, self.keys.inner.locs[0].position)
+                    offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                    make_face()
+
+
+            connector_sketch = connector_sketch.sketch \
+                .translate(self.outline.dims.switch_offset)\
+                .translate((0,0, -self.keyplate_dims.size_z + self.bottom_dims.size_z))
+            extrude(to_extrude=connector_sketch, amount=self.keyplate_dims.connector_depth_z, mode=Mode.SUBTRACT)
+            push_object(connector_sketch, name="connector_sketch") if self.debug else None
 
     def project_to_face(self, pattern, face: Face) -> Vector:
         vector = face.normal_at((0,0,0))
