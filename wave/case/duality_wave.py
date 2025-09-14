@@ -84,6 +84,7 @@ class ThumbDimensions(KeyCol):
 class CaseDimensions:
     clearance: float = 0.02
     wall_thickness: float = 1.3
+
     pin_radius: float = 0.5
 
     pattern_depth: float = 0.2
@@ -116,9 +117,10 @@ class DualityWaveCase:
         print("Creating case...")
 
         with BuildSketch() as key_holes:
-            for keycol in self.keycols:
-                with Locations(*keycol.locs):
-                    Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+            with Locations((21.5, 12.9)):
+                for keycol in self.keycols:
+                    with Locations(*keycol.locs):
+                        Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
             push_object(key_holes, name="key_holes") if self.debug else None
             
         with BuildSketch() as outline:
@@ -127,11 +129,11 @@ class DualityWaveCase:
             thumb_container_height_y = 25
             circle_radius = 39.9
 
-            with Locations((base_width_x/2 - 21.5, base_length_y/2 - 12.9)):
+            with Locations((base_width_x/2, base_length_y/2)):
                 Rectangle(base_width_x, base_length_y)
-            with Locations((self.thumb.locs[1].position.X-10, self.thumb.locs[1].position.Y + thumb_container_height_y/2 + 1.5)):
+            with Locations((self.thumb.locs[1].position.X+11.5, self.thumb.locs[1].position.Y + thumb_container_height_y/2 + 14.4)):
                 Rectangle(2*Choc.cap.width_x + 10, thumb_container_height_y + 21.5, rotation=self.thumb.rotation)
-            with Locations((base_width_x + circle_radius - 21.5, self.thumb.locs[1].position.Y + 35.5)):
+            with Locations((base_width_x + circle_radius, self.thumb.locs[1].position.Y + 48.4)):
                 Circle(circle_radius, mode=Mode.SUBTRACT)
 
             outline = outline.sketch
@@ -229,9 +231,10 @@ class DualityWaveCase:
         with BuildPart() as self.chocs:
             self.chocs.name = "Choc Switches"
 
-            for keycol in self.keycols:
-                with Locations([loc*Location((0,0,Choc.base.thickness_z)) for loc in keycol.locs]):
-                    add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
+            with Locations((21.5, 12.9)):
+                for keycol in self.keycols:
+                    with Locations(keycol.locs):
+                        add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
         push_object(self.chocs, name="chocs")
 
         xiao = Xiao()
@@ -248,7 +251,7 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
 
-    knurl = True
+    knurl = False
     case = DualityWaveCase(with_knurl=knurl, debug=True)
 
     push_object(case.case) if hasattr(case, "case") else None

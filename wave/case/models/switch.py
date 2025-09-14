@@ -46,7 +46,7 @@ class StemDimensions:
 class CapDimensions:
     width_x: float = 18
     length_y: float = 17.1
-    height_z: float = 2.6
+    height_z: float = 2.25
 
     width_x_without_space: float = 17.45
     length_y_without_space: float = 16.571
@@ -63,7 +63,7 @@ class Choc:
     def __init__(self, show_model=False, show_step_file=False):
         with BuildPart() as self.model:
             with BuildPart() as main_housing_base:
-                with Locations((0, 0, -self.base.thickness_z / 2)):
+                with Locations((0, 0, +self.base.thickness_z / 2)):
                     Box(self.base.width_x, self.base.length_y, self.base.thickness_z)
 
             with BuildPart(main_housing_base.faces().sort_by(Axis.Z)[0]) as bottom_housing:
@@ -98,15 +98,15 @@ class Choc:
                         RectangleRounded(self.cap.width_x_without_space, self.cap.length_y_without_space, 2)
                 extrude(amount=self.cap.height_z)
                 fillet(cap.faces().sort_by(Axis.Z)[-1].edges(), 1.5)
-                s = 80
-                with Locations((0, 0, s+7)):
+                s = 40
+                with Locations((0, 0, s+6.7)):
                     Sphere(s, mode=Mode.SUBTRACT, rotation=(90, 0, 0))
 
         if show_model:
             from ocp_vscode import show_all
             if show_step_file:
                 step_file = import_step('/home/tvollert/Downloads/MBK_Keycap_-_1u.step')
-                step_file = step_file.translate((0, -0.15, 3.6))
+                step_file = step_file.translate((0, -0.15, 3.6+self.base.thickness_z/2))
                 pass
                 
             show_all()

@@ -382,7 +382,7 @@ class SingleSwitchXiaoCase:
         choc = Choc()
 
         locs = GridLocations(Choc.cap.width_x, Choc.cap.length_y, self.cols, self.rows).local_locations
-        chocs = [copy.copy(choc.model.part).locate(loc * Location((0, self.key_y, Choc.base.thickness_z + self.dims.wall_thickness))) for loc in locs]
+        chocs = [copy.copy(choc.model.part).locate(loc * Location((0, self.key_y, self.dims.wall_thickness))) for loc in locs]
         chocs = Compound(chocs)
         chocs.name = "Choc Switches"
         self.accessories.append(chocs)
@@ -404,17 +404,17 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
 
-    knurl = True
+    knurl = False
 
     proto = SingleSwitchXiaoCase(with_knurl=knurl)
-    # push_object(proto.snake) if hasattr(proto, "snake") else None
-    # push_object(proto.keywell) if hasattr(proto, "keywell") else None
-    # push_object(proto.case) if hasattr(proto, "case") else None
-    # push_object(proto.bottom) if hasattr(proto, "bottom") else None
-    # if hasattr(proto, "accessories"):
-    #     for accessory in proto.accessories:
-    #         push_object(accessory)
-    # show_objects()
+    push_object(proto.snake) if hasattr(proto, "snake") else None
+    push_object(proto.keywell) if hasattr(proto, "keywell") else None
+    push_object(proto.case) if hasattr(proto, "case") else None
+    push_object(proto.bottom) if hasattr(proto, "bottom") else None
+    if hasattr(proto, "accessories"):
+        for accessory in proto.accessories:
+            push_object(accessory)
+    show_objects()
 
     if knurl:
         export_stl(proto.case.part, "wave_case.stl", tolerance=0.01) if hasattr(proto, "case") else None
