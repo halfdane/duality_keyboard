@@ -15,14 +15,14 @@ from ocp_vscode import *
 @dataclass
 class BottomDimensions:
     size_z: float = 1.3
-    keyplate_offset: float = 1.3
+    keyplate_offset: float = 2
 
 @dataclass
 class KeyplateDimensions:
     size_z: float = Choc.bottom_housing.height_z + Choc.posts.post_height_z + BottomDimensions.size_z
     switch_clamp_clearance: float = size_z - Choc.clamps.clearance_z
-
-    xiao_position: Location = (1.5 + Xiao.board.width_x/2, Outline.dims.base_length_y - Xiao.board.depth_y/2-1.5, -1.3)
+    xiao_offset: float = BottomDimensions.keyplate_offset
+    xiao_position: Location = (xiao_offset + Xiao.board.width_x/2, Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset, -(Choc.bottom_housing.height_z + Choc.posts.post_height_z - Xiao.board.thickness_z - Xiao.usb.height_z))
 
 @dataclass
 class CaseDimensions:
@@ -51,13 +51,6 @@ class DualityWaveCase:
     def create_keyplate(self):
         print("Creating keyplate...")
 
-        with BuildSketch() as key_holes:
-            with Locations(self.outline.dims.switch_offset):
-                for keycol in self.keys.keycols:
-                    with Locations(keycol.locs):
-                        Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
-        push_object(key_holes, name="key_holes") if self.debug else None
-
         with BuildPart() as self.keyplate:
             self.keyplate.name = "Keyplate"
 
@@ -79,23 +72,20 @@ class DualityWaveCase:
                         thicken(to_thicken=face, amount=-self.dims.pattern_depth, mode=Mode.SUBTRACT)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_walls:
-                    offset(
-                            self.outline.sketch,
-                            -self.bottom_dims.keyplate_offset,
-                            kind=Kind.INTERSECTION,
-                        )
+                offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
             extrude(amount=self.bottom_dims.size_z, mode=Mode.SUBTRACT)
             push_object(bottom_walls, name="bottom_walls") if self.debug else None
 
-            with BuildSketch() as keyholes:
-                add(key_holes)
+            with BuildSketch() as key_holes:
+                with Locations(self.outline.dims.switch_offset):
+                    for keycol in self.keys.keycols:
+                        with Locations(keycol.locs):
+                            Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+            push_object(key_holes, name="key_holes") if self.debug else None
             extrude(amount=-Choc.clamps.clearance_z, mode=Mode.SUBTRACT)
+
             with BuildSketch(Plane.XY.offset(-Choc.clamps.clearance_z)) as keyholes_with_space:
-                offset(
-                        key_holes.sketch,
-                        1, 
-                        kind=Kind.INTERSECTION
-                )
+                offset(key_holes.sketch, 1)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
             with BuildSketch(Plane(self.keyplate_dims.xiao_position)) as xiao_hole:
@@ -110,7 +100,6 @@ class DualityWaveCase:
                     RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
                 with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
                     Circle(0.5)
-
             extrude(amount=-10, mode=Mode.SUBTRACT)
             push_object(usb_cut, name="usb_cut") if self.debug else None
 
