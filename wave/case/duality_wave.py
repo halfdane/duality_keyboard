@@ -8,76 +8,67 @@ from models.power_switch import PowerSwitch
 from models.knurl import Knurl
 from models.symbol import Symbol
 from models.keys import Keys
+from models.outline import Outline
 
 from ocp_vscode import *
 
 @dataclass
+class BottomDimensions:
+    size_z: float = 1.3
+    keyplate_offset: float = 1.3
+
+@dataclass
+class KeyplateDimensions:
+    size_z: float = Choc.bottom_housing.height_z + Choc.posts.post_height_z + BottomDimensions.size_z
+    switch_clamp_clearance: float = size_z - Choc.clamps.clearance_z
+
+    xiao_position: Location = (1.5 + Xiao.board.width_x/2, Outline.dims.base_length_y - Xiao.board.depth_y/2-1.5, -1.3)
+
+@dataclass
 class CaseDimensions:
     clearance: float = 0.02
-    wall_thickness: float = 1.3
-
     pin_radius: float = 0.5
-
     pattern_depth: float = 0.2
 
-    case_height_z: float = Choc.bottom_housing.height_z + Choc.posts.post_height_z
     keywell_height_z: float = Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z
 
 
 class DualityWaveCase:
     dims = CaseDimensions()
+    bottom_dims = BottomDimensions()
+    keyplate_dims = KeyplateDimensions()
     keys = Keys()
+    outline = Outline(keys.thumb)
 
     def __init__(self, with_knurl=False, debug=False):
         self.with_knurl = with_knurl
         self.debug = debug
 
-        self.wall_height = Choc.bottom_housing.height_z + Choc.posts.post_height_z
-
-        self.create_case()
+        self.create_keyplate()
 
         self.create_accessories()
 
-    def create_case(self):
-        print("Creating case...")
+    def create_keyplate(self):
+        print("Creating keyplate...")
 
         with BuildSketch() as key_holes:
-            with Locations((21.5, 12.9)):
+            with Locations(self.outline.dims.switch_offset):
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
                         Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
-            push_object(key_holes, name="key_holes") if self.debug else None
-            
-        with BuildSketch() as outline:
-            base_width_x = 107
-            base_length_y = 85
-            thumb_container_height_y = 25
-            circle_radius = 39.9
+        push_object(key_holes, name="key_holes") if self.debug else None
 
-            thumb = self.keys.thumb
-
-            with Locations((base_width_x/2, base_length_y/2)):
-                Rectangle(base_width_x, base_length_y)
-            with Locations((thumb.locs[1].position.X+11.5, thumb.locs[1].position.Y + thumb_container_height_y/2 + 14.4)):
-                Rectangle(2*Choc.cap.width_x + 10, thumb_container_height_y + 21.5, rotation=thumb.rotation)
-            with Locations((base_width_x + circle_radius, thumb.locs[1].position.Y + 48.4)):
-                Circle(circle_radius, mode=Mode.SUBTRACT)
-
-            outline = outline.sketch
-
-            push_object(outline, name="outline") if self.debug else None
-
-        with BuildPart() as self.case:
-            self.case.name = "Case"
+        with BuildPart() as self.keyplate:
+            self.keyplate.name = "Keyplate"
 
             with BuildSketch() as walls:
-                add(outline)
-            extrude(amount=-self.wall_height-self.dims.wall_thickness)
+                add(self.outline.sketch)
+            extrude(amount=-self.keyplate_dims.size_z)
 
             if self.with_knurl: 
                 print("Adding knurl...")
-                tops = self.case.faces().filter_by(Axis.Z)
-                walls = self.case.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
+                tops = self.keyplate.faces().filter_by(Axis.Z)
+                walls = self.keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
                 self.create_knurl(distance=10 if self.debug else 1.5, width_x=200, height_y=50)
                 for i, wall in enumerate(walls):
                     print(f"  Projecting pattern to wall {i+1} of {len(walls)}")
@@ -87,26 +78,25 @@ class DualityWaveCase:
                     for i, face in enumerate(faces):
                         thicken(to_thicken=face, amount=-self.dims.pattern_depth, mode=Mode.SUBTRACT)
 
-            with BuildSketch(Plane.XY.offset(-self.dims.wall_thickness-self.wall_height)) as keep_walls:
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_walls:
                     offset(
-                            outline,
-                            -self.dims.wall_thickness,
+                            self.outline.sketch,
+                            -self.bottom_dims.keyplate_offset,
                             kind=Kind.INTERSECTION,
                         )
-            extrude(amount=self.dims.wall_thickness, mode=Mode.SUBTRACT)
-            push_object(keep_walls, name="keep_walls") if self.debug else None
+            extrude(amount=self.bottom_dims.size_z, mode=Mode.SUBTRACT)
+            push_object(bottom_walls, name="bottom_walls") if self.debug else None
 
             with BuildSketch() as keyholes:
                 add(key_holes)
-            extrude(amount=-self.dims.wall_thickness, mode=Mode.SUBTRACT)
-            with BuildSketch(Plane.XY.offset(-self.dims.wall_thickness)) as keyholes:
+            extrude(amount=-Choc.clamps.clearance_z, mode=Mode.SUBTRACT)
+            with BuildSketch(Plane.XY.offset(-Choc.clamps.clearance_z)) as keyholes_with_space:
                 offset(
                         key_holes.sketch,
                         1, 
                         kind=Kind.INTERSECTION
                 )
-            extrude(amount=-self.wall_height, mode=Mode.SUBTRACT)
-            push_object(key_holes, name="keyholes") if self.debug else None
+            extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
 
 
@@ -158,7 +148,7 @@ class DualityWaveCase:
         with BuildPart() as self.chocs:
             self.chocs.name = "Choc Switches"
 
-            with Locations((21.5, 12.9)):
+            with Locations(self.outline.dims.switch_offset):
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
                         add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation))
@@ -167,7 +157,7 @@ class DualityWaveCase:
         xiao = Xiao()
         xiao.model = xiao.model.part\
             .rotate(Axis.X, 180)\
-            .translate((-5, 62, -self.dims.wall_thickness))
+            .translate(self.keyplate_dims.xiao_position)
         push_object(xiao.model, name="xiao")
 
             
@@ -181,5 +171,5 @@ if __name__ == "__main__":
     knurl = False
     case = DualityWaveCase(with_knurl=knurl, debug=True)
 
-    push_object(case.case) if hasattr(case, "case") else None
+    push_object(case.keyplate) if hasattr(case, "keyplate") else None
     show_objects() 

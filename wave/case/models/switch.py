@@ -28,6 +28,8 @@ class ClampDimensions:
     depth_y: float = 3.154
     offset_between: float = 3.5
 
+    clearance_z: float = BottomHousingDimensions.height_z - height_z
+
 @dataclass
 class UpperHousingDimensions:
     height_z: float = 2.5
