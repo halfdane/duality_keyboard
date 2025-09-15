@@ -13,6 +13,12 @@ from models.outline import Outline
 from ocp_vscode import *
 
 @dataclass
+class CaseDimensions:
+    clearance: float = 0.02
+    pin_radius: float = 0.5
+    pattern_depth: float = 0.2
+
+@dataclass
 class BottomDimensions:
     size_z: float = 1.3
     keyplate_offset: float = 2
@@ -33,18 +39,14 @@ class KeyplateDimensions:
     connector_depth_z: float = Choc.posts.post_height_z
 
 @dataclass
-class CaseDimensions:
-    clearance: float = 0.02
-    pin_radius: float = 0.5
-    pattern_depth: float = 0.2
-
-    keywell_height_z: float = Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z
-
+class KeywellDimensions:
+    size_z: float = Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z + CaseDimensions.pattern_depth
 
 class DualityWaveCase:
     dims = CaseDimensions()
     bottom_dims = BottomDimensions()
     keyplate_dims = KeyplateDimensions()
+    keywell_dims = KeywellDimensions()
     outline = Outline()
     keys = Keys(outline.dims.switch_offset)
 
@@ -70,6 +72,11 @@ class DualityWaveCase:
         self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
         push_object(self.keywell_right, name="keywell_right") if self.debug else None
+
+        self.bottom_left = self.create_bottom()
+        self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
+        push_object(self.bottom_left, name="bottom_left") if self.debug else None
+        push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
         self.create_accessories()
 
@@ -176,7 +183,7 @@ class DualityWaveCase:
         with BuildPart() as keywell:
             with BuildSketch():
                 add(self.outline.sketch)
-            extrude(amount=self.keyplate_dims.size_z)
+            extrude(amount=self.keywell_dims.size_z)
 
             if self.with_knurl: 
                 print("Adding knurl...")
@@ -192,10 +199,28 @@ class DualityWaveCase:
                     with Locations((1,0)):
                         Rectangle(Choc.cap.width_x+4, Choc.cap.length_y + 11, rotation=self.keys.thumb.rotation)
             push_object(key_holes, name="key_holes2") if self.debug else None
-            extrude(amount=self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
+            extrude(amount=self.keywell_dims.size_z, mode=Mode.SUBTRACT)
 
 
         return keywell.part
+
+    def create_bottom(self):
+        print("Creating bottom...")
+
+        with BuildPart() as bottom:
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)):
+                offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
+            extrude(amount=self.bottom_dims.size_z)
+
+            if self.with_knurl: 
+                print("Adding knurl...")
+                tops = bottom.faces().filter_by(Axis.Z)
+                walls = bottom.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
+                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
+            
+        return bottom.part
+
+
 
     def create_accessories(self):
         if not self.debug:
