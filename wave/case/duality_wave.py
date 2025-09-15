@@ -51,6 +51,8 @@ class DualityWaveCase:
     def __init__(self, with_knurl=False, debug=False):
         self.with_knurl = with_knurl
         self.debug = debug
+        if self.with_knurl:
+            self.knurl = Knurl(debug=debug)
 
         self.keyplate_left = self.create_keyplate()
 
@@ -88,14 +90,7 @@ class DualityWaveCase:
                 print("Adding knurl...")
                 tops = keyplate.faces().filter_by(Axis.Z)
                 walls = keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
-                self.create_knurl(distance=10 if self.debug else 1.5, width_x=200, height_y=50)
-                for i, wall in enumerate(walls):
-                    print(f"  Projecting pattern to wall {i+1} of {len(walls)}")
-                    push_object(wall, name=f"wall_{i}") if self.debug else None
-                    faces, pattern = self.project_to_face(self.knurl.rotate(Axis.X, 90), wall)
-                    push_object(pattern, name=f"pattern_{i}") if self.debug else None
-                    for i, face in enumerate(faces):
-                        thicken(to_thicken=face, amount=-self.dims.pattern_depth, mode=Mode.SUBTRACT)
+                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_walls:
                 offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
@@ -175,55 +170,10 @@ class DualityWaveCase:
                     self.keys.middle.locs[2].position + Vector((25, Choc.cap.length_y/2 -self.keyplate_dims.connector_width/2)) + Vector(self.outline.dims.switch_offset),
                     ):
                     RectangleRounded(10, 1.5*self.keyplate_dims.connector_width, radius=0.5*self.keyplate_dims.connector_width)
-            push_object(connector_holder1, name="connector_holder1") if self.debug else None
             extrude(to_extrude=connector_holder1.sketch, amount=0.25, mode=Mode.ADD)
+            push_object(connector_holder1, name="connector_holder1") if self.debug else None
         
         return keyplate.part
-
-
-
-    def project_to_face(self, pattern, face: Face) -> Vector:
-        vector = face.normal_at((0,0,0))
-
-        abs_vector = Vector(abs(vector.X), abs(vector.Y), abs(vector.Z))
-        if abs_vector.X >= abs_vector.Y and abs_vector.X >= abs_vector.Z:
-            direction, pattern = (Vector(-1, 0, 0), pattern.rotate(Axis.Z, 90).translate((200, 0, 0))) if vector.X >= 0 else (Vector(1, 0, 0), pattern.rotate(Axis.Z, 90).translate((-200, 0, 0)))
-        elif abs_vector.Y >= abs_vector.X and abs_vector.Y >= abs_vector.Z:
-            direction, pattern = (Vector(0, -1, 0), pattern.translate((0, 200, 0))) if vector.Y >= 0 else (Vector(0, 1, 0), pattern.translate((0, -200, 0)))
-        else:
-            direction, pattern = (Vector(0, 0, -1), pattern.translate((0, 0, 200))) if vector.Z >= 0 else (Vector(0, 0, 1), pattern.translate((0, 0, -200)))
-        
-        return pattern.face().project_to_shape(face, direction).faces(), pattern
-
-
-    def create_knurl(self, width_x=0, height_y=0, distance=2):
-        pattern_width=distance
-        scale=2/3
-        half_height = pattern_width / math.atan(math.radians(90))
-        points = [
-            (scale*-pattern_width/2, 0),
-            (0, -scale*half_height),
-            (scale*pattern_width/2, 0),
-            (0, scale*half_height),
-        ]
-        with BuildSketch() as rhombus:
-            Polygon(*points)
-
-        with BuildSketch() as pattern:
-            Rectangle(width_x, height_y)
-            with Locations((0,0), (-pattern_width/2, half_height)):
-                with GridLocations(
-                    x_count=math.ceil(width_x/pattern_width)+1,
-                    y_count=math.ceil(height_y/(2*half_height))+1,
-                    x_spacing=pattern_width,
-                    y_spacing=2*half_height,
-                ):
-                    add(rhombus, mode=Mode.SUBTRACT)
-
-        self.knurl = pattern.sketch
-        self.knurl.name = "Surface Pattern"
-        self.knurl.distance = distance
-
 
     def create_accessories(self):
         if not self.debug:
