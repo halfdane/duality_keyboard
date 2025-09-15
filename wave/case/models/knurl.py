@@ -11,21 +11,24 @@ class Knurl:
         for i, wall in enumerate(walls):
             print(f"  Projecting pattern to wall {i} of {len(walls)}")
             push_object(wall, name=f"wall_{i}") if self.debug else None
-            width, height = wall.oriented_bounding_box().size.X, wall.oriented_bounding_box().size.Y
+            width, height = max(wall.oriented_bounding_box().size.X, wall.oriented_bounding_box().size.Z), wall.oriented_bounding_box().size.Y
+            if height > width:
+                width, height = height, width
+            print(f"    oriented bounding box: {wall.oriented_bounding_box().size}")
+            print(f"    Wall size: {width:.2f} x {height:.2f}")
             if width < 0.1 or height < 0.1:
                 print(f"  Skipping small wall {i}")
                 continue
 
             if wall.is_planar:
                 with BuildSketch(wall) as pattern_sketch:
-                    add(self.create_knurl(distance=distance, width_x=height, height_y=width))
+                    add(self.create_knurl(distance=distance, width_x=width, height_y=height))
                 push_object(pattern_sketch, name=f"planar_pattern_{i}") if self.debug else None
                 extrude(to_extrude=pattern_sketch.sketch, amount=-pattern_depth, mode=Mode.SUBTRACT)
             else:
                 faces, pattern = self.project_to_face(
-                    self.create_knurl(distance=distance, width_x=200, height_y=50)\
-                        .rotate(Axis.X, 90)\
-                        .translate(Vector(0, 0, -height/2)), 
+                    self.create_knurl(distance=distance, width_x=200, height_y=200)\
+                        .rotate(Axis.X, 90), 
                         wall)
                 push_object(pattern, name=f"curved_pattern_{i}") if self.debug else None
                 for i, face in enumerate(faces):

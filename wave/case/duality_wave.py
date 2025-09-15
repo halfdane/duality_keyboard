@@ -87,7 +87,8 @@ class DualityWaveCase:
         with BuildPart() as keyplate:
             with BuildSketch():
                 add(self.outline.sketch)
-            extrude(amount=-self.keyplate_dims.size_z)
+            extrude(amount=self.keyplate_dims.size_z)
+            keyplate.part = keyplate.part.translate((0,0,-self.keyplate_dims.size_z))
 
             if self.with_knurl: 
                 print("Adding knurl...")
@@ -214,9 +215,8 @@ class DualityWaveCase:
 
             if self.with_knurl: 
                 print("Adding knurl...")
-                tops = bottom.faces().filter_by(Axis.Z)
-                walls = bottom.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
-                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
+                bottom_face = bottom.faces().sort_by(Axis.Z)[0]
+                self.knurl.patternize([bottom_face], pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
             
         return bottom.part
 
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
 
-    knurl = False
+    knurl = True
     case = DualityWaveCase(with_knurl=knurl, debug=True)
 
     show_objects() 
