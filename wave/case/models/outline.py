@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from build123d import *
 from models.switch import Choc
-from models.keys import ThumbDimensions
+from models.keys import ThumbDimensions, RingFingerDimensions
 
 @dataclass
 class Dimensions:
@@ -18,6 +18,7 @@ class Outline:
 
     def __init__(self):
         thumbs = ThumbDimensions()
+        ring = RingFingerDimensions()
         with BuildSketch() as outline:
             with Locations((self.dims.base_width_x/2, self.dims.base_length_y/2)):
                 Rectangle(self.dims.base_width_x, self.dims.base_length_y)
@@ -25,6 +26,9 @@ class Outline:
                 Rectangle(2*Choc.cap.width_x + 10, self.dims.thumb_container_height_y + 21.5, rotation=thumbs.rotation)
             with Locations((self.dims.base_width_x + self.dims.circle_radius, thumbs.locs[1].Y + 48.4)):
                 Circle(self.dims.circle_radius, mode=Mode.SUBTRACT)
+            with Locations((self.dims.base_width_x/2+1, ring.y - 19)):
+                Circle(44/2, mode=Mode.SUBTRACT)
+
 
         self.sketch = outline.sketch
 

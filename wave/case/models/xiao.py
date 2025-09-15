@@ -57,7 +57,7 @@ class Xiao:
 
     def __init__(self, show_model=False, show_step_file=False):
         # Calculate solder hole positions
-        with BuildPart() as self.model:
+        with BuildPart() as model:
             with BuildPart() as board:
                 with BuildSketch():
                     RectangleRounded(self.board.width_x, self.board.depth_y, 2)
@@ -89,11 +89,24 @@ class Xiao:
 
                 with Locations((self.components.loading_light_x, self.components.loading_light_y, self.components.loading_light_height_z/2)) as loading_light:
                     Box(self.components.loading_light_width_x, self.components.loading_light_depth_y, self.components.loading_light_height_z)
+        self.model = model.part
 
         if show_model:
             from ocp_vscode import show, show_object, show_all, reset_show, set_port, set_defaults, get_defaults, Camera
             set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
             show_object(self.model, name="Xiao Board", options={"color": "blue", "opacity": 0.5}) 
+
+
+    def create_usb_cut(self, clearance=0.5):
+        with BuildPart() as usb_cut:
+            with BuildSketch(Plane.XZ.offset(-Xiao.board.depth_y/2)) as usb_sketch:
+                usb_z_position = -Xiao.board.thickness_z - Xiao.usb.height_z/2
+                with Locations((0, usb_z_position)):
+                    RectangleRounded(Xiao.usb.width_x + 2*clearance, Xiao.usb.height_z+2*clearance, radius=Xiao.usb.radius+clearance)
+                with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
+                    Circle(0.5)
+            extrude(amount=-10, mode=Mode.ADD)
+        return usb_cut.part
 
 
 

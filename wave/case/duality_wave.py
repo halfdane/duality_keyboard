@@ -48,6 +48,8 @@ class DualityWaveCase:
     outline = Outline()
     keys = Keys(outline.dims.switch_offset)
 
+    xiao = Xiao()
+
     def __init__(self, with_knurl=False, debug=False):
         self.with_knurl = with_knurl
         self.debug = debug
@@ -55,34 +57,28 @@ class DualityWaveCase:
             self.knurl = Knurl(debug=debug)
 
         self.keyplate_left = self.create_keyplate()
-
-        self.create_accessories()
-
         self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
-        usb_cut = self.create_usb_cut()
+
+        usb_cut = self.xiao.create_usb_cut(self.dims.clearance)
         self.keyplate_left = self.keyplate_left - usb_cut.translate(self.keyplate_dims.xiao_position)
         self.keyplate_right = self.keyplate_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
 
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
         push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
 
-    def create_usb_cut(self):
-        with BuildPart() as usb_cut:
-            with BuildSketch(Plane.XZ.offset(-Xiao.board.depth_y/2)) as usb_sketch:
-                usb_z_position = -Xiao.board.thickness_z - Xiao.usb.height_z/2
-                with Locations((0, usb_z_position)):
-                    RectangleRounded(Xiao.usb.width_x + 2*self.dims.clearance, Xiao.usb.height_z+2*self.dims.clearance, radius=Xiao.usb.radius+self.dims.clearance)
-                with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
-                    Circle(0.5)
-            extrude(amount=-10, mode=Mode.ADD)
-        return usb_cut.part
+        self.keywell_left = self.create_keywell()
+        self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
+        push_object(self.keywell_left, name="keywell_left") if self.debug else None
+        push_object(self.keywell_right, name="keywell_right") if self.debug else None
+
+        self.create_accessories()
 
 
     def create_keyplate(self):
         print("Creating keyplate...")
 
         with BuildPart() as keyplate:
-            with BuildSketch() as walls:
+            with BuildSketch():
                 add(self.outline.sketch)
             extrude(amount=-self.keyplate_dims.size_z)
 
@@ -173,6 +169,33 @@ class DualityWaveCase:
             push_object(connector_holder1, name="connector_holder1") if self.debug else None
         
         return keyplate.part
+    
+    def create_keywell(self):
+        print("Creating keywell...")
+
+        with BuildPart() as keywell:
+            with BuildSketch():
+                add(self.outline.sketch)
+            extrude(amount=self.keyplate_dims.size_z)
+
+            if self.with_knurl: 
+                print("Adding knurl...")
+                tops = keywell.faces().filter_by(Axis.Z)
+                walls = keywell.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
+                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
+            
+            with BuildSketch() as key_holes:
+                for keycol in self.keys.finger_cols:
+                    with Locations(keycol.locs):
+                        Rectangle(Choc.cap.width_x +1, Choc.cap.length_y + 1, rotation=keycol.rotation)
+                with Locations(self.keys.thumb.locs):
+                    with Locations((1,0)):
+                        Rectangle(Choc.cap.width_x+4, Choc.cap.length_y + 11, rotation=self.keys.thumb.rotation)
+            push_object(key_holes, name="key_holes2") if self.debug else None
+            extrude(amount=self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
+
+
+        return keywell.part
 
     def create_accessories(self):
         if not self.debug:
@@ -188,8 +211,7 @@ class DualityWaveCase:
         self.chocs = self.chocs.part + mirror(self.chocs.part, about=Plane.YZ)
         push_object(self.chocs, name="chocs")
 
-        xiao = Xiao()
-        xiao = xiao.model.part\
+        xiao = self.xiao.model\
             .rotate(Axis.X, 180)\
             .translate(self.keyplate_dims.xiao_position)
         xiao = xiao + mirror(xiao, about=Plane.YZ)
