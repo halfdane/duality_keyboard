@@ -14,8 +14,6 @@ class Knurl:
             width, height = max(wall.oriented_bounding_box().size.X, wall.oriented_bounding_box().size.Z), wall.oriented_bounding_box().size.Y
             if height > width:
                 width, height = height, width
-            print(f"    oriented bounding box: {wall.oriented_bounding_box().size}")
-            print(f"    Wall size: {width:.2f} x {height:.2f}")
             if width < 0.1 or height < 0.1:
                 print(f"  Skipping small wall {i}")
                 continue

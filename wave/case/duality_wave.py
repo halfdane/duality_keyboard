@@ -17,6 +17,7 @@ class CaseDimensions:
     clearance: float = 0.02
     pin_radius: float = 0.5
     pattern_depth: float = 0.2
+    pattern_size: float = 2
 
 @dataclass
 class BottomDimensions:
@@ -57,6 +58,8 @@ class DualityWaveCase:
         self.debug = debug
         if self.with_knurl:
             self.knurl = Knurl(debug=debug)
+        if self.debug:
+            self.dims.pattern_size = 15
 
         self.keyplate_left = self.create_keyplate()
         self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
@@ -94,7 +97,8 @@ class DualityWaveCase:
                 print("Adding knurl...")
                 tops = keyplate.faces().filter_by(Axis.Z)
                 walls = keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
-                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
+                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
+                self.knurl.patternize([tops[0]], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_walls:
                 offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
@@ -190,8 +194,9 @@ class DualityWaveCase:
                 print("Adding knurl...")
                 tops = keywell.faces().filter_by(Axis.Z)
                 walls = keywell.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
-                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
-            
+                self.knurl.patternize(walls, pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
+                self.knurl.patternize([tops[-1]], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
+
             with BuildSketch() as key_holes:
                 for keycol in self.keys.finger_cols:
                     with Locations(keycol.locs):
@@ -216,8 +221,8 @@ class DualityWaveCase:
             if self.with_knurl: 
                 print("Adding knurl...")
                 bottom_face = bottom.faces().sort_by(Axis.Z)[0]
-                self.knurl.patternize([bottom_face], pattern_depth=self.dims.pattern_depth, distance=1.5 if not self.debug else 10)
-            
+                self.knurl.patternize([bottom_face], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
+
         return bottom.part
 
 
