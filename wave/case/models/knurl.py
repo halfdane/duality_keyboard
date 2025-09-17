@@ -6,44 +6,49 @@ class Knurl:
 
     def __init__(self, debug=False):
         self.debug = debug
+        self.calls = 0
 
-    def patternize(self, walls, pattern_depth=0.5, distance=1.5):
+    def patternize(self, walls: list[Face], pattern_depth=0.5, distance=1.5):
+        knurl_debug = []
         for i, wall in enumerate(walls):
-            print(f"  Projecting pattern to wall {i} of {len(walls)}")
-            push_object(wall, name=f"wall_{i}") if self.debug else None
+            print(f"  Projecting pattern to wall {i} of {len(walls)}") if self.debug else None
+            
             width, height = max(wall.oriented_bounding_box().size.X, wall.oriented_bounding_box().size.Z), wall.oriented_bounding_box().size.Y
             if height > width:
                 width, height = height, width
             if width < 0.1 or height < 0.1:
-                print(f"  Skipping small wall {i}")
+                knurl_debug.append({f"wall_{i} (ignored)": wall}) if self.debug else None
                 continue
-
             if wall.is_planar:
                 with BuildSketch(wall) as pattern_sketch:
                     add(self.create_knurl(distance=distance, width_x=width, height_y=height))
-                push_object(pattern_sketch, name=f"planar_pattern_{i}") if self.debug else None
                 extrude(to_extrude=pattern_sketch.sketch, amount=-pattern_depth, mode=Mode.SUBTRACT)
+                knurl_debug.append({f"planar wall_{i}": wall}) if self.debug else None
+                knurl_debug.append({f"planar pattern_{i}": pattern_sketch}) if self.debug else None
             else:
                 faces, pattern = self.project_to_face(
                     self.create_knurl(distance=distance, width_x=200, height_y=200)\
                         .rotate(Axis.X, 90), 
                         wall)
-                push_object(pattern, name=f"curved_pattern_{i}") if self.debug else None
                 for i, face in enumerate(faces):
                     thicken(to_thicken=face, amount=-pattern_depth, mode=Mode.SUBTRACT)
+                knurl_debug.append({f"curved wall_{i}": wall}) if self.debug else None
+                knurl_debug.append({f"curved pattern_{i}": pattern}) if self.debug else None
+        push_object(knurl_debug, name=f"knurl_debug_{self.calls}") if self.debug else None
+        self.calls += 1
 
-    def project_to_face(self, pattern, face: Face) -> Vector:
-        vector = face.normal_at((0,0,0))
+    def project_to_face(self, pattern: Sketch, face: Face) -> Vector:
+        vector = face.normal_at((0,0,0)).normalized()
 
         abs_vector = Vector(abs(vector.X), abs(vector.Y), abs(vector.Z))
         if abs_vector.X >= abs_vector.Y and abs_vector.X >= abs_vector.Z:
-            direction, pattern = (Vector(-1, 0, 0), pattern.rotate(Axis.Z, 90).translate((200, 0, 0))) if vector.X >= 0 else (Vector(1, 0, 0), pattern.rotate(Axis.Z, 90).translate((-200, 0, 0)))
+            pattern = pattern.rotate(Axis.Z, 90) if vector.X >= 0 else pattern.rotate(Axis.Z, 90)
         elif abs_vector.Y >= abs_vector.X and abs_vector.Y >= abs_vector.Z:
-            direction, pattern = (Vector(0, -1, 0), pattern.translate((0, 200, 0))) if vector.Y >= 0 else (Vector(0, 1, 0), pattern.translate((0, -200, 0)))
+            pattern = pattern if vector.Y >= 0 else pattern
         else:
-            direction, pattern = (Vector(0, 0, -1), pattern.translate((0, 0, 200))) if vector.Z >= 0 else (Vector(0, 0, 1), pattern.translate((0, 0, -200)))
-        
-        return pattern.face().project_to_shape(face, direction).faces(), pattern
+            pattern = pattern if vector.Z >= 0 else pattern
+
+        return pattern.face().project_to_shape(face, vector).faces(), pattern
 
 
     def create_knurl(self, width_x=0, height_y=0, distance=2, offset:Vector=Vector(0,0,0)):
