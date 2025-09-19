@@ -106,7 +106,8 @@ class Xiao:
                 with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
                     Circle(0.5)
             extrude(amount=-10, mode=Mode.ADD)
-        return usb_cut.part
+        
+        return usb_cut.part+mirror(usb_cut.part, Plane.XZ.offset(-Xiao.board.depth_y/2))
 
 
 
