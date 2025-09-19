@@ -7,7 +7,7 @@ if __name__ == "__main__":
 from dataclasses import dataclass
 from build123d import *
 from models.switch import Choc
-from models.keys import ThumbDimensions, RingFingerDimensions
+from models.keys import Keys, ThumbDimensions
 
 @dataclass
 class Dimensions:
@@ -22,21 +22,25 @@ class Outline:
 
     dims = Dimensions()
 
-    def __init__(self):
-        thumbs = ThumbDimensions()
-        ring = RingFingerDimensions()
+    def __init__(self, keys = Keys(Dimensions.switch_offset), debug=False):
+        thumbs = keys.thumb
+        ring = keys.ring
         with BuildSketch() as outline:
-            with Locations((self.dims.base_width_x/2, self.dims.base_length_y/2)):
-                base=Rectangle(self.dims.base_width_x, self.dims.base_length_y)
-            right_edge = base.edges().sort_by(Axis.X)[-1]
-            with Locations((thumbs.locs[1].X+11.5, thumbs.locs[1].Y + self.dims.thumb_container_height_y/2 + 14.4)):
-                Rectangle(2*Choc.cap.width_x + 10, self.dims.thumb_container_height_y + 21.5, rotation=thumbs.rotation)
-            with Locations(right_edge @ 0.5+(self.dims.circle_radius, 0)):
-                Circle(self.dims.circle_radius, mode=Mode.SUBTRACT)
-            with Locations((self.dims.base_width_x/2+1, ring.y - 19)):
-                Circle(44/2, mode=Mode.SUBTRACT)
-
-
+            with BuildLine() as line:
+                l0 = Line((0,0), (0, self.dims.base_length_y))
+                l1 = Line(l0@1, (self.dims.base_width_x, self.dims.base_length_y))
+                l2 = Line(l1@1, (self.dims.base_width_x, self.dims.base_length_y/2))
+                half_height = (Choc.cap.length_y + 5) /2
+                half_width = (Choc.cap.width_x+4) / 2
+                l3 = Line((thumbs.locs[1].X + half_width + half_height/8, thumbs.locs[1].Y + half_height - half_width/8), 
+                          (thumbs.locs[1].X + half_width - half_height/8, thumbs.locs[1].Y - half_height - half_width/8))
+                a0 = TangentArc([l2 @ 1, l3 @ 0], tangent=l2 % 1)
+                
+                l4 = Line(l3@1, (thumbs.locs[0].X - half_width + half_height/8-0.5, (l0@0).Y))
+                a1 = RadiusArc((33.1, (l0@0).Y), l4 @ 1, radius=22.1, short_sagitta=True)
+                l5 = Line(a1@0, l0@0)
+            make_face()
+            fillet(outline.vertices(), radius=1)
         self.sketch = outline.sketch
 
 # main method
