@@ -24,6 +24,9 @@ class BottomDimensions:
     size_z: float = 1.3
     keyplate_offset: float = 2
 
+    ribs_xy: float = 2
+    ribs_z: float = 1.5
+
 @dataclass
 class KeyplateDimensions:
     keys: Keys
@@ -46,13 +49,12 @@ class KeyplateDimensions:
     bottom_holder_radius: float = rubber_bumper_radius + 2
 
     def bottom_holder_locations(self) -> list[Vector]:
-        holder_radius = self.bottom_holder_radius
         return [
+            (self.keys.pointer.locs[1] + self.keys.middle.locs[0]) / 2-(0, 2),
             (self.keys.thumb.locs[0] + self.keys.thumb.locs[1]) / 2,
-            (self.keys.pointer.locs[1] + self.keys.middle.locs[1]) / 2,
-            Vector(self.outline.dims.base_width_x, self.outline.dims.base_length_y) - Vector(holder_radius, holder_radius),
-            Vector(0, 0) + Vector(holder_radius, holder_radius),
-            Vector(0, self.outline.dims.base_length_y) + Vector(holder_radius, -holder_radius),
+            Vector(self.outline.dims.base_width_x, self.outline.dims.base_length_y) - Vector(self.rubber_bumper_radius, self.rubber_bumper_radius) + Vector(-2, -2)*2,
+            Vector(0, 0) + Vector(self.rubber_bumper_radius, self.rubber_bumper_radius) + Vector(2, 2)*2,
+            Vector(0, self.outline.dims.base_length_y) + Vector(self.rubber_bumper_radius, -self.rubber_bumper_radius) + Vector(2, -2)*2,
         ]
     
 
@@ -83,14 +85,16 @@ class DualityWaveCase:
 
         push_object(self.debug_content, name="debug_content") if self.debug else None
 
-        usb_cut = self.xiao.create_usb_cut(self.dims.clearance)
+        usb_cut = self.xiao.create_usb_cut(2*self.dims.clearance)
+        push_object(usb_cut.translate(self.keyplate_dims.xiao_position), name="usb_cut") if self.debug else None
 
         self.keyplate_left = self.create_keyplate()
         self.keyplate_left = self.keyplate_left - usb_cut.translate(self.keyplate_dims.xiao_position)
-        self.keywell_left = self.create_keywell()
-        self.bottom_left = self.create_bottom()
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
+        self.keywell_left = self.create_keywell()
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
+        self.bottom_left = self.create_bottom()
+        self.bottom_left = self.bottom_left - usb_cut.translate(self.keyplate_dims.xiao_position)
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
 
@@ -98,6 +102,7 @@ class DualityWaveCase:
         self.keyplate_right = self.keyplate_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
         self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
         self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
+        self.bottom_right = self.bottom_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
         push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
         push_object(self.keywell_right, name="keywell_right") if self.debug else None
         push_object(self.bottom_right, name="bottom_right") if self.debug else None
@@ -109,21 +114,27 @@ class DualityWaveCase:
         print("Creating keyplate...")
 
         with BuildPart() as keyplate:
-            with BuildSketch():
+            with BuildSketch() as base:
                 add(self.outline.sketch)
             extrude(amount=self.keyplate_dims.size_z)
             keyplate.part = keyplate.part.translate((0,0,-self.keyplate_dims.size_z))
+            fillet(objects=keyplate.faces().sort_by(Axis.Z)[0].edges(), radius=1)
+            self.debug_content.append({"base": base}) if self.debug else None
 
-            if self.with_knurl: 
+            if self.with_knurl:
                 print("Adding knurl...")
                 tops = keyplate.faces().filter_by(Axis.Z)
                 walls = keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
                 self.knurl.patternize(walls + [tops[0]], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
 
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_walls:
-                offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
-            extrude(amount=self.bottom_dims.size_z, mode=Mode.SUBTRACT)
-            self.debug_content.append({"bottom_walls": bottom_walls}) if self.debug else None
+            add(self.create_bottom_outline(self.dims.clearance))
+            extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z + self.dims.clearance, mode=Mode.SUBTRACT)
+
+            add(self.create_bottom_wall(self.dims.clearance))
+            extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z  + self.dims.clearance, mode=Mode.SUBTRACT)
+            fillet(objects=keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[1].edges() 
+                   + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[2].edges(), 
+                   radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
 
             with BuildSketch() as key_holes:
                 for keycol in self.keys.keycols:
@@ -135,6 +146,9 @@ class DualityWaveCase:
                 offset(key_holes.sketch, 1)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
+            ribs_sketch = self.create_bottom_ribs_sketch()
+            extrude(to_extrude=ribs_sketch, amount=self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
+
             with BuildSketch(Plane(self.keyplate_dims.xiao_position)) as xiao_hole:
                 Rectangle(Xiao.board.width_x - 1.5, Xiao.board.depth_y - 1.5)
             extrude(amount=self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
@@ -142,53 +156,9 @@ class DualityWaveCase:
                 Rectangle(Xiao.board.width_x + 2*self.dims.clearance, Xiao.board.depth_y + 2*self.dims.clearance)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
-
             with_topline = False
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as connector_sketch:
-                top_y = self.keys.middle.locs[2].Y+Choc.cap.length_y/2
-
-                if with_topline:
-                    with BuildLine() as top_line:
-                        FilletPolyline(
-                            (self.keys.pinkie.locs[2].X, top_y),
-                            (self.keys.inner.locs[2].X, top_y),
-                            (self.keys.inner.locs[2].X, self.keys.inner.locs[0].Y),
-                            radius=2
-                        )
-                        offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                    make_face()
-
-                for row in range(3):
-                    with BuildLine() as row_line:
-                        pts = [ keycol.locs[row] + (Choc.pins.pin2_x, -Choc.pins.pin2_y) for keycol in self.keys.finger_cols]
-                        Polyline(*pts)
-                        offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                    make_face()
-
-                for col in [self.keys.inner, self.keys.pointer, self.keys.middle, self.keys.ring]:
-                    column_to_topline = Line(col.locs[0], col.locs[2])
-                    offset(column_to_topline, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                    make_face()
-                
-                with BuildLine() as pinkie_to_topline:
-                    pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2], (self.keys.pinkie.locs[2].X, top_y) ]
-                    Polyline(*pts)
-                    offset(amount=self.keyplate_dims.connector_width, side=Side.BOTH)
-                make_face()
-
-                l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y))
-                offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                make_face()
-                l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, Choc.pins.pin2_y))
-                offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                make_face()
-                for t in self.keys.thumb.locs:
-                    l = Line(t, self.keys.inner.locs[0])
-                    offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-                    make_face()
-
-            extrude(amount=self.keyplate_dims.connector_depth_z, mode=Mode.SUBTRACT)
-            self.debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
+            connector_sketch = self.create_connector_sketch(with_topline=with_topline)
+            extrude(to_extrude=connector_sketch, amount=self.keyplate_dims.connector_depth_z, mode=Mode.SUBTRACT)
 
             if with_topline:
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as connector_holder:
@@ -201,17 +171,9 @@ class DualityWaveCase:
                 extrude(amount=0.25, mode=Mode.ADD)
                 self.debug_content.append({"connector_holder": connector_holder}) if self.debug else None
 
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)): 
+            with Locations((0, 0, -self.keyplate_dims.size_z+self.bottom_dims.size_z)):
                 with Locations(self.keyplate_dims.bottom_holder_locations()):
-                    Circle(self.keyplate_dims.bottom_holder_radius -1)
-            bumpers = extrude(amount=-self.bottom_dims.size_z, mode=Mode.ADD)
-            with BuildSketch([s.faces().sort_by(Axis.Z)[0] for s in bumpers.solids()]) as bumper_cut:
-                Circle(self.keyplate_dims.bottom_holder_radius)
-            bottom_holders = extrude(amount=-0.75, mode=Mode.ADD)
-            fillet(bottom_holders.edges(), radius=0.3)
-            with BuildSketch([s.faces().sort_by(Axis.Z)[0] for s in bottom_holders.solids()]) as bumper_cut:
-                Circle(self.keyplate_dims.rubber_bumper_radius)
-            extrude(amount=-1, mode=Mode.SUBTRACT)
+                    Cylinder(self.keyplate_dims.rubber_bumper_radius, self.keyplate_dims.size_z+self.bottom_dims.size_z)
 
         return keyplate.part
     
@@ -243,32 +205,138 @@ class DualityWaveCase:
 
 
         return keywell.part
+    
+    def create_bottom_outline(self, clearance = 0):
+        print("Creating bottom outline...")
+
+        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_outline:
+            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset + clearance, kind=Kind.INTERSECTION)
+            fillet(bottom_outline.vertices(), radius=1)
+
+        return bottom_outline.sketch
+
+    def create_bottom_wall(self, clearance = 0):
+        print("Creating bottom wall...")
+
+        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_wall:
+            add(self.create_bottom_outline(clearance))
+            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
+            fillet(bottom_wall.vertices(), radius=1)
+        return bottom_wall.sketch
 
     def create_bottom(self):
         print("Creating bottom...")
 
         with BuildPart() as bottom:
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)):
-                offset(self.outline.sketch, -self.bottom_dims.keyplate_offset, kind=Kind.INTERSECTION)
+            add(self.create_bottom_outline())
             extrude(amount=self.bottom_dims.size_z)
 
-            if self.with_knurl: 
-                print("Adding knurl...")
-                bottom_face = bottom.faces().sort_by(Axis.Z)[0]
-                self.knurl.patternize([bottom_face], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
+            add(self.create_bottom_wall())
+            extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z)
+            fillet(objects=bottom.faces().group_by(Axis.Z)[-1].edges()
+                   + bottom.faces().group_by(Axis.Z)[1].edges(), 
+                   radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
+
+            ribs_sketch = self.create_bottom_ribs_sketch()
+            ribs_sketch = offset(objects=ribs_sketch, amount=-2*self.dims.clearance, mode=Mode.PRIVATE)
+            extrude(to_extrude=ribs_sketch, amount=self.bottom_dims.ribs_z, mode=Mode.ADD)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
                 with Locations(self.keyplate_dims.bottom_holder_locations()):
-                    Circle(self.keyplate_dims.bottom_holder_radius - 2 + 2*self.dims.clearance)
-            extrude(amount=self.bottom_dims.size_z + 0.1, mode=Mode.SUBTRACT)
+                    Circle(self.keyplate_dims.rubber_bumper_radius + 2*self.dims.clearance)
+            extrude(amount=self.bottom_dims.size_z+self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
-                with Locations(self.keyplate_dims.bottom_holder_locations()):
-                    Circle(self.keyplate_dims.bottom_holder_radius + 2*self.dims.clearance)
-            extrude(amount=1, mode=Mode.SUBTRACT)
         return bottom.part
 
+    def create_connector_sketch(self, with_topline=True):
+        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as connector_sketch:
+            top_y = self.keys.middle.locs[2].Y+Choc.cap.length_y/2
 
+            if with_topline:
+                with BuildLine() as top_line:
+                    FilletPolyline(
+                        (self.keys.pinkie.locs[2].X, top_y),
+                        (self.keys.inner.locs[2].X, top_y),
+                        (self.keys.inner.locs[2].X, self.keys.inner.locs[0].Y),
+                        radius=2
+                    )
+                    offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+
+            for row in range(3):
+                with BuildLine() as row_line:
+                    pts = [ keycol.locs[row] + (Choc.pins.pin2_x, -Choc.pins.pin2_y) for keycol in self.keys.finger_cols]
+                    Polyline(*pts)
+                    offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+
+            for col in [self.keys.inner, self.keys.pointer, self.keys.middle, self.keys.ring]:
+                column_to_topline = Line(col.locs[0], col.locs[2])
+                offset(column_to_topline, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+            
+            with BuildLine() as pinkie_to_topline:
+                pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2], (self.keys.pinkie.locs[2].X, top_y) ]
+                Polyline(*pts)
+                offset(amount=self.keyplate_dims.connector_width, side=Side.BOTH)
+            make_face()
+
+            l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y))
+            offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+            make_face()
+            l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, Choc.pins.pin2_y))
+            offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+            make_face()
+            for t in self.keys.thumb.locs:
+                l = Line(t, self.keys.inner.locs[0])
+                offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
+                make_face()
+        
+        self.debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
+        return connector_sketch.sketch            
+
+
+    def create_bottom_ribs_sketch(self):
+        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_ribs:
+            for keycol in [self.keys.pinkie, self.keys.pointer, self.keys.middle, self.keys.ring]:
+                with BuildSketch(Plane.XY.rotated((0,0,keycol.rotation)), mode=Mode.PRIVATE) as col:
+                    Rectangle(Choc.cap.width_x+2, 3*Choc.cap.length_y+self.bottom_dims.ribs_xy/2)
+                add(col.sketch.translate(keycol.locs[1]))
+            for keycol in [self.keys.pinkie, self.keys.pointer, self.keys.middle, self.keys.ring]:
+                with BuildSketch(Plane.XY.rotated((0,0,keycol.rotation)), mode=Mode.PRIVATE) as col:
+                    Rectangle(Choc.bottom_housing.width_x+2, 3*Choc.cap.length_y - self.bottom_dims.ribs_xy)
+                add(col.sketch.translate(keycol.locs[1]), mode=Mode.SUBTRACT)
+            for keycol in [self.keys.pinkie, self.keys.pointer, self.keys.middle, self.keys.ring]:
+                with BuildSketch(Plane.XY.rotated((0,0,keycol.rotation)), mode=Mode.PRIVATE) as col:
+                    with Locations((0,-Choc.cap.length_y/2), (0,Choc.cap.length_y/2)):
+                        Rectangle(Choc.cap.width_x, self.bottom_dims.ribs_xy)
+                add(col.sketch.translate(keycol.locs[1]))
+
+            # there's a weird gap between lower pinkie and the outline, that wants to be filled
+            with BuildSketch(Plane.XY, mode=Mode.PRIVATE) as col:
+                a = Vector(24.5,4)
+                b = Vector(31,5.5)
+                c = Vector(31,4)
+                Triangle(a=(b-a).length*2, b=(c-b).length*2, c=(a-c).length*2)
+            add(col.sketch.translate(self.keys.pinkie.locs[0] + (5, -Choc.cap.length_y/2)))
+
+            with Locations(self.keys.inner.locs):
+                with Locations((-1, 0)):
+                    Rectangle(Choc.bottom_housing.width_x +4, Choc.bottom_housing.depth_y + 4, rotation=self.keys.inner.rotation)
+                with Locations((-0.5, 0)):
+                    Rectangle(Choc.bottom_housing.width_x+1, Choc.bottom_housing.depth_y, rotation=self.keys.inner.rotation, mode=Mode.SUBTRACT)
+            
+            keycol = self.keys.thumb
+            with BuildSketch(Plane.XY.rotated((0,0,keycol.rotation)), mode=Mode.PRIVATE) as col:
+                Rectangle(2*Choc.cap.width_x, self.bottom_dims.ribs_xy)
+            add(col.sketch.translate((keycol.locs[1] + keycol.locs[0])/2 + (0, Choc.cap.length_y/2)))
+
+            with BuildSketch(Plane.XY):
+                with Locations(self.keyplate_dims.bottom_holder_locations()[0:2]):
+                    Circle(self.keyplate_dims.bottom_holder_radius+0.2)
+
+        self.debug_content.append({"bottom_ribs": bottom_ribs}) if self.debug else None        
+        return bottom_ribs.sketch
 
     def create_accessories(self):
         if not self.debug:
@@ -294,11 +362,9 @@ class DualityWaveCase:
 
 if __name__ == "__main__":
     set_port(3939)
+    knurl = False
+    case = DualityWaveCase(with_knurl=knurl, debug=True)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
-
-    knurl = False
-    case = DualityWaveCase(with_knurl=knurl, debug=True)
-
     show_objects() 
