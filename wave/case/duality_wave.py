@@ -46,7 +46,7 @@ class KeyplateDimensions:
     connector_depth_z: float = Choc.posts.post_height_z
 
     rubber_bumper_radius: float = 4
-    bottom_holder_radius: float = rubber_bumper_radius + 2
+    bottom_holder_radius: float = rubber_bumper_radius + 1
 
     def bottom_holder_locations(self) -> list[Vector]:
         return [
@@ -245,6 +245,17 @@ class DualityWaveCase:
                 with Locations(self.keyplate_dims.bottom_holder_locations()):
                     Circle(self.keyplate_dims.rubber_bumper_radius + 2*self.dims.clearance)
             extrude(amount=self.bottom_dims.size_z+self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
+
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
+                with Locations(self.keyplate_dims.bottom_holder_locations()[0:2]):
+                    Circle(self.keyplate_dims.bottom_holder_radius + 2*self.dims.clearance)
+            extrude(amount=0.3, mode=Mode.SUBTRACT)
+            chamfer(bottom.faces()\
+                   .filter_by(Axis.Z)\
+                    .group_by(Axis.Z)[1]\
+                        .edges()\
+                        .filter_by(lambda e: e.length < 30), 
+                    length=self.keyplate_dims.bottom_holder_radius - self.keyplate_dims.rubber_bumper_radius - 0.5 - 2*self.dims.clearance)
 
         return bottom.part
 
