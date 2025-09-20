@@ -69,7 +69,7 @@ class ThumbDimensions(KeyCol):
     rotation: float = -8
     locs: list[Vector] = (
         Vector((x, y)), 
-        Vector((Choc.cap.width_x + x, y + Choc.cap.length_y/rotation)), 
+        Vector((Choc.cap.width_x + x, y + Choc.cap.width_x/rotation)), 
     )
 
 class Keys:

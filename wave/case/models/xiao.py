@@ -105,7 +105,7 @@ class Xiao:
                     RectangleRounded(Xiao.usb.width_x + 2*clearance, Xiao.usb.height_z+2*clearance, radius=Xiao.usb.radius+clearance)
                 with Locations((-Xiao.usb.width_x/2-1, usb_z_position+1)):
                     Circle(0.5)
-            extrude(amount=-10, mode=Mode.ADD)
+            extrude(amount=-7, mode=Mode.ADD)
         
         return usb_cut.part+mirror(usb_cut.part, Plane.XZ.offset(-Xiao.board.depth_y/2))
 

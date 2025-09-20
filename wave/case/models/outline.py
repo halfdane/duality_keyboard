@@ -31,12 +31,12 @@ class Outline:
                 l1 = Line(l0@1, (self.dims.base_width_x, self.dims.base_length_y))
                 l2 = Line(l1@1, (self.dims.base_width_x, self.dims.base_length_y/2))
                 half_height = (Choc.cap.length_y + 5) /2
-                half_width = (Choc.cap.width_x+4) / 2
+                half_width = (Choc.cap.width_x+5) / 2
                 l3 = Line((thumbs.locs[1].X + half_width + half_height/8, thumbs.locs[1].Y + half_height - half_width/8), 
                           (thumbs.locs[1].X + half_width - half_height/8, thumbs.locs[1].Y - half_height - half_width/8))
                 a0 = TangentArc([l2 @ 1, l3 @ 0], tangent=l2 % 1)
                 
-                l4 = Line(l3@1, (thumbs.locs[0].X - half_width + half_height/8-0.5, (l0@0).Y))
+                l4 = Line(l3@1, (thumbs.locs[0].X - half_width + half_height/8-1, (l0@0).Y-1))
                 a1 = RadiusArc((33.1, (l0@0).Y), l4 @ 1, radius=22.1, short_sagitta=True)
                 l5 = Line(a1@0, l0@0)
             make_face()
