@@ -51,6 +51,10 @@ class KeyplateDimensions:
     bottom_holder_height_z: float = 0.5
     bottom_holder_deflect: float = 0.2
 
+    clip_position_z: float = (size_z - Choc.clamps.clearance_z)/2
+    clip_xy: float = 0.4
+    clip_z: float = 1
+
     def bumper_holder_locations(self) -> list[Vector]:
         return [
             Vector(self.outline.dims.base_width_x, self.outline.dims.base_length_y) - Vector(self.rubber_bumper_radius, self.rubber_bumper_radius) + Vector(-2, -2)*2,
@@ -105,15 +109,14 @@ class DualityWaveCase:
         self.bottom_left = self.bottom_left - usb_cut_for_bottom.translate(self.keyplate_dims.xiao_position)
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
-
-        # self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
-        # self.keyplate_right = self.keyplate_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
-        # self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
-        # self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
-        # self.bottom_right = self.bottom_right - usb_cut_for_bottom.translate(self.keyplate_dims.xiao_mirror_position)
-        # push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
-        # push_object(self.keywell_right, name="keywell_right") if self.debug else None
-        # push_object(self.bottom_right, name="bottom_right") if self.debug else None
+        self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
+        self.keyplate_right = self.keyplate_right - usb_cut.translate(self.keyplate_dims.xiao_mirror_position)
+        self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
+        self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
+        self.bottom_right = self.bottom_right - usb_cut_for_bottom.translate(self.keyplate_dims.xiao_mirror_position)
+        push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
+        push_object(self.keywell_right, name="keywell_right") if self.debug else None
+        push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
         self.create_accessories()
 
@@ -135,14 +138,20 @@ class DualityWaveCase:
                 walls = keyplate.faces().filter_by(lambda f: f not in tops).sort_by(Axis.X, reverse=True)
                 self.knurl.patternize(walls + [tops[0]], pattern_depth=self.dims.pattern_depth, distance=self.dims.pattern_size)
 
-            add(self.create_bottom_outline(self.dims.clearance))
+            bottom_outline = self.create_bottom_outline(self.dims.clearance)
+            add(bottom_outline)
+            extrude(amount=self.bottom_dims.size_z + self.dims.clearance, mode=Mode.SUBTRACT)
+            add(offset(bottom_outline, amount=-2*self.bottom_dims.keyplate_offset, mode=Mode.PRIVATE))
             extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z + self.dims.clearance, mode=Mode.SUBTRACT)
 
             add(self.create_bottom_wall(self.dims.clearance))
             extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z  + self.dims.clearance, mode=Mode.SUBTRACT)
-            fillet(objects=keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[1].edges() 
-                   + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[2].edges(), 
-                   radius=self.bottom_dims.ribs_z/4 - self.dims.clearance)
+            fillet(objects=edges(Select.NEW)
+                   + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-2].edges(), 
+                   radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
+            
+            add(self.create_bottom_clips(bottom_outline))
+            chamfer(edges(Select.LAST), length=self.keyplate_dims.clip_z/4 - self.dims.clearance/4)
 
             with BuildSketch() as key_holes:
                 for keycol in self.keys.keycols:
@@ -256,12 +265,25 @@ class DualityWaveCase:
             offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
             fillet(bottom_wall.vertices(), radius=1)
         return bottom_wall.sketch
+    
+    def create_bottom_clips(self, bottom_outline):
+        clips = []
+        for e in bottom_outline.edges().filter_by(GeomType.LINE):
+            clip_length = e.length * self.keyplate_dims.clip_xy
+            direction = (e.start_point() - e.end_point())
+            clips.append(
+                Box(self.keyplate_dims.clip_z, clip_length, 2*self.keyplate_dims.clip_z, mode=Mode.PRIVATE)
+                .rotate(Axis.Z, -math.degrees(math.atan2(direction.X, direction.Y)))
+                .translate(e.center() + (0,0, self.keyplate_dims.clip_position_z)))
+            
+        return clips
 
     def create_bottom(self):
         print("Creating bottom...")
 
         with BuildPart() as bottom:
-            add(self.create_bottom_outline())
+            bottom_outline = self.create_bottom_outline()
+            add(bottom_outline)
             extrude(amount=self.bottom_dims.size_z)
 
             add(self.create_bottom_wall())
@@ -269,6 +291,9 @@ class DualityWaveCase:
             fillet(objects=bottom.faces().group_by(Axis.Z)[-1].edges()
                    + bottom.faces().group_by(Axis.Z)[1].edges(), 
                    radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
+            
+            add(self.create_bottom_clips(bottom_outline), mode=Mode.SUBTRACT)
+            chamfer(edges(Select.LAST), length=self.keyplate_dims.clip_z/4 - self.dims.clearance/4)
 
             ribs_sketch = self.create_bottom_ribs_sketch()
             ribs_sketch = offset(objects=ribs_sketch, amount=-2*self.dims.clearance, mode=Mode.PRIVATE)
