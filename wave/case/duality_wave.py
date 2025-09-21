@@ -85,7 +85,7 @@ class DualityWaveCase:
     keyplate_dims = KeyplateDimensions()
     bottom_dims = BottomDimensions()
 
-    bumper_dims = BumperHolderDimensions(keys, outline)
+    bumperholder_dims = BumperHolderDimensions(keys, outline)
 
     xiao = Xiao()
     bumper = RubberBumper()
@@ -146,7 +146,7 @@ class DualityWaveCase:
             bottom_outline = self.create_bottom_outline(self.dims.clearance)
             add(bottom_outline)
             extrude(amount=self.bottom_dims.size_z, mode=Mode.SUBTRACT)
-            add(offset(bottom_outline, amount=-2*self.bottom_dims.keyplate_offset, mode=Mode.PRIVATE))
+            add(offset(bottom_outline, amount=-2.5*self.bottom_dims.keyplate_offset, mode=Mode.PRIVATE))
             extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
             add(self.create_bottom_wall(self.dims.clearance, self.bottom_dims.ribs_xy/2))
@@ -188,29 +188,29 @@ class DualityWaveCase:
             print("  bumpers...")
             with BuildPart() as bumper_holder:
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)) as bumper_holder_sketch:
-                    with Locations(self.bumper_dims.bumper_locations()):
+                    with Locations(self.bumperholder_dims.bumper_locations()):
                         Circle(self.bumper.dims.radius)
                 extrude(amount=-self.bottom_dims.size_z-self.bottom_dims.ribs_z + self.bumper.dims.base_z)
 
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)) as bottom_holder_sketch:
-                    with Locations(self.bumper_dims.bottom_holder_locations()):
-                        Circle(self.bumper_dims.radius - 1.5*self.bumper_dims.deflect)
+                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
+                        Circle(self.bumperholder_dims.radius - 1.5*self.bumperholder_dims.deflect)
                 extrude(amount=-self.bottom_dims.size_z-self.bottom_dims.ribs_z + self.bumper.dims.base_z)
                 chamfer(edges(Select.LAST).group_by(Axis.Z)[-1], length=0.5 - self.dims.clearance)
                 extrude(to_extrude=offset(bottom_holder_sketch.sketch, amount=-0.5, mode=Mode.PRIVATE), amount=1.8, taper=60)
 
-                with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bumper.dims.base_z+self.bumper_dims.height_z)):
-                    with Locations(self.bumper_dims.bottom_holder_locations()):
-                        Circle(self.bumper_dims.radius)
+                with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bumper.dims.base_z+self.bumperholder_dims.height_z)):
+                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
+                        Circle(self.bumperholder_dims.radius)
                         Circle(self.bumper.dims.radius, mode=Mode.SUBTRACT)
-                extrude(amount=-self.bumper.dims.base_z-self.bumper_dims.height_z)
+                extrude(amount=-self.bumper.dims.base_z-self.bumperholder_dims.height_z)
             
                 chamfer(edges(Select.LAST).group_by(Edge.length)[-1], length=0.5)
                 fillet(edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[-1],
-                    radius=self.bumper_dims.deflect/2)
+                    radius=self.bumperholder_dims.deflect/2)
 
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)):
-                    with Locations(self.bumper_dims.bottom_holder_locations()):
+                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
                         Rectangle(10, 1)
                         Rectangle(1, 10)
                 extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
@@ -316,25 +316,25 @@ class DualityWaveCase:
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
-                with Locations(self.bumper_dims.bottom_holder_locations() + self.bumper_dims.bumper_locations()):
+                with Locations(self.bumperholder_dims.bottom_holder_locations() + self.bumperholder_dims.bumper_locations()):
                     Circle(self.bumper.dims.radius + 2*self.dims.clearance)
             extrude(amount=self.bottom_dims.size_z+self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bumper.dims.base_z)): 
-                with Locations(self.bumper_dims.bottom_holder_locations()):
-                    Circle(self.bumper_dims.radius - self.bumper_dims.deflect)
+                with Locations(self.bumperholder_dims.bottom_holder_locations()):
+                    Circle(self.bumperholder_dims.radius - self.bumperholder_dims.deflect)
             bottom_holder_cut1 = extrude(amount=self.bottom_dims.size_z+self.bottom_dims.ribs_z-self.bumper.dims.base_z, mode=Mode.SUBTRACT)
 
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
-                with Locations(self.bumper_dims.bottom_holder_locations()):
-                    Circle(self.bumper_dims.radius + self.dims.clearance)
+                with Locations(self.bumperholder_dims.bottom_holder_locations()):
+                    Circle(self.bumperholder_dims.radius + self.dims.clearance)
             extrude(amount=self.bumper.dims.base_z + self.dims.clearance, mode=Mode.SUBTRACT)
             chamfer(
                 bottom.edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[0]
                 + bottom_holder_cut1.edges().group_by(Axis.Z)[-1],
-                length=self.bumper_dims.deflect)
+                length=self.bumperholder_dims.deflect)
             fillet(bottom.edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[0],
-                   radius=self.bumper_dims.deflect/2)
+                   radius=self.bumperholder_dims.deflect/2)
 
         return bottom.part
 
@@ -360,9 +360,6 @@ class DualityWaveCase:
                 offset(amount=self.keyplate_dims.connector_width, side=Side.BOTH)
             make_face()
 
-            l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, -Choc.pins.pin2_y))
-            offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
-            make_face()
             l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, Choc.pins.pin2_y))
             offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
             make_face()
@@ -394,13 +391,20 @@ class DualityWaveCase:
 
             # fill the weird gap between lower pinkie and the outline
             with BuildSketch(Plane.XY, mode=Mode.PRIVATE) as filler:
-                with BuildLine() as l:
-                    a = Vector(20,3.75)
-                    b = Vector(30.6,3.75)
-                    c = Vector(31.6,5.4)
-                    d = Vector(30.5, 6.83)
-                    e = Vector(20,3.9)
-                    Polyline(a, b, c, d, e, a)
+                with BuildLine():
+                    Polyline((20,3.75), 
+                             (30.6,3.75),
+                             (31.6,5.4),
+                             (30.5, 8.3),
+                             (20,3.9),
+                             close=True)
+                make_face() 
+                with BuildLine():
+                    Polyline((46,19.3), 
+                             (46.5,19.3),
+                             (46.5,19.8),
+                             (46,19.8),
+                             close=True)
                 make_face() 
             filler = filler.sketch
             add(filler)
@@ -418,8 +422,8 @@ class DualityWaveCase:
             add(col.sketch.translate((keycol.locs[1] + keycol.locs[0])/2 + (0, Choc.cap.length_y/2)))
 
             with BuildSketch(Plane.XY):
-                with Locations(self.bumper_dims.bottom_holder_locations()):
-                    Circle(self.bumper_dims.radius+1.2)
+                with Locations(self.bumperholder_dims.bottom_holder_locations()):
+                    Circle(self.bumperholder_dims.radius+1.2)
 
         self.debug_content.append({"bottom_ribs": bottom_ribs}) if self.debug else None        
         return bottom_ribs.sketch
@@ -443,7 +447,7 @@ class DualityWaveCase:
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.keyplate_dims.size_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
-            with Locations(self.bumper_dims.bumper_locations() + self.bumper_dims.bottom_holder_locations()):
+            with Locations(self.bumperholder_dims.bumper_locations() + self.bumperholder_dims.bottom_holder_locations()):
                 add(copy.copy(self.bumper.model))
         self.bumpers = self.bumpers.part
             
