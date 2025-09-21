@@ -155,7 +155,9 @@ class DualityWaveCase:
                    + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-2].edges(), 
                    radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
             
-            add(self.create_bottom_clips(bottom_outline, outward_facing=False, camera_position=keyplate.part.center()))
+            bottom_clips = self.create_bottom_clips(bottom_outline, outward_facing=False, camera_position=keyplate.part.center())
+            bottom_clips = bottom_clips.translate((0,0, 1*self.dims.clearance))
+            add(bottom_clips)
 
             print("  key holes...")
             with BuildSketch() as key_holes:
