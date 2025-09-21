@@ -41,7 +41,7 @@ class BumperHolderDimensions:
 
     radius: float = BumperDimensions.radius+1
     height_z: float = 0.5
-    deflect: float = 0.2
+    deflect: float = 0.4
 
     def bumper_locations(self) -> list[Vector]:
         o_dims = self.outline.dims
@@ -149,7 +149,7 @@ class DualityWaveCase:
             add(offset(bottom_outline, amount=-2*self.bottom_dims.keyplate_offset, mode=Mode.PRIVATE))
             extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
-            add(self.create_bottom_wall(self.dims.clearance))
+            add(self.create_bottom_wall(self.dims.clearance, self.bottom_dims.ribs_xy/2))
             extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z  + self.dims.clearance, mode=Mode.SUBTRACT)
             fillet(objects=edges(Select.NEW)
                    + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-2].edges(), 
@@ -185,7 +185,6 @@ class DualityWaveCase:
 
             print("  bumpers...")
             with BuildPart() as bumper_holder:
-                bumper_holder.name = "bumper_holder"
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)) as bumper_holder_sketch:
                     with Locations(self.bumper_dims.bumper_locations()):
                         Circle(self.bumper.dims.radius)
@@ -193,7 +192,7 @@ class DualityWaveCase:
 
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)) as bottom_holder_sketch:
                     with Locations(self.bumper_dims.bottom_holder_locations()):
-                        Circle(self.bumper.dims.radius)
+                        Circle(self.bumper_dims.radius - 1.5*self.bumper_dims.deflect)
                 extrude(amount=-self.bottom_dims.size_z-self.bottom_dims.ribs_z + self.bumper.dims.base_z)
                 chamfer(edges(Select.LAST).group_by(Axis.Z)[-1], length=0.5 - self.dims.clearance)
                 extrude(to_extrude=offset(bottom_holder_sketch.sketch, amount=-0.5, mode=Mode.PRIVATE), amount=1.8, taper=60)
@@ -202,9 +201,9 @@ class DualityWaveCase:
                     with Locations(self.bumper_dims.bottom_holder_locations()):
                         Circle(self.bumper_dims.radius)
                         Circle(self.bumper.dims.radius, mode=Mode.SUBTRACT)
-                bottom_holder = extrude(amount=-self.bumper.dims.base_z-self.bumper_dims.height_z)
+                extrude(amount=-self.bumper.dims.base_z-self.bumper_dims.height_z)
             
-                chamfer(bottom_holder.edges().group_by(Edge.length)[-1], length=0.5)
+                chamfer(edges(Select.LAST).group_by(Edge.length)[-1], length=0.5)
                 fillet(edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[-1],
                     radius=self.bumper_dims.deflect/2)
 
@@ -248,12 +247,12 @@ class DualityWaveCase:
 
         return bottom_outline.sketch
 
-    def create_bottom_wall(self, clearance = 0):
+    def create_bottom_wall(self, outer_clearance = 0, inner_clearance = 0):
         print("  bottom wall...")
 
         with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_wall:
-            add(self.create_bottom_outline(clearance))
-            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
+            add(self.create_bottom_outline(outer_clearance))
+            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - inner_clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
             fillet(bottom_wall.vertices(), radius=1)
         return bottom_wall.sketch
 
