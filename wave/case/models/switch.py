@@ -1,23 +1,11 @@
-import os
+if __name__ == "__main__":
+    import sys, os
+    # add parent directory to path
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dataclasses import dataclass
 from build123d import *
-
-
-class RectDimensions(Vector):
-    pass
-
-class RoundDimensions(Vector):
-    def __init__(self, radius: float, z: float):
-        super().__init__(radius, 0, z)
-
-    @property
-    def radius(self):
-        return self.X
-
-@dataclass(frozen=True)
-class PosAndDims:
-    p: Vector
-    d: RectDimensions | RoundDimensions
+from models.model_types import RectDimensions, RoundDimensions, PosAndDims
 
 @dataclass
 class BaseDimensions:

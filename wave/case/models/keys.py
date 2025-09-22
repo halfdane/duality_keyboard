@@ -3,7 +3,6 @@ if __name__ == "__main__":
     # add parent directory to path
     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from ocp_vscode import *
 
 from dataclasses import dataclass
 from build123d import *

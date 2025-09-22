@@ -65,9 +65,9 @@ class CaseDimensions:
     pin_radius: float = 0.5    
 
     xiao_offset: float = BottomDimensions.keyplate_offset + BottomDimensions.ribs_xy
-    xiao_pos_x: float = 10 + Xiao.board.width_x/2
-    xiao_pos_y: float = Outline.dims.base.Y - Xiao.board.depth_y/2 - xiao_offset
-    xiao_pos_z: float = -(Choc.below.d.Z - Xiao.board.thickness_z - Xiao.usb.height_z)
+    xiao_pos_x: float = 10 + Xiao.dims.d.X/2
+    xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - xiao_offset
+    xiao_pos_z: float = -(Choc.below.d.Z - Xiao.dims.d.Z - Xiao.usb.d.Z)
     xiao_position: Location = (xiao_pos_x, xiao_pos_y, xiao_pos_z)
     xiao_mirror_position: Location = (-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
@@ -177,10 +177,10 @@ class DualityWaveCase:
 
             print("  xiao hole...")
             with BuildSketch(Plane(self.dims.xiao_position)) as xiao_hole:
-                Rectangle(Xiao.board.width_x - 1.5, Xiao.board.depth_y - 1.5)
+                Rectangle(Xiao.dims.d.X - 1.5, Xiao.dims.d.Y - 1.5)
             extrude(amount=self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
             with BuildSketch(Plane(self.dims.xiao_position)) as xiao_cut:
-                Rectangle(Xiao.board.width_x + 2*self.dims.clearance, Xiao.board.depth_y + 2*self.dims.clearance)
+                Rectangle(Xiao.dims.d.X + 2*self.dims.clearance, Xiao.dims.d.Y + 2*self.dims.clearance)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
 
             print("  connector cut...")
