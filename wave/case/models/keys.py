@@ -21,7 +21,7 @@ choc_y = Vector(0, Choc.cap.d.Y)
 @dataclass
 class PinkieDimensions(KeyCol):
     rotation: float = 8
-    pos: Vector = Vector(21.5, 13)
+    pos: Vector = Vector(21.5, 13.5)
     rot: Vector = choc_y - choc_x/rotation - choc_y/rotation/(2*rotation) - choc_x/rotation/(2*rotation)
     locs: list[Vector] = (
         Vector(pos),

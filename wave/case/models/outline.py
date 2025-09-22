@@ -15,10 +15,7 @@ choc_y = Vector(0, Choc.cap.d.Y)
 
 @dataclass
 class Dimensions:
-    base_width_x = 107
-    base_length_y = 85
-    thumb_container_height_y = 25
-    circle_radius = 39.9
+    base: Vector = Vector(107, 85)
 
 class Outline:
 
@@ -29,9 +26,9 @@ class Outline:
         ring = keys.ring
         with BuildSketch() as outline:
             with BuildLine() as line:
-                l0 = Line((0,0), (0, self.dims.base_length_y))
-                l1 = Line(l0@1, (self.dims.base_width_x, self.dims.base_length_y))
-                l2 = Line(l1@1, (self.dims.base_width_x, self.dims.base_length_y/2))
+                l0 = Line((0,0), (0, self.dims.base.Y))
+                l1 = Line(l0@1, (self.dims.base.X, self.dims.base.Y))
+                l2 = Line(l1@1, (self.dims.base.X, self.dims.base.Y/2))
 
                 l30 = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9,1.2)
                 l31 = thumbs.locs[1] + choc_x/2 - choc_y/2 + (0.7,-3.7)
@@ -65,7 +62,7 @@ if __name__ == "__main__":
         for keycol in keys.keycols:
             with BuildSketch() as keycol_sketch:
                 with Locations(keycol.locs) as l:
-                    Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+                    Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
             add(keycol_sketch)
 
     show_object(outline.sketch, name="outline")

@@ -48,9 +48,9 @@ class BumperHolderDimensions:
         radius = BumperDimensions.radius
         return [
             (self.keys.thumb.locs[0] + self.keys.thumb.locs[1])/2 + (-0.5, -Choc.cap.d.Y/4+1.1),
-            Vector(o_dims.base_width_x, o_dims.base_length_y) - Vector(radius, radius) + Vector(-2, -2)*2,
+            Vector(o_dims.base.X, o_dims.base.Y) - Vector(radius, radius) + Vector(-2, -2)*2,
             Vector(0, 0) + Vector(radius, radius) + Vector(2, 2)*2,
-            Vector(0, o_dims.base_length_y) + Vector(radius, -radius) + Vector(2, -2)*2,
+            Vector(0, o_dims.base.Y) + Vector(radius, -radius) + Vector(2, -2)*2,
         ]
     
     def bottom_holder_locations(self) -> list[Vector]:
@@ -66,7 +66,7 @@ class CaseDimensions:
 
     xiao_offset: float = BottomDimensions.keyplate_offset + BottomDimensions.ribs_xy
     xiao_pos_x: float = 10 + Xiao.board.width_x/2
-    xiao_pos_y: float = Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset
+    xiao_pos_y: float = Outline.dims.base.Y - Xiao.board.depth_y/2 - xiao_offset
     xiao_pos_z: float = -(Choc.below.d.Z - Xiao.board.thickness_z - Xiao.usb.height_z)
     xiao_position: Location = (xiao_pos_x, xiao_pos_y, xiao_pos_z)
     xiao_mirror_position: Location = (-xiao_pos_x, xiao_pos_y, xiao_pos_z)
@@ -247,7 +247,7 @@ class DualityWaveCase:
     def create_bottom_outline(self, clearance = 0):
         with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_outline:
             offset(self.outline.sketch, -self.bottom_dims.keyplate_offset + clearance, kind=Kind.INTERSECTION)
-            # fillet(bottom_outline.vertices(), radius=1)
+            fillet(bottom_outline.vertices(), radius=1)
 
         return bottom_outline.sketch
 
@@ -257,7 +257,7 @@ class DualityWaveCase:
         with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_wall:
             add(self.create_bottom_outline(outer_clearance))
             offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - inner_clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
-            # fillet(bottom_wall.vertices(), radius=1)
+            fillet(bottom_wall.vertices(), radius=1)
         return bottom_wall.sketch
 
     def create_bottom_clips(self, bottom_outline: Sketch, outward_facing=False, camera_position=Vector((0,1,0))):
