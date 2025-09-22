@@ -1,13 +1,17 @@
-import sys, os
 if __name__ == "__main__":
+    import sys, os
     # add parent directory to path
     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from ocp_vscode import *
 
 from dataclasses import dataclass
 from build123d import *
 from models.switch import Choc
-from models.keys import Keys, ThumbDimensions
+from models.keys import Keys
+
+choc_x = Vector(Choc.cap.width_x, 0)
+choc_y = Vector(0, Choc.cap.length_y)
 
 @dataclass
 class Dimensions:
@@ -16,13 +20,11 @@ class Dimensions:
     thumb_container_height_y = 25
     circle_radius = 39.9
 
-    switch_offset = (21.5, 12.9)
-
 class Outline:
 
     dims = Dimensions()
 
-    def __init__(self, keys = Keys(Dimensions.switch_offset), debug=False):
+    def __init__(self, keys = Keys(), debug=False):
         thumbs = keys.thumb
         ring = keys.ring
         with BuildSketch() as outline:
@@ -30,14 +32,14 @@ class Outline:
                 l0 = Line((0,0), (0, self.dims.base_length_y))
                 l1 = Line(l0@1, (self.dims.base_width_x, self.dims.base_length_y))
                 l2 = Line(l1@1, (self.dims.base_width_x, self.dims.base_length_y/2))
-                half_height = (Choc.cap.length_y + 5) /2
-                half_width = (Choc.cap.width_x+5) / 2
-                l3 = Line((thumbs.locs[1].X + half_width + half_height/8, thumbs.locs[1].Y + half_height - half_width/8), 
-                          (thumbs.locs[1].X + half_width - half_height/8, thumbs.locs[1].Y - half_height - half_width/8))
+
+                l30 = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9,1.2)
+                l31 = thumbs.locs[1] + choc_x/2 - choc_y/2 + (0.7,-3.7)
+                l3 = Line(l30, l31)
                 a0 = TangentArc([l2 @ 1, l3 @ 0], tangent=l2 % 1)
-                
-                l4 = Line(l3@1, (thumbs.locs[0].X - half_width + half_height/8-1, (l0@0).Y-1))
-                a1 = RadiusArc((33.1, (l0@0).Y), l4 @ 1, radius=22.1, short_sagitta=True)
+
+                l4 = Line(l3@1, Vector(thumbs.locs[0].X-1.5, (l0@0).Y-1) - choc_x/2)
+                a1 = RadiusArc((31.5, (l0@0).Y), l4 @ 1, radius=22.1, short_sagitta=True)
                 l5 = Line(a1@0, l0@0)
             make_face()
             fillet(outline.vertices(), radius=1)
@@ -57,4 +59,14 @@ if __name__ == "__main__":
 
     print(f"Setup time: {time.time() - start_time:.3f}s")
     outline = Outline()
+
+    keys = Keys()
+    with BuildSketch() as key_holes:
+        for keycol in keys.keycols:
+            with BuildSketch() as keycol_sketch:
+                with Locations(keycol.locs) as l:
+                    Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+            add(keycol_sketch)
+
     show_object(outline.sketch, name="outline")
+    show_object(key_holes.sketch, name="key_holes")

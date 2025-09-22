@@ -58,7 +58,7 @@ class StemDimensions:
 @dataclass
 class CapDimensions:
     width_x: float = 18
-    length_y: float = 17.1
+    length_y: float = 17
     height_z: float = 2.25
 
     width_x_without_space: float = 17.45

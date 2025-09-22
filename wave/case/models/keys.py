@@ -1,81 +1,98 @@
+if __name__ == "__main__":
+    import sys, os
+    # add parent directory to path
+    print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from ocp_vscode import *
+
 from dataclasses import dataclass
 from build123d import *
 from models.switch import Choc
 
+
 class KeyCol:
+    pos: Vector = Vector(0,0)
     rotation: float = 0
     locs: list[Vector] = []
 
+choc_x = Vector(Choc.cap.width_x, 0)
+choc_y = Vector(0, Choc.cap.length_y)
+
 @dataclass
 class PinkieDimensions(KeyCol):
-    x: float = 0
-    y: float = 0
-    offset_x: float = -1
     rotation: float = 8
+    pos: Vector = Vector(21.5, 13)
+    rot: Vector = choc_y - choc_x/rotation - choc_y/rotation/(2*rotation) - choc_x/rotation/(2*rotation)
     locs: list[Vector] = (
-        Vector((0, 0)), 
-        Vector((-Choc.cap.width_x/rotation, Choc.cap.length_y)), 
-        Vector((-2*Choc.cap.width_x/rotation, 2*Choc.cap.length_y))
+        Vector(pos),
+        Vector(pos + rot),
+        Vector(pos + 2*rot)
     )
 
 @dataclass
 class RingFingerDimensions(KeyCol):
-    x: float = Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 14
+    offset: Vector = Vector(-1.9, -2.8)
+    pos = PinkieDimensions.pos + choc_x + choc_y + offset
     rotation: float = 0
     locs: list[Vector] = (
-        Vector((x, y)), 
-        Vector((x, Choc.cap.length_y + y)), 
-        Vector((x, 2*Choc.cap.length_y + y))
+        Vector(pos), 
+        Vector(pos + choc_y), 
+        Vector(pos + 2*choc_y)
     )
 
 @dataclass
 class MiddleFingerDimensions(KeyCol):
-    x: float = 2*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 22.4
+    pos = RingFingerDimensions.pos + choc_x + choc_y/2
+    x: float = pos.X
+    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
-        Vector((x, y)), 
-        Vector((x, Choc.cap.length_y + y)), 
-        Vector((x, 2*Choc.cap.length_y + y))
+        Vector(pos), 
+        Vector(pos + choc_y), 
+        Vector(pos + 2*choc_y)
     )
 
 @dataclass
 class PointerFingerDimensions(KeyCol):
-    x: float = 3*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 18
+    pos = MiddleFingerDimensions.pos + choc_x - choc_y/4
+    x: float = pos.X
+    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
-        Vector((x, y)), 
-        Vector((x, Choc.cap.length_y + y)), 
-        Vector((x, 2*Choc.cap.length_y + y))
+        Vector(pos), 
+        Vector(pos + choc_y), 
+        Vector(pos + 2*choc_y)
     )
 
 @dataclass
 class InnerFingerDimensions(KeyCol):
-    x: float = 4*Choc.cap.width_x + PinkieDimensions.offset_x
-    y: float = 14
+    pos = PointerFingerDimensions.pos + choc_x - choc_y/4
+    x: float = pos.X
+    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
-        Vector((x, y)), 
-        Vector((x, Choc.cap.length_y + y)), 
-        Vector((x, 2*Choc.cap.length_y + y))
+        Vector(pos), 
+        Vector(pos + choc_y), 
+        Vector(pos + 2*choc_y)
     )
 
 @dataclass
 class ThumbDimensions(KeyCol):
-    x: float = InnerFingerDimensions.locs[0].X - 6.5
-    y: float = InnerFingerDimensions.locs[0].Y - 18
     rotation: float = -8
+    pos: Vector = Vector(InnerFingerDimensions.locs[0].X,
+                    InnerFingerDimensions.locs[0].Y)- choc_y \
+                        - choc_x/rotation + choc_y/rotation
+
+    rot: Vector = 0.5*choc_y/rotation
+
     locs: list[Vector] = (
-        Vector((x, y)), 
-        Vector((Choc.cap.width_x + x, y + Choc.cap.width_x/rotation)), 
+        Vector(pos - choc_x/2 - rot + 0.5*choc_y/rotation/rotation + choc_x/rotation/rotation),
+        Vector(pos + choc_x/2 + 2*rot + 2*choc_y/rotation/rotation - choc_x/rotation/2)
     )
 
 class Keys:
     
-    def __init__(self, switch_offset=(0,0)):
-        offset_vector = Vector(switch_offset)
+    def __init__(self):
         self.pinkie = PinkieDimensions()
         self.ring = RingFingerDimensions()
         self.middle = MiddleFingerDimensions()
@@ -86,5 +103,27 @@ class Keys:
         self.finger_cols = [self.pinkie, self.ring, self.middle, self.pointer, self.inner]
         self.keycols: list[KeyCol] = [*self.finger_cols, self.thumb]
 
-        for col in self.keycols:
-            col.locs = [loc + offset_vector for loc in col.locs]
+
+
+# main method
+if __name__ == "__main__":
+    from ocp_vscode import *
+
+    set_port(3939)
+    show_clear()
+    set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
+    set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
+
+    keys = Keys()
+    with BuildPart() as key_holes:
+        for keycol in keys.keycols:
+            with BuildSketch():
+                with Locations(keycol.locs) as l:
+                    Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+            extrude(amount=-5)
+            with Locations(keycol.locs) as l:
+                Sphere(1)
+        with Locations((keys.thumb.locs[0] + keys.thumb.locs[1])/2) as l:
+            Sphere(radius=1)
+
+    show_all()
