@@ -10,8 +10,8 @@ from build123d import *
 from models.switch import Choc
 from models.keys import Keys
 
-choc_x = Vector(Choc.cap.width_x, 0)
-choc_y = Vector(0, Choc.cap.length_y)
+choc_x = Vector(Choc.cap.d.X, 0)
+choc_y = Vector(0, Choc.cap.d.Y)
 
 @dataclass
 class Dimensions:

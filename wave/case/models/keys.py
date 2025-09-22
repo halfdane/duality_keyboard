@@ -15,8 +15,8 @@ class KeyCol:
     rotation: float = 0
     locs: list[Vector] = []
 
-choc_x = Vector(Choc.cap.width_x, 0)
-choc_y = Vector(0, Choc.cap.length_y)
+choc_x = Vector(Choc.cap.d.X, 0)
+choc_y = Vector(0, Choc.cap.d.Y)
 
 @dataclass
 class PinkieDimensions(KeyCol):
@@ -43,8 +43,6 @@ class RingFingerDimensions(KeyCol):
 @dataclass
 class MiddleFingerDimensions(KeyCol):
     pos = RingFingerDimensions.pos + choc_x + choc_y/2
-    x: float = pos.X
-    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
         Vector(pos), 
@@ -55,8 +53,6 @@ class MiddleFingerDimensions(KeyCol):
 @dataclass
 class PointerFingerDimensions(KeyCol):
     pos = MiddleFingerDimensions.pos + choc_x - choc_y/4
-    x: float = pos.X
-    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
         Vector(pos), 
@@ -67,8 +63,6 @@ class PointerFingerDimensions(KeyCol):
 @dataclass
 class InnerFingerDimensions(KeyCol):
     pos = PointerFingerDimensions.pos + choc_x - choc_y/4
-    x: float = pos.X
-    y: float = pos.Y
     rotation: float = 0
     locs: list[Vector] = (
         Vector(pos), 
@@ -119,7 +113,7 @@ if __name__ == "__main__":
         for keycol in keys.keycols:
             with BuildSketch():
                 with Locations(keycol.locs) as l:
-                    Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+                    Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
             extrude(amount=-5)
             with Locations(keycol.locs) as l:
                 Sphere(1)

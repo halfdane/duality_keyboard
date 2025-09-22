@@ -24,11 +24,11 @@ class BottomDimensions:
 
 @dataclass
 class KeyplateDimensions:
-    size_z: float = Choc.bottom_housing.height_z + Choc.posts.post_height_z + BottomDimensions.size_z
+    size_z: float = Choc.below.d.Z + BottomDimensions.size_z
     switch_clamp_clearance: float = size_z - Choc.clamps.clearance_z
 
     connector_width: float = 2
-    connector_depth_z: float = Choc.posts.post_height_z
+    connector_depth_z: float = Choc.posts.center.d.Z
 
     clip_position_z: float = 0.6*(size_z - Choc.clamps.clearance_z)
     clip_xy: float = 0.4
@@ -47,7 +47,7 @@ class BumperHolderDimensions:
         o_dims = self.outline.dims
         radius = BumperDimensions.radius
         return [
-            (self.keys.thumb.locs[0] + self.keys.thumb.locs[1])/2 + (-0.5, -Choc.cap.length_y/4+1.1),
+            (self.keys.thumb.locs[0] + self.keys.thumb.locs[1])/2 + (-0.5, -Choc.cap.d.Y/4+1.1),
             Vector(o_dims.base_width_x, o_dims.base_length_y) - Vector(radius, radius) + Vector(-2, -2)*2,
             Vector(0, 0) + Vector(radius, radius) + Vector(2, 2)*2,
             Vector(0, o_dims.base_length_y) + Vector(radius, -radius) + Vector(2, -2)*2,
@@ -67,14 +67,14 @@ class CaseDimensions:
     xiao_offset: float = BottomDimensions.keyplate_offset + BottomDimensions.ribs_xy
     xiao_pos_x: float = 10 + Xiao.board.width_x/2
     xiao_pos_y: float = Outline.dims.base_length_y - Xiao.board.depth_y/2 - xiao_offset
-    xiao_pos_z: float = -(Choc.bottom_housing.height_z + Choc.posts.post_height_z - Xiao.board.thickness_z - Xiao.usb.height_z)
+    xiao_pos_z: float = -(Choc.below.d.Z - Xiao.board.thickness_z - Xiao.usb.height_z)
     xiao_position: Location = (xiao_pos_x, xiao_pos_y, xiao_pos_z)
     xiao_mirror_position: Location = (-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
 
 @dataclass
 class KeywellDimensions:
-    size_z: float = Choc.base.thickness_z + Choc.upper_housing.height_z + Choc.stem.height_z + Choc.cap.height_z
+    size_z: float = Choc.above.d.Z
 
 class DualityWaveCase:
     outline = Outline()
@@ -108,7 +108,7 @@ class DualityWaveCase:
         self.keywell_left = self.create_keywell()
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
-        self.keyplate_left = self.create_keyplate()# - usb_cut
+        self.keyplate_left = self.create_keyplate() - usb_cut
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
 
         self.bottom_left = self.create_bottom() - usb_cut_for_bottom
@@ -164,7 +164,7 @@ class DualityWaveCase:
             with BuildSketch() as key_holes:
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
-                        Rectangle(Choc.bottom_housing.width_x, Choc.bottom_housing.depth_y, rotation=keycol.rotation)
+                        Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
             self.debug_content.append({"key_holes (keyplate)": key_holes}) if self.debug else None
 
             extrude(amount=-Choc.clamps.clearance_z, mode=Mode.SUBTRACT)
@@ -232,11 +232,11 @@ class DualityWaveCase:
             with BuildSketch() as key_holes:
                 for keycol in self.keys.finger_cols:
                     with Locations(keycol.locs):
-                        Rectangle(Choc.cap.width_x +1, Choc.cap.length_y + 1, rotation=keycol.rotation)
+                        Rectangle(Choc.cap.d.X +1, Choc.cap.d.Y + 1, rotation=keycol.rotation)
                 with Locations(self.keys.thumb.locs[0]):
-                    Rectangle(Choc.cap.width_x+2, Choc.cap.length_y + 11, rotation=self.keys.thumb.rotation)
+                    Rectangle(Choc.cap.d.X+2, Choc.cap.d.Y + 11, rotation=self.keys.thumb.rotation)
                 with Locations(self.keys.thumb.locs[1]):
-                    Rectangle(Choc.cap.width_x+4, Choc.cap.length_y + 5, rotation=self.keys.thumb.rotation)
+                    Rectangle(Choc.cap.d.X+4, Choc.cap.d.Y + 5, rotation=self.keys.thumb.rotation)
 
             self.debug_content.append({"key_holes (keywell)": key_holes}) if self.debug else None
             extrude(amount=self.keywell_dims.size_z, mode=Mode.SUBTRACT)
@@ -342,11 +342,11 @@ class DualityWaveCase:
 
     def create_connector_sketch(self):
         with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as connector_sketch:
-            top_y = self.keys.middle.locs[2].Y+Choc.cap.length_y/2
+            top_y = self.keys.middle.locs[2].Y+Choc.cap.d.Y/2
 
             for row in range(3):
                 with BuildLine() as row_line:
-                    pts = [ keycol.locs[row] + (Choc.pins.pin2_x, -Choc.pins.pin2_y) for keycol in self.keys.finger_cols]
+                    pts = [ keycol.locs[row] + (Choc.posts.p2.d.X, -Choc.posts.p2.d.Y) for keycol in self.keys.finger_cols]
                     Polyline(*pts)
                     offset(amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
                 make_face()
@@ -362,7 +362,7 @@ class DualityWaveCase:
                 offset(amount=self.keyplate_dims.connector_width, side=Side.BOTH)
             make_face()
 
-            l = Line(self.keys.thumb.locs[0]+ (Choc.pins.pin2_x, Choc.pins.pin2_y), self.keys.thumb.locs[1]+ (Choc.pins.pin2_x, Choc.pins.pin2_y))
+            l = Line(self.keys.thumb.locs[0]+ Choc.posts.p2.d, self.keys.thumb.locs[1]+ Choc.posts.p2.d)
             offset(l, amount=self.keyplate_dims.connector_width/2, side=Side.BOTH)
             make_face()
             for t in self.keys.thumb.locs:
@@ -382,15 +382,15 @@ class DualityWaveCase:
                 for keycol in self.keys.finger_cols:
                     with BuildSketch() as keycol_sketch:
                         with Locations((keycol.locs[0] + keycol.locs[len(keycol.locs)-1]) / 2):
-                            Rectangle(Choc.cap.width_x+2, 3*Choc.cap.length_y+self.bottom_dims.ribs_xy/2, rotation=keycol.rotation)
+                            Rectangle(Choc.cap.d.X+2, 3*Choc.cap.d.Y+self.bottom_dims.ribs_xy/2, rotation=keycol.rotation)
                         with Locations(keycol.locs):
-                            Rectangle(Choc.bottom_housing.width_x+2, Choc.bottom_housing.depth_y+1, mode=Mode.SUBTRACT, rotation=keycol.rotation)
+                            Rectangle(Choc.below.d.X+2, Choc.below.d.Y+1, mode=Mode.SUBTRACT, rotation=keycol.rotation)
 
                 keycol = self.keys.thumb
                 with BuildSketch() as keycol_sketch:
                     with Locations((keycol.locs[0] + keycol.locs[len(keycol.locs)-1]) / 2):
-                        with Locations((0, Choc.cap.length_y / 2)):
-                            Rectangle(2*Choc.cap.width_x, self.bottom_dims.ribs_xy, rotation=keycol.rotation)
+                        with Locations((0, Choc.cap.d.Y / 2)):
+                            Rectangle(2*Choc.cap.d.X, self.bottom_dims.ribs_xy, rotation=keycol.rotation)
 
 
             with Locations(self.bumperholder_dims.bottom_holder_locations()):

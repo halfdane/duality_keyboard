@@ -2,118 +2,128 @@ import os
 from dataclasses import dataclass
 from build123d import *
 
+
+class RectDimensions(Vector):
+    pass
+
+class RoundDimensions(Vector):
+    def __init__(self, radius: float, z: float):
+        super().__init__(radius, 0, z)
+
+    @property
+    def radius(self):
+        return self.X
+
+@dataclass(frozen=True)
+class PosAndDims:
+    p: Vector
+    d: RectDimensions | RoundDimensions
+
 @dataclass
 class BaseDimensions:
-    width_x: float = 15
-    length_y: float = 15
-    thickness_z: float = 0.8
+    d : RectDimensions = RectDimensions(15, 15, 0.8)
 
 @dataclass
 class BottomHousingDimensions:
-    width_x: float = 13.8
-    depth_y: float = 13.8
-    height_z: float = 2.2
+    d : RectDimensions = RectDimensions(13.8, 13.8, 2.2)
 
 @dataclass
 class PostDimensions:
-    post_height_z: float = 2.65
-    center_post_radius: float = 1.6
-    alignment_pin_radius: float = 0.9
-    alignment_pin_x_offset: float = 5.5
-
-@dataclass
-class PinsDimensions:
-    pin1_x: float = 0
-    pin1_y: float = 5.9
+    center : PosAndDims = PosAndDims(p=Vector(0,0), d=RoundDimensions(1.6, 2.65))
     
-    pin2_x: float = -5
-    pin2_y: float = 3.8
+    a1: PosAndDims = PosAndDims(p=Vector(5.5,0), d=RoundDimensions(0.9, 2.65))
+    a2: PosAndDims = PosAndDims(p=Vector(-5.5,0), d=RoundDimensions(0.9, 2.65))
 
-    radius: float = 0.2
-    height_z: float = 3
+    p1: PosAndDims = PosAndDims(p=Vector(0,5.9), d=RoundDimensions(0.2, 3))
+    p2: PosAndDims = PosAndDims(p=Vector(-5,3.8), d=RoundDimensions(0.2, 3))
+
+    posts: tuple[PosAndDims] = (center, a1, a2, p1, p2)
+
 
 @dataclass
 class ClampDimensions:
-    width_x: float = 0.35
-    height_z: float = 0.9
-    depth_y: float = 3.154
+    d: RectDimensions = RectDimensions(0.35, 3.154, 0.9)
     offset_between: float = 3.5
-
-    clearance_z: float = BottomHousingDimensions.height_z - height_z
+    clearance_z: float = BottomHousingDimensions.d.Z - d.Z
 
 @dataclass
 class UpperHousingDimensions:
-    height_z: float = 2.5
-    width_x: float = 13.6
-    depth_y: float = 13.8
+    d: RectDimensions = RectDimensions(13.6, 13.8, 2.5)
 
 @dataclass
 class StemDimensions:
-    height_z: float = 2.5
-    width_x: float = 10
-    depth_y: float = 4.5
-    ext_width_x: float = 3
-    ext_depth_y: float = 1.2
+    d: RectDimensions = RectDimensions(10, 4.5, 2.5)    
+    ext_d: RectDimensions = RectDimensions(3, 1.2, 0)
 
 @dataclass
 class CapDimensions:
-    width_x: float = 18
-    length_y: float = 17
-    height_z: float = 2.25
+    d: RectDimensions = RectDimensions(18, 17, 2.25)
+    d_without_space: RectDimensions = RectDimensions(17.45, 16.571, d.Z)
 
-    width_x_without_space: float = 17.45
-    length_y_without_space: float = 16.571
+@dataclass
+class AboveDimensions:
+    d: RectDimensions = RectDimensions(
+        BaseDimensions.d.X,
+        BaseDimensions.d.Y,
+        BaseDimensions.d.Z + UpperHousingDimensions.d.Z + StemDimensions.d.Z + CapDimensions.d.Z
+    )
+
+
+@dataclass
+class BelowDimensions:
+    d: RectDimensions = RectDimensions(
+        BottomHousingDimensions.d.X,
+        BottomHousingDimensions.d.Y,
+        BottomHousingDimensions.d.Z + max([post.d.Z for post in PostDimensions.posts])
+    )
 
 class Choc:
     base = BaseDimensions()
     bottom_housing = BottomHousingDimensions()
     posts = PostDimensions()
-    pins = PinsDimensions()
     clamps = ClampDimensions()
     upper_housing = UpperHousingDimensions()
     stem = StemDimensions()
     cap = CapDimensions()
 
+    above = AboveDimensions()
+    below = BelowDimensions()
+
     def __init__(self, show_model=False, show_step_file=False):
         with BuildPart() as self.model:
             with BuildPart() as main_housing_base:
-                with Locations((0, 0, +self.base.thickness_z / 2)):
-                    Box(self.base.width_x, self.base.length_y, self.base.thickness_z)
+                with Locations((0, 0, +self.base.d.Z / 2)):
+                    Box(self.base.d.X, self.base.d.Y, self.base.d.Z)
 
             with BuildPart(main_housing_base.faces().sort_by(Axis.Z)[0]) as bottom_housing:
-                with Locations((0, 0, self.bottom_housing.height_z / 2)):
-                    Box(self.bottom_housing.width_x, self.bottom_housing.depth_y, self.bottom_housing.height_z)
+                with Locations((0, 0, self.bottom_housing.d.Z / 2)):
+                    Box(self.bottom_housing.d.X, self.bottom_housing.d.Y, self.bottom_housing.d.Z)
 
             with BuildPart(bottom_housing.faces().sort_by(Axis.Z)[0]) as posts:
-                with Locations((0, 0, self.posts.post_height_z / 2)):
-                    Cylinder(self.posts.center_post_radius, self.posts.post_height_z)
-                with Locations((self.posts.alignment_pin_x_offset, 0, self.posts.post_height_z / 2), 
-                            (-self.posts.alignment_pin_x_offset, 0, self.posts.post_height_z / 2)):
-                    Cylinder(self.posts.alignment_pin_radius, self.posts.post_height_z)
-                with Locations((self.pins.pin1_x, self.pins.pin1_y, self.pins.height_z / 2),
-                            (self.pins.pin2_x, self.pins.pin2_y, self.pins.height_z / 2)):
-                    Cylinder(self.pins.radius, self.pins.height_z)
+                for post in self.posts.posts:
+                    with Locations(post.p + (0, 0, -post.d.Z / 2)):
+                        Cylinder(post.d.radius, post.d.Z)
 
             with BuildPart(bottom_housing.faces().filter_by(Axis.X)) as snap_in_clamps:
-                with Locations(((self.bottom_housing.height_z-self.clamps.height_z)/2, self.clamps.offset_between, self.clamps.width_x/2), 
-                            ((self.bottom_housing.height_z-self.clamps.height_z)/2, -self.clamps.offset_between, self.clamps.width_x/2)):
-                    Box(self.clamps.height_z, self.clamps.depth_y, self.clamps.width_x)
+                with Locations(((self.bottom_housing.d.Z-self.clamps.d.Z)/2, self.clamps.offset_between, self.clamps.d.X/2), 
+                            ((self.bottom_housing.d.Z-self.clamps.d.Z)/2, -self.clamps.offset_between, self.clamps.d.X/2)):
+                    Box(self.clamps.d.Z, self.clamps.d.Y, self.clamps.d.X)
 
             with BuildPart(main_housing_base.faces().sort_by(Axis.Z)[-1]) as upper_housing:
-                with Locations((0, 0, self.upper_housing.height_z / 2)):
-                    Box(self.upper_housing.width_x, self.upper_housing.depth_y, self.upper_housing.height_z)
+                with Locations((0, 0, self.upper_housing.d.Z / 2)):
+                    Box(self.upper_housing.d.X, self.upper_housing.d.Y, self.upper_housing.d.Z)
 
             with BuildPart(upper_housing.faces().sort_by(Axis.Z)[-1]) as stem:
-                with Locations((0, 0, self.stem.height_z / 2)):
-                    Box(self.stem.width_x, self.stem.depth_y, self.stem.height_z)
-                with Locations((0, -(self.stem.depth_y+self.stem.ext_depth_y)/2, self.stem.height_z / 2)):
-                    Box(self.stem.ext_width_x, self.stem.ext_depth_y, self.stem.height_z)
+                with Locations((0, 0, self.stem.d.Z / 2)):
+                    Box(self.stem.d.X, self.stem.d.Y, self.stem.d.Z)
+                with Locations((0, -(self.stem.d.Y+self.stem.ext_d.Y)/2, self.stem.d.Z / 2)):
+                    Box(self.stem.ext_d.X, self.stem.ext_d.Y, self.stem.d.Z)
 
             with BuildPart() as cap:
                 with BuildSketch(stem.faces().sort_by(Axis.Z)[-1]):
                     with Locations((0, 0.05)):
-                        RectangleRounded(self.cap.width_x_without_space, self.cap.length_y_without_space, 2)
-                extrude(amount=self.cap.height_z)
+                        RectangleRounded(self.cap.d_without_space.X, self.cap.d_without_space.Y, 2)
+                extrude(amount=self.cap.d.Z)
                 fillet(cap.faces().sort_by(Axis.Z)[-1].edges(), 1.5)
                 s = 40
                 with Locations((0, 0, s+6.7)):
@@ -123,7 +133,7 @@ class Choc:
             from ocp_vscode import show_all
             if show_step_file:
                 step_file = import_step('/home/tvollert/Downloads/MBK_Keycap_-_1u.step')
-                step_file = step_file.translate((0, -0.15, 3.6+self.base.thickness_z/2))
+                step_file = step_file.translate((0, -0.15, 3.6+self.base.d.Z/2))
                 pass
                 
             show_all()
