@@ -5,7 +5,6 @@ from build123d import *
 from models.switch import Choc
 from models.xiao import Xiao
 from models.power_switch import PowerSwitch
-from models.knurl import Knurl
 from models.symbol import Symbol
 from models.keys import Keys
 from models.outline import Outline
@@ -68,8 +67,8 @@ class CaseDimensions:
     xiao_pos_x: float = 10 + Xiao.dims.d.X/2
     xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - xiao_offset
     xiao_pos_z: float = -(Choc.below.d.Z - Xiao.dims.d.Z - Xiao.usb.d.Z)
-    xiao_position: Location = (xiao_pos_x, xiao_pos_y, xiao_pos_z)
-    xiao_mirror_position: Location = (-xiao_pos_x, xiao_pos_y, xiao_pos_z)
+    xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
+    xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
 
 @dataclass
@@ -115,7 +114,7 @@ class DualityWaveCase:
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         push_object(self.chocs, name="chocs")
-        push_object(self.xiao.model, name="xiao")
+        push_object(self.xiao.model.translate(self.dims.xiao_position), name="xiao")
         push_object(self.bumpers, name="bumpers")
 
         if both_sides:
@@ -437,8 +436,7 @@ class DualityWaveCase:
         self.chocs = self.chocs.part
 
         self.xiao.model = self.xiao.model\
-            .rotate(Axis.X, 180)\
-            .translate(self.dims.xiao_position)
+            .rotate(Axis.X, 180)
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.keyplate_dims.size_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
@@ -449,7 +447,7 @@ class DualityWaveCase:
 
 if __name__ == "__main__":
     set_port(3939)
-    case = DualityWaveCase(debug=True)
+    case = DualityWaveCase(debug=True, both_sides=True)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
