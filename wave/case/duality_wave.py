@@ -30,7 +30,7 @@ class KeyplateDimensions:
     connector_width: float = 2
     connector_depth_z: float = Choc.posts.post_height_z
 
-    clip_position_z: float = (size_z - Choc.clamps.clearance_z)/2
+    clip_position_z: float = 0.6*(size_z - Choc.clamps.clearance_z)
     clip_xy: float = 0.4
     clip_z: float = 1
 
@@ -150,7 +150,7 @@ class DualityWaveCase:
             extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
             # inner wall
-            add(self.create_bottom_wall(self.dims.clearance, self.bottom_dims.ribs_xy/2))
+            add(self.create_bottom_wall(self.dims.clearance, 4*self.dims.clearance))
             extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z  + self.dims.clearance, mode=Mode.SUBTRACT)
             fillet(objects=keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-4].edges()
                    + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-2].edges(), 
