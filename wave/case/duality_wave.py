@@ -64,7 +64,7 @@ class CaseDimensions:
     clearance: float = 0.02
     pin_radius: float = 0.5    
 
-    xiao_offset: float = BottomDimensions.keyplate_offset + BottomDimensions.ribs_xy
+    xiao_offset: float = BottomDimensions.keyplate_offset + Xiao.usb.forward_y
     xiao_pos_x: float = 10 + Xiao.dims.d.X/2
     xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - xiao_offset
     xiao_pos_z: float = -(Choc.below.d.Z - Xiao.dims.d.Z - Xiao.usb.d.Z)
@@ -102,7 +102,7 @@ class DualityWaveCase:
         self.create_accessories()
 
         usb_cut = self.xiao.create_usb_cut(2*self.dims.clearance).translate(self.dims.xiao_position)
-        usb_cut_for_bottom = self.xiao.create_usb_cut(6*self.dims.clearance).translate(self.dims.xiao_position)
+        usb_cut_large = self.xiao.create_usb_cut(6*self.dims.clearance).translate(self.dims.xiao_position)
         self.debug_content.append({"usb_cut": usb_cut}) if self.debug else None
 
         self.keywell_left = self.create_keywell()
@@ -111,7 +111,7 @@ class DualityWaveCase:
         self.keyplate_left = self.create_keyplate() - usb_cut
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
 
-        self.bottom_left = self.create_bottom() - usb_cut_for_bottom
+        self.bottom_left = self.create_bottom() - usb_cut_large
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         push_object(self.chocs, name="chocs")
@@ -125,7 +125,7 @@ class DualityWaveCase:
             self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ) - usb_cut.translate(self.dims.xiao_mirror_position)
             push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
 
-            self.bottom_right = mirror(self.bottom_left, about=Plane.YZ) - usb_cut_for_bottom.translate(self.dims.xiao_mirror_position)
+            self.bottom_right = mirror(self.bottom_left, about=Plane.YZ) - usb_cut_large.translate(self.dims.xiao_mirror_position)
             push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
             push_object(mirror(self.chocs, about=Plane.YZ), name="chocs") if self.debug else None
@@ -138,7 +138,7 @@ class DualityWaveCase:
         with BuildPart() as keyplate:
             with BuildSketch() as base:
                 offset(self.outline.inner_sketch,
-                        -self.bottom_dims.ribs_xy - 2*self.dims.clearance,
+                        -self.bottom_dims.keyplate_offset - 2*self.dims.clearance,
                         kind=Kind.INTERSECTION)
                 fillet(vertices(), radius=1)
             extrude(amount=-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)
@@ -269,7 +269,7 @@ class DualityWaveCase:
                 add(self.outline.sketch)
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z), mode=Mode.SUBTRACT) as inner_wall:
                     offset(self.outline.inner_sketch,
-                        -self.bottom_dims.ribs_xy,
+                        -self.bottom_dims.keyplate_offset,
                         kind=Kind.INTERSECTION,)
                     fillet(vertices(), radius=1)
             extrude(amount=self.keyplate_dims.size_z)
