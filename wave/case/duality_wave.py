@@ -29,9 +29,9 @@ class KeyplateDimensions:
     connector_width: float = 2
     connector_depth_z: float = Choc.posts.center.d.Z
 
-    clip_position_z: float = 0.6*(size_z - Choc.clamps.clearance_z)
+    clip_position_z: float = -1.5
     clip_xy: float = 0.4
-    clip_z: float = 1
+    clip_protusion: float = 0.5
 
 @dataclass
 class BumperHolderDimensions:
@@ -45,11 +45,12 @@ class BumperHolderDimensions:
     def bumper_locations(self) -> list[Vector]:
         o_dims = self.outline.dims
         radius = BumperDimensions.radius
+        base_offset = 2.5
         return [
-            (self.keys.thumb.locs[0] + self.keys.thumb.locs[1])/2 + (-0.5, -Choc.cap.d.Y/4+1.1),
-            Vector(o_dims.base.X, o_dims.base.Y) - Vector(radius, radius) + Vector(-2, -2)*2,
-            Vector(0, 0) + Vector(radius, radius) + Vector(2, 2)*2,
-            Vector(0, o_dims.base.Y) + Vector(radius, -radius) + Vector(2, -2)*2,
+            self.keys.thumb.locs[1] + (Choc.cap.d.X/2, -Choc.cap.d.Y/2) + Vector(-radius, radius) - (0.5, 1.1),
+            Vector(o_dims.base.X, o_dims.base.Y) - Vector(radius, radius) + Vector(-base_offset, -base_offset),
+            Vector(0, 0) + Vector(radius, radius) + Vector(base_offset, base_offset),
+            Vector(0, o_dims.base.Y) + Vector(radius, -radius) + Vector(base_offset, -base_offset),
         ]
     
     def bottom_holder_locations(self) -> list[Vector]:
@@ -136,28 +137,18 @@ class DualityWaveCase:
 
         with BuildPart() as keyplate:
             with BuildSketch() as base:
-                add(self.outline.sketch)
-            extrude(amount=self.keyplate_dims.size_z)
-            keyplate.part = keyplate.part.translate((0,0,-self.keyplate_dims.size_z))
+                offset(self.outline.inner_sketch,
+                        -self.bottom_dims.ribs_xy - 2*self.dims.clearance,
+                        kind=Kind.INTERSECTION)
+                fillet(vertices(), radius=1)
+            extrude(amount=-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)
             fillet(objects=keyplate.faces().sort_by(Axis.Z)[0].edges(), radius=1)
             self.debug_content.append({"base": base}) if self.debug else None
 
-            bottom_outline = self.create_bottom_outline(self.dims.clearance)
-            add(bottom_outline)
-            extrude(amount=self.bottom_dims.size_z, mode=Mode.SUBTRACT)
-            add(offset(bottom_outline, amount=-2.5*self.bottom_dims.keyplate_offset, mode=Mode.PRIVATE))
-            extrude(amount=self.bottom_dims.size_z + self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
-
-            # inner wall
-            add(self.create_bottom_wall(self.dims.clearance, 4*self.dims.clearance))
-            extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z  + self.dims.clearance, mode=Mode.SUBTRACT)
-            fillet(objects=keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-4].edges()
-                   + keyplate.faces().filter_by(Axis.Z).group_by(Axis.Z)[-2].edges(), 
-                   radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
-
-            bottom_clips = self.create_bottom_clips(bottom_outline, outward_facing=False, camera_position=keyplate.part.center())
-            bottom_clips = bottom_clips.translate((0,0, 1*self.dims.clearance))
-            add(bottom_clips)
+            clips = self.create_bottom_clips(base.sketch, clips_on_outside=True, z_position=self.keyplate_dims.clip_position_z)
+            for clip in clips:
+                extrude(to_extrude=clip, amount=self.keyplate_dims.clip_protusion, mode=Mode.ADD)
+                chamfer(clip.edges(), length=self.keyplate_dims.clip_protusion - self.dims.clearance)
 
             print("  key holes...")
             with BuildSketch() as key_holes:
@@ -170,9 +161,6 @@ class DualityWaveCase:
             with BuildSketch(Plane.XY.offset(-Choc.clamps.clearance_z)) as keyholes_with_space:
                 offset(key_holes.sketch, 1)
             extrude(amount=-self.keyplate_dims.size_z, mode=Mode.SUBTRACT)
-
-            ribs_sketch = self.create_bottom_ribs_sketch()
-            extrude(to_extrude=ribs_sketch, amount=self.bottom_dims.ribs_z, mode=Mode.SUBTRACT)
 
             print("  xiao hole...")
             with BuildSketch(Plane(self.dims.xiao_position)) as xiao_hole:
@@ -192,6 +180,7 @@ class DualityWaveCase:
                     with Locations(self.bumperholder_dims.bumper_locations()):
                         Circle(self.bumper.dims.radius)
                 extrude(amount=-self.bottom_dims.size_z-self.bottom_dims.ribs_z + self.bumper.dims.base_z)
+                extrude(to_extrude=bumper_holder_sketch.sketch, amount=1.5)
 
                 with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z+self.bottom_dims.ribs_z)) as bottom_holder_sketch:
                     with Locations(self.bumperholder_dims.bottom_holder_locations()):
@@ -242,78 +231,60 @@ class DualityWaveCase:
 
 
         return keywell.part
-    
-    def create_bottom_outline(self, clearance = 0):
-        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as bottom_outline:
-            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset + clearance, kind=Kind.INTERSECTION)
-            fillet(bottom_outline.vertices(), radius=1)
 
-        return bottom_outline.sketch
-
-    def create_bottom_wall(self, outer_clearance = 0, inner_clearance = 0):
-        print("  bottom wall...")
-
-        with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_wall:
-            add(self.create_bottom_outline(outer_clearance))
-            offset(self.outline.sketch, -self.bottom_dims.keyplate_offset - self.bottom_dims.ribs_xy - inner_clearance, kind=Kind.INTERSECTION, mode=Mode.SUBTRACT)
-            fillet(bottom_wall.vertices(), radius=1)
-        return bottom_wall.sketch
-
-    def create_bottom_clips(self, bottom_outline: Sketch, outward_facing=False, camera_position=Vector((0,1,0))):
+    def create_bottom_clips(self, outline: Sketch, clips_on_outside: bool = False, z_position: float = 0) -> list[Sketch]:
         print("  bottom clips...")
-        def correct_direction(face: Face) -> bool:
-            normal = face.normal_at()
-            look_direction = face.center() - camera_position
-            direction_scalar = normal.dot(look_direction)
-            return direction_scalar < 0 and normal.Z == 0
 
-        z_position = bottom_outline.edges()[0].start_point().Z + self.keyplate_dims.clip_position_z
-        camera_position = Vector(camera_position.X, camera_position.Y, z_position) 
+        clips = []
+        for e in outline.edges().filter_by(GeomType.LINE):
+            edge_center = e.center()
+            edge_direction = (e.end_point() - e.start_point()).normalized()
+            plane_normal = Vector(edge_direction.Y, -edge_direction.X, 0)  # Perpendicular to edge in XY plane
+            plane_origin = Vector(edge_center.X, edge_center.Y, z_position)
+            plane = Plane(origin=plane_origin, z_dir=plane_normal, x_dir=edge_direction)
+            clip_length = e.length * self.keyplate_dims.clip_xy
+            if clips_on_outside:
+                plane = plane.offset(-self.keyplate_dims.clip_protusion)
+                total_height = 4*self.keyplate_dims.clip_protusion
+            else:
+                total_height = 2*self.keyplate_dims.clip_protusion + 2*self.dims.clearance
+                clip_length -= 2*self.keyplate_dims.clip_protusion - 2*self.dims.clearance
 
-        with BuildPart() as clips:
-            for e in bottom_outline.edges().filter_by(GeomType.LINE):
-                clip_length = e.length * self.keyplate_dims.clip_xy
-                direction = (e.start_point() - e.end_point())
-                total_height = 2*self.keyplate_dims.clip_z
-                add(
-                    Box(self.keyplate_dims.clip_z, clip_length, total_height, mode=Mode.PRIVATE)
-                .rotate(Axis.Z, -math.degrees(math.atan2(direction.X, direction.Y)))
-                .translate(e.center() + (0,0, self.keyplate_dims.clip_position_z)))
-            selected_faces = faces()\
-                .filter_by(correct_direction) \
-                .filter_by(lambda f: f.area > self.keyplate_dims.clip_z * total_height)
-            chamfer(selected_faces.edges(), length=self.keyplate_dims.clip_z/2)
-            fillet(edges(Select.LAST), radius=self.keyplate_dims.clip_z/3)
-            self.debug_content.append({f"clips_{"bottom" if outward_facing else "keyplate"}":
-                                       {"clips": clips.part, 
-                                        "selected_faces": selected_faces, 
-                                        "edges": selected_faces.edges(), 
-                                        "camera": Sphere(0.5, mode=Mode.PRIVATE).translate(camera_position)}}) if self.debug else None
+            
+            with BuildSketch(plane) as clip:
+                Rectangle(clip_length, total_height)
+            clips.append(clip.sketch)
 
-        return clips.part
+        self.debug_content.append({"clips": clips}) if self.debug else None
+        return clips
 
     def create_bottom(self):
         print("Creating bottom...")
 
         with BuildPart() as bottom:
-            fingernail_recess_for_easier_removal = 0.5
+            add(self.outline.sketch.translate((0, 0, -self.keyplate_dims.size_z)))
+            extrude(amount=self.bottom_dims.size_z)
 
-            bottom_outline = self.create_bottom_outline()
-            extrude(to_extrude=bottom_outline, amount=fingernail_recess_for_easier_removal)
-            chamfer(objects=bottom.faces().sort_by(Axis.Z)[-1].edges(), length=fingernail_recess_for_easier_removal-self.dims.clearance)
-            extrude(to_extrude=bottom_outline.translate((0, 0, fingernail_recess_for_easier_removal)), amount=self.bottom_dims.size_z-fingernail_recess_for_easier_removal)
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as wall_sketch:
+                add(self.outline.sketch)
+                with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z), mode=Mode.SUBTRACT) as inner_wall:
+                    offset(self.outline.inner_sketch,
+                        -self.bottom_dims.ribs_xy,
+                        kind=Kind.INTERSECTION,)
+                    fillet(vertices(), radius=1)
+            extrude(amount=self.keyplate_dims.size_z)
 
-            add(self.create_bottom_wall())
-            extrude(amount=self.keyplate_dims.size_z - self.bottom_dims.size_z - Choc.clamps.clearance_z)
-            fillet(objects=bottom.faces().group_by(Axis.Z)[-1].edges()
-                   + bottom.faces().group_by(Axis.Z)[-2].edges(), 
+            fillet(objects=bottom.faces().group_by(Axis.Z)[0].edges()
+                   + bottom.faces().group_by(Axis.Z)[1].edges(),
                    radius=self.bottom_dims.ribs_z/2 - self.dims.clearance)
 
-            add(self.create_bottom_clips(bottom_outline, outward_facing=True, camera_position=bottom.part.center()), mode=Mode.SUBTRACT)
+            clips = self.create_bottom_clips(inner_wall.sketch, clips_on_outside=False, z_position=self.keyplate_dims.clip_position_z)
+            for clip in clips:
+                extrude(to_extrude=clip, amount=-self.keyplate_dims.clip_protusion, mode=Mode.SUBTRACT)
+                chamfer(clip.edges(), length=self.keyplate_dims.clip_protusion - self.dims.clearance)
 
-            ribs_sketch = self.create_bottom_ribs_sketch()
-            ribs_sketch = offset(objects=ribs_sketch, amount=-2*self.dims.clearance, mode=Mode.PRIVATE)
-            extrude(to_extrude=ribs_sketch, amount=self.bottom_dims.ribs_z, mode=Mode.ADD)
+            add(self.create_bottom_ribs_sketch(-2*self.dims.clearance))
+            extrude(amount=self.bottom_dims.ribs_z, mode=Mode.ADD)
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
@@ -373,7 +344,7 @@ class DualityWaveCase:
         return connector_sketch.sketch            
 
 
-    def create_bottom_ribs_sketch(self):
+    def create_bottom_ribs_sketch(self, clearance=0):
         print("  bottom ribs...")
         with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z+self.bottom_dims.size_z)) as bottom_ribs:
 
@@ -395,26 +366,7 @@ class DualityWaveCase:
             with Locations(self.bumperholder_dims.bottom_holder_locations()):
                 Circle(self.bumperholder_dims.radius+1.2)
 
-            # fill the weird gap between lower pinkie and the outline
-            with BuildSketch(Plane.XY, mode=Mode.PRIVATE) as filler:
-                with BuildLine():
-                    Polyline((20,3.75), 
-                             (30.6,3.75),
-                             (31.6,5.4),
-                             (30.5, 8.3),
-                             (20,3.9),
-                             close=True)
-                make_face() 
-                with BuildLine():
-                    Polyline((45,19), 
-                             (46,19),
-                             (46,21),
-                             (45,21), 
-                             close=True)
-                make_face() 
-            filler = filler.sketch
-            add(filler)
-            self.debug_content.append({"filler": filler}) if self.debug else None
+            offset(amount=clearance, kind=Kind.INTERSECTION)
 
         self.debug_content.append({"bottom_ribs": bottom_ribs}) if self.debug else None        
         return bottom_ribs.sketch
@@ -447,7 +399,7 @@ class DualityWaveCase:
 
 if __name__ == "__main__":
     set_port(3939)
-    case = DualityWaveCase(debug=True, both_sides=True)
+    case = DualityWaveCase(debug=True, both_sides=False)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
