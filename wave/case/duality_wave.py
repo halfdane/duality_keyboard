@@ -87,7 +87,6 @@ class DualityWaveCase:
 
     bumperholder_dims = BumperHolderDimensions(keys, outline)
 
-    xiao = Xiao()
     bumper = RubberBumper()
 
     debug_content: list = []
@@ -100,36 +99,41 @@ class DualityWaveCase:
         push_object(self.debug_content, name="debug_content") if self.debug else None
 
         self.create_accessories()
-
-        usb_cut = self.xiao.create_usb_cut(2*self.dims.clearance).translate(self.dims.xiao_position)
-        usb_cut_large = self.xiao.create_usb_cut(6*self.dims.clearance).translate(self.dims.xiao_position)
-        self.debug_content.append({"usb_cut": usb_cut}) if self.debug else None
+        
+        xiao_plane = Plane.XY
+        xiao_plane = xiao_plane.rotated((180,0,0)).move(Location(self.dims.xiao_position))
+        xiao_mirrored_plane = xiao_plane.rotated((180,0,0)).move(Location(self.dims.xiao_mirror_position))
+        self.xiao = Xiao(xiao_plane)
 
         self.keywell_left = self.create_keywell()
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
-        self.keyplate_left = self.create_keyplate() - usb_cut
+        self.keyplate_left = self.create_keyplate()
+        self.keyplate_left = self.xiao.free_usb_space(self.keyplate_left)
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
-
-        self.bottom_left = self.create_bottom() - usb_cut_large
+            
+        self.bottom_left = self.create_bottom()
+        self.bottom_left = self.xiao.add_bumps_and_cutouts(self.bottom_left)
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         push_object(self.chocs, name="chocs")
-        push_object(self.xiao.model.translate(self.dims.xiao_position), name="xiao")
+        push_object(self.xiao.model, name="xiao_left")
         push_object(self.bumpers, name="bumpers")
 
         if both_sides:
             self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
             push_object(self.keywell_right, name="keywell_right") if self.debug else None
 
-            self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ) - usb_cut.translate(self.dims.xiao_mirror_position)
+            self.keyplate_right = mirror(self.keyplate_left, about=Plane.YZ)
+            self.keyplate_right = self.xiao.add_bumps_and_cutouts(self.keyplate_right)
             push_object(self.keyplate_right, name="keyplate_right") if self.debug else None
 
-            self.bottom_right = mirror(self.bottom_left, about=Plane.YZ) - usb_cut_large.translate(self.dims.xiao_mirror_position)
+            self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
+            self.bottom_right = self.xiao.add_bumps_and_cutouts(self.bottom_right)
             push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
             push_object(mirror(self.chocs, about=Plane.YZ), name="chocs") if self.debug else None
-            push_object(self.xiao.model.translate(self.dims.xiao_mirror_position), name="xiao")
+            push_object(Xiao(xiao_mirrored_plane).model, name="xiao_right")
         print("Done creating case.")
 
     def create_keyplate(self):
@@ -286,6 +290,12 @@ class DualityWaveCase:
             add(self.create_bottom_ribs_sketch(-2*self.dims.clearance))
             extrude(amount=self.bottom_dims.ribs_z, mode=Mode.ADD)
 
+            print("  xiao support...")
+            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as xiao_support:
+                with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y)):
+                    Rectangle(5, 5)
+            extrude(amount=self.keyplate_dims.size_z + self.dims.xiao_position.Z - Xiao.dims.d.Z - Xiao.processor.d.Z - self.dims.clearance)
+
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)): 
                 with Locations(self.bumperholder_dims.bottom_holder_locations() + self.bumperholder_dims.bumper_locations()):
@@ -386,9 +396,6 @@ class DualityWaveCase:
                 with Locations(keycol.locs):
                     add(copy.copy(choc.model.part).rotate(Axis.Z, keycol.rotation+180))
         self.chocs = self.chocs.part
-
-        self.xiao.model = self.xiao.model\
-            .rotate(Axis.X, 180)
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.keyplate_dims.size_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
