@@ -4,6 +4,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataclasses import dataclass
+import math
 from build123d import *
 from models.switch import Choc
 from models.keys import Keys
@@ -23,20 +24,27 @@ class Outline:
     def __init__(self):
         thumbs = Keys.thumb
 
-        thumb_choc_scaled_x = Choc.above.d.X
-        thumb_choc_scaled_y = Choc.above.d.Y
+        x = Choc.cap.d.X * 2.13
+        y = Choc.above.d.Y * 1.45
+        rotation_rad = math.radians(Keys.thumb.rotation)
+        rotation_cos = math.cos(rotation_rad)
+        rotation_sin = math.sin(rotation_rad)
 
-        print(thumb_choc_scaled_x/thumbs.rotation)
+        cirque_recess_radius = 22
+        with BuildSketch():
+            with Locations((54.5, -5)):
+                cirque_meets_X = Circle(cirque_recess_radius).intersect(Line((0, 0), (100, -0.2)))
 
-        bottom_left = Vector(0,0)
+        bottom_left = Vector(0, 0)
         top_left = Vector(0, self.dims.base.Y)
         top_right = Vector(self.dims.base.X, self.dims.base.Y)
         mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
-        thumb_top_right = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9, 1)
-        thumb_bottom_right = thumbs.locs[1] + choc_x/2 - choc_y/2 + (0.7,-3.4)
-        thumb_bottom_left = Vector(thumbs.locs[0].X-1.5, bottom_left.Y) - choc_x/2
-        cirque_recess_radius = 21.5
-        cirque_recess_left = bottom_left + Vector(32.8,0)
+
+        cirque_recess_left = cirque_meets_X.vertices().sort_by(Axis.X)[0]
+        thumb_bottom_left = cirque_meets_X.vertices().sort_by(Axis.X)[1]
+        thumb_bottom_right = thumb_bottom_left + (x * rotation_cos, x * rotation_sin)
+        thumb_top_right = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9, 1)        
+        thumb_top_right = thumb_bottom_right + (-y * rotation_sin, y * rotation_cos)
 
         with BuildSketch() as outline:
             with BuildLine() as line:
@@ -46,10 +54,9 @@ class Outline:
 
                 a0 = TangentArc([mid_right, thumb_top_right], tangent=l2 % 1)
                 l3 = Line(thumb_top_right, thumb_bottom_right)
-
                 l4 = Line(thumb_bottom_right, thumb_bottom_left)
                 a1 = RadiusArc(cirque_recess_left, thumb_bottom_left, radius=cirque_recess_radius, short_sagitta=True)
-                l5 = Line(a1@0, l0@0)
+                l5 = Line(cirque_recess_left, l0@0)
             make_face()
             fillet(outline.vertices(), radius=1)
 
@@ -101,5 +108,8 @@ if __name__ == "__main__":
 
     show_object(outline.sketch, name="outline")
     show_object(key_holes.sketch, name="key_holes") 
+    show_object(outline.inner_sketch, name="inner_outline")
+
+
 
 

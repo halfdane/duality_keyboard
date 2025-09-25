@@ -16,7 +16,7 @@ from ocp_vscode import *
 @dataclass
 class BottomDimensions:
     size_z: float = 1.3
-    keyplate_offset: float = 1.8
+    keyplate_offset: float = 1.79
 
     ribs_xy: float = 2
     ribs_z: float = 1.5
