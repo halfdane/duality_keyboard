@@ -84,16 +84,15 @@ class ThumbDimensions(KeyCol):
 
 class Keys:
     
-    def __init__(self):
-        self.pinkie = PinkieDimensions()
-        self.ring = RingFingerDimensions()
-        self.middle = MiddleFingerDimensions()
-        self.pointer = PointerFingerDimensions()
-        self.inner = InnerFingerDimensions()
-        self.thumb = ThumbDimensions()        
+    pinkie = PinkieDimensions()
+    ring = RingFingerDimensions()
+    middle = MiddleFingerDimensions()
+    pointer = PointerFingerDimensions()
+    inner = InnerFingerDimensions()
+    thumb = ThumbDimensions()
 
-        self.finger_cols = [self.pinkie, self.ring, self.middle, self.pointer, self.inner]
-        self.keycols: list[KeyCol] = [*self.finger_cols, self.thumb]
+    finger_cols = [pinkie, ring, middle, pointer, inner]
+    keycols: list[KeyCol] = [*finger_cols, thumb]
 
 
 
