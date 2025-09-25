@@ -10,6 +10,7 @@ from models.keys import Keys
 
 choc_x = Vector(Choc.cap.d.X, 0)
 choc_y = Vector(0, Choc.cap.d.Y)
+choc_xy = choc_x + choc_y
 
 @dataclass
 class Dimensions:
@@ -19,22 +20,35 @@ class Outline:
 
     dims = Dimensions()
 
-    def __init__(self, keys = Keys(), debug=False):
-        thumbs = keys.thumb
-        ring = keys.ring
+    def __init__(self):
+        thumbs = Keys.thumb
+
+        thumb_choc_scaled_x = Choc.above.d.X
+        thumb_choc_scaled_y = Choc.above.d.Y
+
+        print(thumb_choc_scaled_x/thumbs.rotation)
+
+        bottom_left = Vector(0,0)
+        top_left = Vector(0, self.dims.base.Y)
+        top_right = Vector(self.dims.base.X, self.dims.base.Y)
+        mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
+        thumb_top_right = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9, 1)
+        thumb_bottom_right = thumbs.locs[1] + choc_x/2 - choc_y/2 + (0.7,-3.4)
+        thumb_bottom_left = Vector(thumbs.locs[0].X-1.5, bottom_left.Y) - choc_x/2
+        cirque_recess_radius = 21.5
+        cirque_recess_left = bottom_left + Vector(32.8,0)
+
         with BuildSketch() as outline:
             with BuildLine() as line:
-                l0 = Line((0,0), (0, self.dims.base.Y))
-                l1 = Line(l0@1, (self.dims.base.X, self.dims.base.Y))
-                l2 = Line(l1@1, (self.dims.base.X, self.dims.base.Y/2))
+                l0 = Line(bottom_left, top_left)
+                l1 = Line(top_left, top_right)
+                l2 = Line(top_right, mid_right)
 
-                l30 = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9,1.2)
-                l31 = thumbs.locs[1] + choc_x/2 - choc_y/2 + (0.7,-3.7)
-                l3 = Line(l30, l31)
-                a0 = TangentArc([l2 @ 1, l3 @ 0], tangent=l2 % 1)
+                a0 = TangentArc([mid_right, thumb_top_right], tangent=l2 % 1)
+                l3 = Line(thumb_top_right, thumb_bottom_right)
 
-                l4 = Line(l3@1, Vector(thumbs.locs[0].X-1.5, (l0@0).Y-1) - choc_x/2)
-                a1 = RadiusArc((31.5, (l0@0).Y), l4 @ 1, radius=22.1, short_sagitta=True)
+                l4 = Line(thumb_bottom_right, thumb_bottom_left)
+                a1 = RadiusArc(cirque_recess_left, thumb_bottom_left, radius=cirque_recess_radius, short_sagitta=True)
                 l5 = Line(a1@0, l0@0)
             make_face()
             fillet(outline.vertices(), radius=1)
@@ -85,5 +99,7 @@ if __name__ == "__main__":
                     Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
             add(keycol_sketch)
 
-    show_object(outline.inner_sketch, name="outline")
+    show_object(outline.sketch, name="outline")
     show_object(key_holes.sketch, name="key_holes") 
+
+
