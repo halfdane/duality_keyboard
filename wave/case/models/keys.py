@@ -4,6 +4,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataclasses import dataclass
+import math
 from build123d import *
 from models.switch import Choc
 
@@ -20,8 +21,8 @@ choc_xy = choc_x + choc_y
 @dataclass
 class PinkieDimensions(KeyCol):
     rotation: float = 8
-    pos: Vector = Vector(21.5, 12.8 )
-    rot: Vector = choc_y - choc_x/rotation - choc_y/rotation/(2*rotation) - choc_x/rotation/(2*rotation)
+    pos: Vector = Vector(21, 13)
+    rot = Vector(0, Choc.cap.d.Y).rotate(Axis.Z, rotation) 
     locs: list[Vector] = (
         Vector(pos),
         Vector(pos + rot),
@@ -72,12 +73,12 @@ class InnerFingerDimensions(KeyCol):
 @dataclass
 class ThumbDimensions(KeyCol):
     rotation: float = -8
-    pos: Vector = InnerFingerDimensions.locs[0] + (-6.3, -17.8)
-    rot = Vector(-2*rotation, rotation)
 
+    pos: Vector = InnerFingerDimensions.locs[0] + (-6.3, -17.8)
+    rot = Vector(Choc.cap.d.X, 0).rotate(Axis.Z, rotation)
     locs: list[Vector] = (
         Vector(pos),
-        Vector(pos + choc_x + choc_x/rot.X + choc_y/rot.Y + (-0.4, -0.5)),
+        Vector(pos + rot),
     )
 
 class Keys:
@@ -114,6 +115,8 @@ if __name__ == "__main__":
             #     Sphere(1)
         # with Locations(keys.thumb.locs[0], keys.thumb.locs[1]) as l:
         #     Sphere(radius=1)
+        with Locations(keys.thumb.locs[0]) as l:
+            Sphere(radius=1) 
         with Locations(keys.thumb.locs[1]) as l:
             Sphere(radius=1) 
 

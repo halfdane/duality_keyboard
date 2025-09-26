@@ -21,67 +21,90 @@ class Outline:
 
     dims = Dimensions()
 
-    def __init__(self):
-        thumbs = Keys.thumb
+    def __init__(self, wall_thickness=1.8):
+        self.wall_thickness = wall_thickness
 
-        x = Choc.cap.d.X * 2.13
-        y = Choc.above.d.Y * 1.45
-        rotation_rad = math.radians(Keys.thumb.rotation)
-        rotation_cos = math.cos(rotation_rad)
-        rotation_sin = math.sin(rotation_rad)
+        self.cirque_recess_radius = 22
+        self.cirque_recess_position = Vector(54, -5)
 
-        cirque_recess_radius = 22
-        with BuildSketch():
-            with Locations((54.5, -5)):
-                cirque_meets_X = Circle(cirque_recess_radius).intersect(Line((0, 0), (100, -0.2)))
+        self.bottom_left = Vector(0, 0)
+        self.top_left = Vector(0, self.dims.base.Y)
+        self.top_right = Vector(self.dims.base.X, self.dims.base.Y)
+        self.mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
 
-        bottom_left = Vector(0, 0)
-        top_left = Vector(0, self.dims.base.Y)
-        top_right = Vector(self.dims.base.X, self.dims.base.Y)
-        mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
+        thumb_cluster_horizontal = Choc.cap.d.X/2 + wall_thickness
+        thumb_cluster_vertical = Choc.cap.d.Y/2 + wall_thickness
+        
+        self.thumb_bottom_left = Keys.thumb.locs[0] + Vector(-thumb_cluster_horizontal, -thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_bottom_right = Keys.thumb.locs[1] + Vector(thumb_cluster_horizontal, -thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_top_right = Keys.thumb.locs[1] + Vector(thumb_cluster_horizontal, thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_top_left = Keys.thumb.locs[0] + Vector(-thumb_cluster_horizontal, thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
 
-        cirque_recess_left = cirque_meets_X.vertices().sort_by(Axis.X)[0]
-        thumb_bottom_left = cirque_meets_X.vertices().sort_by(Axis.X)[1]
-        thumb_bottom_right = thumb_bottom_left + (x * rotation_cos, x * rotation_sin)
-        thumb_top_right = thumbs.locs[1] + choc_x/2 + choc_y/2 + (3.9, 1)        
-        thumb_top_right = thumb_bottom_right + (-y * rotation_sin, y * rotation_cos)
+        self.sketch = self.create_outline()
+        self.inner_sketch = self.create_inner_outline()
+        self.keywell_sketch = self.create_keywell_outline()
 
+
+    def create_outline(self, offset_by=0):
         with BuildSketch() as outline:
             with BuildLine() as line:
-                l0 = Line(bottom_left, top_left)
-                l1 = Line(top_left, top_right)
-                l2 = Line(top_right, mid_right)
-
-                a0 = TangentArc([mid_right, thumb_top_right], tangent=l2 % 1)
-                l3 = Line(thumb_top_right, thumb_bottom_right)
-                l4 = Line(thumb_bottom_right, thumb_bottom_left)
-                a1 = RadiusArc(cirque_recess_left, thumb_bottom_left, radius=cirque_recess_radius, short_sagitta=True)
-                l5 = Line(cirque_recess_left, l0@0)
+                Line(self.bottom_left, self.top_left)
+                Line(self.top_left, self.top_right)
+                l2 = Line(self.top_right, self.mid_right)
+                TangentArc([self.mid_right, self.thumb_top_right], tangent=l2 % 1)
+                Line(self.thumb_top_right, self.thumb_bottom_right)
+                Line(self.thumb_bottom_right, self.thumb_bottom_left)
+                Line(self.thumb_bottom_left, self.bottom_left)
             make_face()
-            fillet(outline.vertices(), radius=1)
-
+            with Locations(self.cirque_recess_position):
+                Circle(self.cirque_recess_radius, mode=Mode.SUBTRACT)
+            fillet(vertices(), radius=1)
+            if offset_by != 0:
+                offset(amount=offset_by)
+                fillet(vertices(), radius=1)
+        return outline.sketch
+    
+    def create_inner_outline(self, offset_by=-1.8):
         with BuildSketch() as inner_outline:
             with BuildLine() as line:
-                add(l0)
-                add(l1)
-                add(l2)
-
-                add(l3)
-                add(a0)
-                add(l4)
-
-                p = 0.49
-
-
-                r1=RadiusArc(a1@0, a1@(p-0.1), radius=22.1, short_sagitta=True)
-                r2=RadiusArc(a1@(p+0.1), a1@1, radius=22.1, short_sagitta=True)
-                add(Line(r2@0, r1@1))
-                add(l5)
+                Line(self.bottom_left, self.top_left)
+                Line(self.top_left, self.top_right)
+                l2 = Line(self.top_right, self.mid_right)
+                TangentArc([self.mid_right, self.thumb_top_right], tangent=l2 % 1)
+                Line(self.thumb_top_right, self.thumb_bottom_right)
+                Line(self.thumb_bottom_right, self.thumb_bottom_left)
+                Line(self.thumb_bottom_left, self.bottom_left)
             make_face()
-            fillet(outline.vertices(), radius=1)
+            with BuildSketch(mode=Mode.SUBTRACT): 
+                with Locations(self.cirque_recess_position):
+                    Circle(self.cirque_recess_radius)
+                with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - self.wall_thickness/4)):
+                    Rectangle(100, self.wall_thickness/2, mode=Mode.SUBTRACT, rotation=180)
+            fillet(vertices(), radius=1)
+            if offset_by != 0:
+                offset(amount=offset_by)
+                fillet(vertices(), radius=1)
         
-        self.sketch = outline.sketch
-        self.inner_sketch = inner_outline.sketch
+        return inner_outline.sketch
+        
+    def create_keywell_outline(self):
+        thumb_bottom_left = Keys.thumb.locs[0] + Vector(-Choc.cap.d.X/2, -Choc.cap.d.Y).rotate(Axis.Z, Keys.thumb.rotation)
+        thumb_top_left = self.thumb_top_left + Vector(self.wall_thickness, 0).rotate(Axis.Z, Keys.thumb.rotation)
+
+        outline = self.create_outline()
+        with BuildSketch() as keywell_outline:
+            add(outline)
+
+            for keycol in Keys.finger_cols:
+                with Locations(keycol.locs):
+                    Rectangle(Choc.cap.d.X +1, Choc.cap.d.Y + 1, rotation=keycol.rotation, mode=Mode.SUBTRACT)
+            keycol = Keys.thumb
+            with Locations(keycol.locs):
+                Rectangle(Choc.cap.d.X +4, Choc.cap.d.Y + 8, rotation=keycol.rotation, mode=Mode.SUBTRACT)
+
+
+        return keywell_outline.sketch
+
 
 # main method
 if __name__ == "__main__":
@@ -109,7 +132,4 @@ if __name__ == "__main__":
     show_object(outline.sketch, name="outline")
     show_object(key_holes.sketch, name="key_holes") 
     show_object(outline.inner_sketch, name="inner_outline")
-
-
-
-
+    show_object(outline.keywell_sketch, name="keywell_outline")
