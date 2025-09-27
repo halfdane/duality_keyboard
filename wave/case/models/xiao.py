@@ -50,8 +50,9 @@ class Xiao:
 
     plane: Plane
 
-    def __init__(self, plane=Plane.XY):
+    def __init__(self, plane=Plane.XY, clearance=0.01):
         self.plane = plane
+        self.clearance = clearance
 
         self.model = self._create_model()
         self.reset_button_lever_sketch = self._create_reset_button_lever_sketch()
@@ -87,8 +88,8 @@ class Xiao:
                 with Locations((0, self.processor.forward_y, self.processor.d.Z/2)) as processor:
                     Box(self.processor.d.X, self.processor.d.Y, self.processor.d.Z)
 
-                with Locations(self.components.reset_button_d.p) as reset_button:
-                    Box(self.components.reset_button_d.d.X, self.components.reset_button_d.d.Y, self.components.reset_button_d.d.Z)
+                with Locations(self.components.reset_button_d.p):
+                    self.reset_button = Box(self.components.reset_button_d.d.X, self.components.reset_button_d.d.Y, self.components.reset_button_d.d.Z)
 
                 with Locations(self.components.led_d.p) as led:
                     Box(self.components.led_d.d.X, self.components.led_d.d.Y, self.components.led_d.d.Z)
@@ -113,7 +114,7 @@ class Xiao:
             offset(a, amount=lever_gap, side=Side.RIGHT)
             make_face()
 
-        return self.plane * reset_sketch.sketch
+        return reset_sketch.sketch
 
     def _create_reset_button_bump(self):
         lever_width = self.reset_lever_dims.d.X
@@ -122,22 +123,23 @@ class Xiao:
             with Locations(p):
                 a = Circle(lever_width/2)
 
-        return self.plane * reset_bump.sketch
+        return reset_bump.sketch
 
-    def _create_usb_cut_sketch(self, clearance=0.5):
+    def _create_usb_cut_sketch(self):
         with BuildSketch() as usb_sketch:
             with Locations((0, Xiao.dims.d.Z/2)):
                 with Locations((0, Xiao.usb.d.Z/2)):
-                    RectangleRounded(Xiao.usb.d.X + 2*clearance, Xiao.usb.d.Z+2*clearance, radius=Xiao.usb.radius+clearance)
+                    RectangleRounded(Xiao.usb.d.X + 2*self.clearance, Xiao.usb.d.Z+2*self.clearance, radius=Xiao.usb.radius+self.clearance)
                 with Locations((Xiao.components.led_d.p.X, Xiao.components.led_d.p.Z/2 + 0.5)):
                     Circle(0.5)
         return usb_sketch.sketch
 
-    def _create_free_usb_space_sketch(self, clearance=0.5):
+    def _create_free_usb_space_sketch(self):
+        enlarge_by = 2.3
         with BuildSketch() as usb_sketch:
             with Locations((0, Xiao.dims.d.Z/2)):
-                with Locations((-0.85, Xiao.usb.d.Z/2)):
-                    RectangleRounded(Xiao.usb.d.X +2.7, Xiao.usb.d.Z+2*clearance, radius=Xiao.usb.radius+clearance)
+                with Locations((-enlarge_by/2+self.clearance, Xiao.usb.d.Z/2)):
+                    RectangleRounded(Xiao.usb.d.X + enlarge_by, Xiao.usb.d.Z+2*self.clearance, radius=Xiao.usb.radius+self.clearance)
         return usb_sketch.sketch
     
     def _create_usb_cut_sketch_plane(self, model):
@@ -145,16 +147,17 @@ class Xiao:
         boardfront:Face = model.faces().sort_by(front_dir_axis).filter_by(Axis.Y)[1]
         return boardfront
     
-    def free_usb_space(self, part: Part):
+    def add_large_usb_cutouts(self, part: Part):
         with BuildPart() as p:
             add(part)
             with BuildSketch(self.usb_cut_sketch_plane) as cut_sketch:
                 add(self.free_usb_space_sketch)
             extrude(to_extrude=cut_sketch.sketch, amount=7, mode=Mode.SUBTRACT)
+            extrude(to_extrude=cut_sketch.sketch, amount=-6.5, mode=Mode.SUBTRACT)
 
         return p.part
 
-    def add_bumps_and_cutouts(self, part: Part, bump_height=2, ):
+    def add_usb_cutouts(self, part: Part):
         with BuildPart() as p:
             add(part)
             with BuildSketch(self.usb_cut_sketch_plane) as cut_sketch:
@@ -162,14 +165,27 @@ class Xiao:
             extrude(to_extrude=cut_sketch.sketch, amount=7, mode=Mode.SUBTRACT)
             extrude(to_extrude=cut_sketch.sketch, amount=-6.5, mode=Mode.SUBTRACT)
             
-            lever_sketch = self.reset_button_lever_sketch\
-                    .translate((0,0,-Xiao.dims.d.Z-Xiao.usb.d.Z))
-            add(lever_sketch)
-            extrude(to_extrude=lever_sketch, amount=10, mode=Mode.SUBTRACT)
+        return p.part
+    
+    def add_reset_lever(self, part: Part, plane: Plane, debug=False):
+        with BuildPart() as p:
+            add(part)
+            if debug:
+                with BuildSketch(plane) as plane_sketch:
+                    Circle(10)
+                extrude(to_extrude=plane_sketch.sketch, dir=plane.z_dir, amount=1, mode=Mode.ADD)
+                extrude(to_extrude=plane_sketch.sketch, dir=-plane.z_dir, amount=1, mode=Mode.SUBTRACT)
 
-            reset_button_bump = self.reset_button_bump\
-                    .translate((0,0,-Xiao.dims.d.Z-Xiao.usb.d.Z))
-            extrude(to_extrude=reset_button_bump, amount=-bump_height)
+
+            dist = plane.origin.Z - self.plane.origin.Z + self.dims.d.Z + self.components.reset_button_d.d.Z
+            with BuildSketch(plane) as lever_sketch:
+                add(self.reset_button_lever_sketch)
+            extrude(dir=plane.z_dir, amount=10, mode=Mode.SUBTRACT)
+
+            with BuildSketch(plane) as reset_button_bump:
+                add(self.reset_button_bump)
+            extrude(dir=plane.z_dir, amount=dist, mode=Mode.ADD)
+
 
         return p.part
 
@@ -183,17 +199,24 @@ if __name__ == "__main__":
     xiao = Xiao(xiao_plane)
 
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
-    show_object(xiao.model, name="Xiao Board", options={"color": "lightblue", "opacity": 0.5})
-    show_object(xiao.reset_button_lever_sketch, name="Reset Button Cut", options={"color": "red", "opacity": 0.5})
-    show_object(xiao.reset_button_bump, name="reset bump")
+    set_colormap(ColorMap.accent())
 
-    with BuildPart(xiao_plane) as usb_cut:
+    model = xiao.model
+    reset_button_lever_sketch = xiao.reset_button_lever_sketch
+    reset_button_bump = xiao.reset_button_bump
+    free_usb_space_sketch = xiao.free_usb_space_sketch
+
+    with BuildPart(xiao_plane) as usb_cut_3d:
         with BuildSketch(xiao.usb_cut_sketch_plane) as cut_sketch:
             cut = xiao.usb_cut_sketch
             add(cut)
-        show_object(cut_sketch, name="USB Cut Sketch", options={"color": "orange", "opacity": 0.5})
         extrude(amount=7, mode=Mode.ADD)
     # usb_cut.part = xiao.plane * usb_cut.part
-    show_object(usb_cut.part, name="USB Cut 3D", options={"color": "green", "opacity": 0.5})
-    show_object(xiao.free_usb_space_sketch, name="Free USB Space Sketch", options={"color": "purple", "opacity": 0.5})
-    
+
+    bumper_plane = xiao_plane.offset(Xiao.dims.d.Z + Xiao.usb.d.Z)
+    reset_lever = xiao.add_reset_lever(model, bumper_plane)
+
+    with BuildSketch(xiao_plane, bumper_plane) as plane_sketch:
+        Circle(10)
+
+    show_all()
