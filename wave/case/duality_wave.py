@@ -230,7 +230,7 @@ class DualityWaveCase:
         print("  bottom clips...")
 
         clips = []
-        for e in outline.edges().filter_by(GeomType.LINE):
+        for e in outline.edges().filter_by(GeomType.LINE).filter_by(lambda e: e.length > 5):
             edge_center = e.center()
             edge_direction = (e.end_point() - e.start_point()).normalized()
             plane_normal = Vector(edge_direction.Y, -edge_direction.X, 0)  # Perpendicular to edge in XY plane
@@ -403,3 +403,7 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
     show_objects() 
+
+    export_stl(case.keywell_left, "keywell_left.stl", tolerance=0.01) if hasattr(case, "keywell_left") else None
+    export_stl(case.keyplate_left, "keyplate_left.stl", tolerance=0.01) if hasattr(case, "keyplate_left") else None
+    export_stl(case.bottom_left, "bottom_left.stl", tolerance=0.01) if hasattr(case, "bottom_left") else None

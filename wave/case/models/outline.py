@@ -41,7 +41,7 @@ class Outline:
         self.thumb_top_left = Keys.thumb.locs[0] + Vector(-thumb_cluster_horizontal, thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
 
         self.sketch = self.create_outline()
-        self.inner_sketch = self.create_inner_outline()
+        self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
         self.keywell_sketch = self.create_keywell_outline()
 
 
@@ -75,16 +75,17 @@ class Outline:
                 Line(self.thumb_bottom_right, self.thumb_bottom_left)
                 Line(self.thumb_bottom_left, self.bottom_left)
             make_face()
-            with BuildSketch(mode=Mode.SUBTRACT): 
+            with BuildSketch(mode=Mode.SUBTRACT):
+                rect_y = 15
                 with Locations(self.cirque_recess_position):
                     Circle(self.cirque_recess_radius)
-                with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - self.wall_thickness/4)):
-                    Rectangle(100, self.wall_thickness/2, mode=Mode.SUBTRACT, rotation=180)
+                with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - rect_y/2)):
+                    RectangleRounded(25, rect_y, radius=rect_y/2 - 0.01, rotation=180)
             fillet(vertices(), radius=1)
             if offset_by != 0:
                 offset(amount=offset_by)
                 fillet(vertices(), radius=1)
-        
+
         return inner_outline.sketch
         
     def create_keywell_outline(self):

@@ -13,7 +13,7 @@ class BaseDimensions:
 
 @dataclass
 class BottomHousingDimensions:
-    d : RectDimensions = RectDimensions(13.8, 13.8, 2.2)
+    d : RectDimensions = RectDimensions(13.81, 13.81, 2.2)
 
 @dataclass
 class PostDimensions:

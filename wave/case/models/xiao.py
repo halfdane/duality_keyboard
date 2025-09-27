@@ -131,7 +131,7 @@ class Xiao:
                 with Locations((0, Xiao.usb.d.Z/2)):
                     RectangleRounded(Xiao.usb.d.X + 2*self.clearance, Xiao.usb.d.Z+2*self.clearance, radius=Xiao.usb.radius+self.clearance)
                 with Locations((Xiao.components.led_d.p.X, Xiao.components.led_d.p.Z/2 + 0.5)):
-                    Circle(0.5)
+                    Circle(1)
         return usb_sketch.sketch
 
     def _create_free_usb_space_sketch(self):
