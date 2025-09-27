@@ -88,21 +88,37 @@ class Outline:
         return inner_outline.sketch
         
     def create_keywell_outline(self):
-        thumb_bottom_left = Keys.thumb.locs[0] + Vector(-Choc.cap.d.X/2, -Choc.cap.d.Y).rotate(Axis.Z, Keys.thumb.rotation)
-        thumb_top_left = self.thumb_top_left + Vector(self.wall_thickness, 0).rotate(Axis.Z, Keys.thumb.rotation)
-
         outline = self.create_outline()
         with BuildSketch() as keywell_outline:
             add(outline)
 
+            x = Choc.cap.d.X +1
+            y = Choc.cap.d.Y + 1
             for keycol in Keys.finger_cols:
                 with Locations(keycol.locs):
-                    Rectangle(Choc.cap.d.X +1, Choc.cap.d.Y + 1, rotation=keycol.rotation, mode=Mode.SUBTRACT)
+                    Rectangle(x, y, rotation=keycol.rotation, mode=Mode.SUBTRACT)
             keycol = Keys.thumb
             with Locations(keycol.locs):
                 Rectangle(Choc.cap.d.X +4, Choc.cap.d.Y + 8, rotation=keycol.rotation, mode=Mode.SUBTRACT)
+            with Locations((Keys.pinkie.locs[1] + Keys.pinkie.locs[2]) / 2 + Vector(0, 5).rotate(Axis.Z, Keys.pinkie.rotation) ):
+                Rectangle(x, y, rotation=Keys.pinkie.rotation, mode=Mode.SUBTRACT)
 
-
+            # manual fillet between pinkie and ring finger
+            pinkie_line = Line(Keys.pinkie.locs[2] + Vector(x/2, y/2).rotate(Axis.Z, Keys.pinkie.rotation),
+                                Keys.pinkie.locs[2] + Vector(x/2, -y/2).rotate(Axis.Z, Keys.pinkie.rotation), mode=Mode.PRIVATE)
+            ring_line = Line(Keys.ring.locs[2] + Vector(-x/2, y).rotate(Axis.Z, Keys.ring.rotation),
+                                Keys.ring.locs[2] + Vector(-x/2, -y).rotate(Axis.Z, Keys.ring.rotation), mode=Mode.PRIVATE)
+            pinkie_pos = pinkie_line@0.7
+            perpendicular_line_to_pinkie = Line(pinkie_pos, pinkie_pos + Vector(100,0).rotate(Axis.Z, Keys.pinkie.rotation), mode=Mode.PRIVATE)
+            cross = perpendicular_line_to_pinkie.intersect(ring_line)
+            final_line = Line(pinkie_pos, cross, mode=Mode.PRIVATE)
+            a = SagittaArc(start_point=final_line@1, end_point=final_line@0, sagitta=final_line.length/2)
+            with BuildLine() as line:
+                add(a)
+                l1 = Line(a@1, a@1 + Vector(0, -20))
+                l2 = Line(l1@1, l1@1 + Vector(10, 0))
+                l3 = Line(l2@1, a@0)
+            make_face(mode=Mode.SUBTRACT)
         return keywell_outline.sketch
 
 
@@ -116,7 +132,7 @@ if __name__ == "__main__":
     set_port(3939)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
-    set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
+    set_colormap(ColorMap.accent())
 
     print(f"Setup time: {time.time() - start_time:.3f}s")
     outline = Outline()
@@ -124,12 +140,14 @@ if __name__ == "__main__":
     keys = Keys()
     with BuildSketch() as key_holes:
         for keycol in keys.keycols:
-            with BuildSketch() as keycol_sketch:
-                with Locations(keycol.locs) as l:
+            with BuildSketch():
+                with Locations(keycol.locs):
                     Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
-            add(keycol_sketch)
 
-    show_object(outline.sketch, name="outline")
-    show_object(key_holes.sketch, name="key_holes") 
-    show_object(outline.inner_sketch, name="inner_outline")
-    show_object(outline.keywell_sketch, name="keywell_outline")
+    sketch = outline.sketch
+    inner_sketch = outline.inner_sketch
+    keywell = outline.keywell_sketch
+
+    show_all()
+
+
