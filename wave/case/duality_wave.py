@@ -218,61 +218,87 @@ class DualityWaveCase:
             extrude(to_extrude=wall_sketch.sketch, amount=Choc.upper_housing.d.Z+Choc.base.d.Z)
             extrude(to_extrude=wall_sketch.sketch, amount=-self.keyplate_dims.size_z)
 
-
-            clips = self.create_bottom_clips(keywell_wall, clips_on_outside=False, z_position=self.keyplate_dims.clip_position_z)
-            for clip in clips:
-                extrude(to_extrude=clip, amount=-self.keyplate_dims.clip_protusion + self.dims.clearance, mode=Mode.SUBTRACT)
-                chamfer(clip.edges(), length=self.keyplate_dims.clip_protusion - 2*self.dims.clearance)
-
+            edges_to_add_clips = keywell_wall.edges().sort_by(Axis.Y, reverse=True)
+            clip_offset = Vector(0, 
+                                 0, 
+                                 0)
+            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=False, z_position=self.keyplate_dims.clip_position_z, clip_offset=clip_offset)
+            
+            clip_offset = Vector(0, 
+                                 self.keyplate_dims.clip_protusion,
+                                 -self.keyplate_dims.clip_protusion)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=False, z_position=self.keyplate_dims.clip_position_z, clip_offset=clip_offset)
         return keywell.part
 
-    def create_bottom_clips(self, outline: Sketch, clips_on_outside: bool = False, z_position: float = 0) -> list[Sketch]:
-        print("  bottom clips...")
+    def add_bottom_clips(self, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, clip_offset: Vector = Vector(0, 0, 0)) -> list[Sketch]:
+        """Clips on the outside are always protruding.
 
+            Offset adds 
+                - X to the clip length along the edge, 
+                - Y to the protrusion, 
+                - Z to the height.
+        """
+        print("  bottom clips...")
         clips = []
-        for e in outline.edges().filter_by(GeomType.LINE).filter_by(lambda e: e.length > 5):
+        # Ensure edges is always a list
+        if isinstance(edges, Edge):
+            edges = ShapeList([edges])
+        for e in edges.filter_by(GeomType.LINE).filter_by(lambda e: e.length > 5):
             edge_center = e.center()
             edge_direction = (e.end_point() - e.start_point()).normalized()
             plane_normal = Vector(edge_direction.Y, -edge_direction.X, 0)  # Perpendicular to edge in XY plane
             plane_origin = Vector(edge_center.X, edge_center.Y, z_position)
             plane = Plane(origin=plane_origin, z_dir=plane_normal, x_dir=edge_direction)
-            clip_length = e.length * self.keyplate_dims.clip_xy
-            if clips_on_outside:
-                plane = plane.offset(-self.keyplate_dims.clip_protusion)
-                total_height = 4*self.keyplate_dims.clip_protusion
-            else:
-                total_height = 2*self.keyplate_dims.clip_protusion + 4*self.dims.clearance
-                clip_length -= 2*self.keyplate_dims.clip_protusion - 2*self.dims.clearance
 
-            
+            clip_length = e.length * self.keyplate_dims.clip_xy + clip_offset.X
+            total_height = 2*self.keyplate_dims.clip_protusion + clip_offset.Z
+            total_protrusion = self.keyplate_dims.clip_protusion + clip_offset.Y
+
+            if clips_on_outside:
+                plane = plane.offset(-total_protrusion)
+
             with BuildSketch(plane) as clip:
                 Rectangle(clip_length, total_height)
-            clips.append(clip.sketch)
+            clip = clip.sketch
 
-        self.debug_content.append({"clips": clips}) if self.debug else None
-        return clips
+            dir = 1 if clips_on_outside else -1
+            mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
+            extrude(to_extrude=clip, amount=total_protrusion * dir, mode=mode)
+            chamfer(clip.edges(), length=total_protrusion - self.dims.clearance/2)
+            clips.append(clip)
+
+        self.debug_content.append({f"clips {"bottom" if clips_on_outside else "keywell"}": clips}) if self.debug else None
+
 
     def create_bottom(self):
         print("Creating bottom...")
 
         with BuildPart() as bottom:
-            outline = self.outline.create_inner_outline(offset_by=-self.bottom_dims.keyplate_offset - 2*self.dims.clearance)
+            outline = self.outline.create_inner_outline(offset_by=-self.bottom_dims.keyplate_offset - self.dims.clearance)
             
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as base:
                 add(outline)
             extrude(amount=self.bottom_dims.size_z)
-            chamfer(objects=bottom.faces().filter_by(Axis.Z).edges(), length=0.3)
+            chamfer(objects=bottom.faces().filter_by(Axis.Z).edges(), length=0.2)
 
-            clips = self.create_bottom_clips(base.sketch, clips_on_outside=True, z_position=self.keyplate_dims.clip_position_z)
-            for clip in clips:
-                extrude(to_extrude=clip, amount=self.keyplate_dims.clip_protusion, mode=Mode.ADD)
-                chamfer(clip.edges(), length=self.keyplate_dims.clip_protusion - self.dims.clearance)
+            edges_to_add_clips = base.edges().sort_by(Axis.Y, reverse=True)
+
+            clip_offset = Vector(2*self.keyplate_dims.clip_protusion - 2*self.dims.clearance,
+                                 0, 
+                                 2*self.keyplate_dims.clip_protusion - 2*self.dims.clearance)
+            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=True, z_position=self.keyplate_dims.clip_position_z, clip_offset=clip_offset)
+
+            clip_offset = Vector(4*self.keyplate_dims.clip_protusion - 2*self.dims.clearance, 
+                                 self.keyplate_dims.clip_protusion, 
+                                 3*self.keyplate_dims.clip_protusion - 2*self.dims.clearance)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=True, z_position=self.keyplate_dims.clip_position_z, clip_offset=clip_offset)
 
             print("  xiao support...")
-            with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as xiao_support:
-                with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y)):
-                    Rectangle(5, 5)
-            extrude(amount=self.keyplate_dims.size_z + self.dims.xiao_position.Z - Xiao.dims.d.Z - Xiao.processor.d.Z - self.dims.clearance)
+            with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_support:
+                with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y - Xiao.processor.forward_y)):
+                    Rectangle(Xiao.processor.d.X + 2*self.dims.clearance, Xiao.processor.d.Y + 4*self.dims.clearance)
+            extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z + self.dims.clearance) , mode=Mode.SUBTRACT)
+            self.debug_content.append({"xiao support": xiao_support}) if self.debug else None
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)):

@@ -136,10 +136,11 @@ class Xiao:
 
     def _create_free_usb_space_sketch(self):
         enlarge_by = 2.3
+        height = Xiao.usb.d.Z+6*self.clearance
         with BuildSketch() as usb_sketch:
             with Locations((0, Xiao.dims.d.Z/2)):
-                with Locations((-enlarge_by/2+self.clearance, Xiao.usb.d.Z/2)):
-                    RectangleRounded(Xiao.usb.d.X + enlarge_by, Xiao.usb.d.Z+2*self.clearance, radius=Xiao.usb.radius+self.clearance)
+                with Locations((-enlarge_by/2+self.clearance, height/2)):
+                    RectangleRounded(Xiao.usb.d.X + enlarge_by, height, radius=Xiao.usb.radius+self.clearance)
         return usb_sketch.sketch
     
     def _create_usb_cut_sketch_plane(self, model):
