@@ -271,7 +271,7 @@ class DualityWaveCase:
             clip_xy_ratio: float = 0.6
             clip_length = e.length * clip_xy_ratio
             total_height = 3*self.dims.clip_protusion
-            total_protrusion = self.dims.clip_protusion * (1.5 if extralong else 1)
+            total_protrusion = self.dims.clip_protusion * (2 if extralong else 1)
 
             if clips_on_outside: 
                 total_height -= self.dims.clearance
