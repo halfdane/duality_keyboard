@@ -103,7 +103,7 @@ class DualityWaveCase:
 
         self.bottom_left = self.create_bottom()
         self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
-        self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z))
+        self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         if both_sides:
@@ -117,7 +117,7 @@ class DualityWaveCase:
 
             self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
             self.bottom_right = self.xiao.add_large_usb_cutouts(self.bottom_right)
-            self.bottom_right = self.xiao.add_reset_lever(self.bottom_right, xiao_mirrored_plane.offset(self.dims.keyplate_z))
+            self.bottom_right = self.xiao.add_reset_lever(self.bottom_right, xiao_mirrored_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z))
             push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
             push_object(mirror(self.chocs, about=Plane.YZ), name="chocs") if self.debug else None
@@ -148,9 +148,9 @@ class DualityWaveCase:
             extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
 
             print("  xiao hole...")
-            with BuildSketch(Plane(self.dims.xiao_position)) as xiao_hole:
+            with BuildSketch(Plane((self.dims.xiao_position.X, self.dims.xiao_position.Y, 0))) as xiao_hole:
                 Rectangle(Xiao.dims.d.X - 1.5, Xiao.dims.d.Y - 1.5)
-            extrude(amount=self.dims.below_z, mode=Mode.SUBTRACT)
+            extrude(amount=self.dims.xiao_position.Z, mode=Mode.SUBTRACT)
             with BuildSketch(Plane(self.dims.xiao_position)) as xiao_cut:
                 Rectangle(Xiao.dims.d.X + 2*self.dims.clearance, Xiao.dims.d.Y + 2*self.dims.clearance)
             extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
@@ -206,7 +206,11 @@ class DualityWaveCase:
             add(keywell_wall)
             extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
             bottom_inner_edges = keywell.edges(Select.LAST).group_by(Axis.Z)[0]
-            chamfer(bottom_inner_edges, length=0.1)
+            self.debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
+            try:
+                chamfer(bottom_inner_edges, length=0.1)
+            except:
+                print("  ********** keywell chamfer failed")
 
             edges_to_add_clips = keywell_wall.edges().sort_by(Axis.Y, reverse=True)
             clip_offset = Vector(0, 

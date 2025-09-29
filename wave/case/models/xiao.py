@@ -57,9 +57,7 @@ class Xiao:
         self.model = self._create_model()
         self.reset_button_lever_sketch = self._create_reset_button_lever_sketch()
         self.reset_button_bump = self._create_reset_button_bump()
-        self.usb_cut_sketch = self._create_usb_cut_sketch()
         self.usb_cut_sketch_plane = self._create_usb_cut_sketch_plane(self.model)
-        self.free_usb_space_sketch = self._create_free_usb_space_sketch()
 
 
     def _create_model(self):
@@ -130,7 +128,7 @@ class Xiao:
             with Locations((0, Xiao.dims.d.Z/2)):
                 with Locations((0, Xiao.usb.d.Z/2)):
                     RectangleRounded(Xiao.usb.d.X + 2*self.clearance, Xiao.usb.d.Z+2*self.clearance, radius=Xiao.usb.radius+self.clearance)
-                with Locations((Xiao.components.led_d.p.X, Xiao.components.led_d.p.Z/2 + 0.5)):
+                with Locations((Xiao.components.led_d.p.X, Xiao.components.led_d.p.Z/2 + 1)):
                     Circle(1)
         return usb_sketch.sketch
 
@@ -138,9 +136,8 @@ class Xiao:
         enlarge_by = 2.3
         height = Xiao.usb.d.Z+6*self.clearance
         with BuildSketch() as usb_sketch:
-            with Locations((0, Xiao.dims.d.Z/2)):
-                with Locations((-enlarge_by/2+self.clearance, height/2)):
-                    RectangleRounded(Xiao.usb.d.X + enlarge_by, height, radius=Xiao.usb.radius+self.clearance)
+            with Locations((-enlarge_by/2+self.clearance, Xiao.dims.d.Z/2 + height/2 - 3*self.clearance)):
+                RectangleRounded(Xiao.usb.d.X + enlarge_by, height, radius=Xiao.usb.radius+self.clearance)
         return usb_sketch.sketch
     
     def _create_usb_cut_sketch_plane(self, model):
@@ -152,9 +149,9 @@ class Xiao:
         with BuildPart() as p:
             add(part)
             with BuildSketch(self.usb_cut_sketch_plane) as cut_sketch:
-                add(self.free_usb_space_sketch)
+                add(self._create_free_usb_space_sketch())
             extrude(to_extrude=cut_sketch.sketch, amount=7, mode=Mode.SUBTRACT)
-            extrude(to_extrude=cut_sketch.sketch, amount=-6.5, mode=Mode.SUBTRACT)
+            extrude(to_extrude=cut_sketch.sketch, amount=-(self.usb.d.Y - self.usb.forward_y + self.clearance), mode=Mode.SUBTRACT)
 
         return p.part
 
@@ -162,22 +159,15 @@ class Xiao:
         with BuildPart() as p:
             add(part)
             with BuildSketch(self.usb_cut_sketch_plane) as cut_sketch:
-                add(self.usb_cut_sketch)
+                add(self._create_usb_cut_sketch())
             extrude(to_extrude=cut_sketch.sketch, amount=7, mode=Mode.SUBTRACT)
-            extrude(to_extrude=cut_sketch.sketch, amount=-6.5, mode=Mode.SUBTRACT)
-            
+            extrude(to_extrude=cut_sketch.sketch, amount=-(self.usb.d.Y - self.usb.forward_y + self.clearance), mode=Mode.SUBTRACT)
+
         return p.part
     
-    def add_reset_lever(self, part: Part, plane: Plane, debug=False):
+    def add_reset_lever(self, part: Part, plane: Plane):
         with BuildPart() as p:
             add(part)
-            if debug:
-                with BuildSketch(plane) as plane_sketch:
-                    Circle(10)
-                extrude(to_extrude=plane_sketch.sketch, dir=plane.z_dir, amount=1, mode=Mode.ADD)
-                extrude(to_extrude=plane_sketch.sketch, dir=-plane.z_dir, amount=1, mode=Mode.SUBTRACT)
-
-
             dist = plane.origin.Z - self.plane.origin.Z + self.dims.d.Z + self.components.reset_button_d.d.Z
             with BuildSketch(plane) as lever_sketch:
                 add(self.reset_button_lever_sketch)
@@ -205,11 +195,11 @@ if __name__ == "__main__":
     model = xiao.model
     reset_button_lever_sketch = xiao.reset_button_lever_sketch
     reset_button_bump = xiao.reset_button_bump
-    free_usb_space_sketch = xiao.free_usb_space_sketch
+    free_usb_space_sketch = xiao._create_free_usb_space_sketch()
 
     with BuildPart(xiao_plane) as usb_cut_3d:
         with BuildSketch(xiao.usb_cut_sketch_plane) as cut_sketch:
-            cut = xiao.usb_cut_sketch
+            cut = xiao._create_usb_cut_sketch()
             add(cut)
         extrude(amount=7, mode=Mode.ADD)
     # usb_cut.part = xiao.plane * usb_cut.part
