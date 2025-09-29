@@ -131,7 +131,7 @@ class DualityWaveCase:
         print("Creating keyplate...")
 
         with BuildPart() as keyplate:
-            base=add(self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness - 2*self.dims.clearance))
+            base=add(self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness - self.dims.clearance))
             extrude(amount=-self.dims.keyplate_z)
             self.debug_content.append({"base": base}) if self.debug else None
 
@@ -274,7 +274,7 @@ class DualityWaveCase:
             total_protrusion = self.dims.clip_protusion * (2 if extralong else 1)
 
             if clips_on_outside: 
-                total_height -= self.dims.clearance
+                total_height -= self.dims.clearance * (8 if extralong else 2)
                 clip_length -= 1
                 plane = plane.offset(-total_protrusion)
 
@@ -284,7 +284,8 @@ class DualityWaveCase:
 
             dir = 1 if clips_on_outside else -1
             mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
-            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode)
+            taper = 5 if extralong else 0
+            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode, taper=-dir*taper)
             if clips_on_outside:
                 fillet(clip.edges(), radius=self.dims.clip_protusion - 0.2)
             clips.append(clip)
