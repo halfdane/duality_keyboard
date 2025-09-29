@@ -204,9 +204,9 @@ class DualityWaveCase:
 
             keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
             add(keywell_wall)
-            extrude(amount=-self.dims.below_z  , mode=Mode.SUBTRACT)
+            extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
             bottom_inner_edges = keywell.edges(Select.LAST).group_by(Axis.Z)[0]
-            # chamfer(bottom_inner_edges, length=0.1)
+            chamfer(bottom_inner_edges, length=0.1)
 
             edges_to_add_clips = keywell_wall.edges().sort_by(Axis.Y, reverse=True)
             clip_offset = Vector(0, 
@@ -218,6 +218,17 @@ class DualityWaveCase:
                                  self.dims.clip_protusion,
                                  -self.dims.clip_protusion)
             self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=False, z_position=self.dims.clip_position_z, clip_offset=clip_offset)
+
+            inner_bottom_edge = bottom_inner_edges.sort_by(Axis.Y)[-1]
+            edge_center = inner_bottom_edge.center()
+            edge_direction = (inner_bottom_edge.end_point() - inner_bottom_edge.start_point()).normalized()
+            plane_normal = Vector(edge_direction.Y, -edge_direction.X, 0)  # Perpendicular to edge in XY plane
+            plane_origin = Vector(edge_center.X, edge_center.Y, -self.dims.keyplate_z)
+            plane = Plane(origin=plane_origin, z_dir=plane_normal, x_dir=edge_direction)
+            with BuildSketch(plane) as clip:
+                Rectangle(inner_bottom_edge.length*0.55, 1)
+            extrude(amount=0.5,  taper=45-self.dims.clearance)
+
         return keywell.part
 
     def add_bottom_clips(self, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, clip_offset: Vector = Vector(0, 0, 0)) -> list[Sketch]:
