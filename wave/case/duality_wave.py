@@ -37,6 +37,11 @@ class CaseDimensions:
     xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
     xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
+    powerswitch_position: Vector = Vector(
+                xiao_position.X + Xiao.dims.d.X/2 + 3, 
+                xiao_position.Y + 5, 
+                -(below_z - 0.75*PowerSwitch.lever.d.Z))
+
 @dataclass
 class BumperHolderDimensions:
     keys: Keys
@@ -93,9 +98,9 @@ class DualityWaveCase:
         push_object(self.xiao.model, name="xiao_left")
         push_object(self.bumpers, name="bumpers")
 
-        self.keywell_left = self.create_keywell()
-        self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
-        push_object(self.keywell_left, name="keywell_left") if self.debug else None
+        # self.keywell_left = self.create_keywell()
+        # self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
+        # push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
         self.keyplate_left = self.create_keyplate()
         self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
@@ -185,7 +190,18 @@ class DualityWaveCase:
                         Rectangle(1, 10)
                 extrude(amount=self.dims.bottom_plate_z - raising/2, mode=Mode.SUBTRACT)
 
-            self.debug_content.append({"small faces": faces().filter_by(lambda f: f.area < 1)}) if self.debug else None
+            with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
+                Rectangle(PowerSwitch.dims.d.Y, PowerSwitch.dims.d.X + self.dims.clearance)
+                with Locations((0.5, 0)):
+                    Rectangle(PowerSwitch.dims.d.Y + 1, PowerSwitch.dims.d.X - 2)
+            extrude(amount=PowerSwitch.dims.d.Z, mode=Mode.SUBTRACT)
+            self.debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
+            with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
+                with Locations((PowerSwitch.dims.d.Y/2 + 0.5, 0)):
+                    Rectangle(1, PowerSwitch.dims.d.X - 2)
+            extrude(amount=PowerSwitch.dims.d.Z - self.dims.powerswitch_position.Z, mode=Mode.SUBTRACT)
+            self.debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
+
 
         return keyplate.part
     
@@ -341,7 +357,6 @@ class DualityWaveCase:
             fillet(bottom.edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[0],
                    radius=self.bumperholder_dims.deflect/2)
 
-
             with BuildSketch(Plane.XY.offset(-Choc.below.d.Z)) as choc_posts:
                 for keycol in self.keys.keycols:
                     with Locations([l for l in keycol.locs if l not in self.upside_down_locations]):
@@ -363,6 +378,17 @@ class DualityWaveCase:
                             add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, 180+keycol.rotation))
             extrude(amount=5, mode=Mode.SUBTRACT)
             self.debug_content.append({"chocs posts rotated": choc_posts}) if self.debug else None
+
+            with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
+                with Locations((PowerSwitch.dims.pin_length/2, 0)):
+                    Rectangle(PowerSwitch.dims.d.Y + PowerSwitch.dims.pin_length + 1, PowerSwitch.dims.d.X +1)
+            extrude(amount=10, mode=Mode.SUBTRACT)
+
+            with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_lever_cut_sketch:
+                with Locations((-PowerSwitch.lever.p.Y, 0, 0)):
+                    RectangleRounded(PowerSwitch.lever.d.Y +0.5, PowerSwitch.lever.clearance + 0.5, radius=0.5)
+            powerswitch_lever_cut = extrude(amount=-(self.dims.powerswitch_position.Z + self.dims.below_z), mode=Mode.SUBTRACT)
+            chamfer(powerswitch_lever_cut.edges().group_by(Axis.Z)[0], length=0.5)
 
         return bottom.part
 
@@ -424,10 +450,10 @@ class DualityWaveCase:
         self.bumpers = self.bumpers.part
 
         powerswitch = PowerSwitch()
-        powerswitch = powerswitch.model.part\
+        powerswitch = powerswitch.model\
             .rotate(Axis.Y, 180)\
             .rotate(Axis.Z, 90)\
-            .translate((self.dims.xiao_position.X + Xiao.dims.d.X/2 + 3, self.dims.xiao_position.Y + 5, -(PowerSwitch.dims.thickness_z/2 + self.dims.bottom_plate_z - PowerSwitch.dims.lever_height_z)))
+            .translate(self.dims.powerswitch_position)
         push_object(powerswitch, name="power_switch") if self.debug else None
 
 
