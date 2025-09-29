@@ -25,20 +25,20 @@ class Outline:
         self.wall_thickness = wall_thickness
 
         self.cirque_recess_radius = 22
-        self.cirque_recess_position = Vector(54, -5)
+        self.cirque_recess_position = Vector(52, -5)
 
         self.bottom_left = Vector(0, 0)
         self.top_left = Vector(0, self.dims.base.Y)
         self.top_right = Vector(self.dims.base.X, self.dims.base.Y)
         self.mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
 
-        thumb_cluster_horizontal = Choc.cap.d.X/2 + wall_thickness
-        thumb_cluster_vertical = Choc.cap.d.Y/2 + wall_thickness
-        
-        self.thumb_bottom_left = Keys.thumb.locs[0] + Vector(-thumb_cluster_horizontal, -thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
-        self.thumb_bottom_right = Keys.thumb.locs[1] + Vector(thumb_cluster_horizontal, -thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
-        self.thumb_top_right = Keys.thumb.locs[1] + Vector(thumb_cluster_horizontal, thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
-        self.thumb_top_left = Keys.thumb.locs[0] + Vector(-thumb_cluster_horizontal, thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_cluster_horizontal = Choc.cap.d.X/2 + wall_thickness + 1
+        self.thumb_cluster_vertical = Choc.cap.d.Y/2 + wall_thickness + 1
+
+        self.thumb_bottom_left = Keys.thumb.locs[0] + Vector(-self.thumb_cluster_horizontal, -self.thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_bottom_right = Keys.thumb.locs[1] + Vector(self.thumb_cluster_horizontal, -self.thumb_cluster_vertical).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_top_right = Keys.thumb.locs[1] + Vector(self.thumb_cluster_horizontal, self.thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
+        self.thumb_top_left = Keys.thumb.locs[0] + Vector(-self.thumb_cluster_horizontal, self.thumb_cluster_vertical + wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)
 
         self.sketch = self.create_outline()
         self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
@@ -89,20 +89,24 @@ class Outline:
         return inner_outline.sketch
         
     def create_keywell_outline(self):
-        outline = self.create_outline()
         with BuildSketch() as keywell_outline:
-            add(outline)
-
             x = Choc.cap.d.X +1
             y = Choc.cap.d.Y + 1
             for keycol in Keys.finger_cols:
                 with Locations(keycol.locs):
-                    Rectangle(x, y, rotation=keycol.rotation, mode=Mode.SUBTRACT)
-            keycol = Keys.thumb
-            with Locations(keycol.locs):
-                Rectangle(Choc.cap.d.X +4, Choc.cap.d.Y + 8, rotation=keycol.rotation, mode=Mode.SUBTRACT)
-            with Locations((Keys.pinkie.locs[1] + Keys.pinkie.locs[2]) / 2 + Vector(0, 5).rotate(Axis.Z, Keys.pinkie.rotation) ):
-                Rectangle(x, y, rotation=Keys.pinkie.rotation, mode=Mode.SUBTRACT)
+                    Rectangle(x, y, rotation=keycol.rotation)
+            
+
+            offset_y = 4
+            with Locations(Keys.thumb.locs[0] + Vector(0, offset_y/2).rotate(Axis.Z, Keys.thumb.rotation)):
+                Rectangle(x, y + offset_y, rotation=Keys.thumb.rotation)
+            offset_y = 3
+            with Locations(Keys.thumb.locs[1] + Vector(0, offset_y/2).rotate(Axis.Z, Keys.thumb.rotation)):
+                Rectangle(x, y + offset_y, rotation=Keys.thumb.rotation)
+
+            with Locations(self.cirque_recess_position):
+                Circle(self.cirque_recess_radius +self.wall_thickness,  mode=Mode.SUBTRACT)
+
 
             # manual fillet between pinkie and ring finger
             pinkie_line = Line(Keys.pinkie.locs[2] + Vector(x/2, y/2).rotate(Axis.Z, Keys.pinkie.rotation),
@@ -119,8 +123,19 @@ class Outline:
                 l1 = Line(a@1, a@1 + Vector(0, -20))
                 l2 = Line(l1@1, l1@1 + Vector(10, 0))
                 l3 = Line(l2@1, a@0)
-            make_face(mode=Mode.SUBTRACT)
+            make_face()
         return keywell_outline.sketch
+    
+    def create_keywell_thumb_addition(self):
+        w_x = Vector(self.wall_thickness/2, 0).rotate(Axis.Z, Keys.thumb.rotation)
+        w_y = Vector(0, self.wall_thickness/2).rotate(Axis.Z, Keys.thumb.rotation)
+
+        with BuildSketch() as thumb_addition:
+            with Locations(Keys.thumb.locs):
+                with Locations(Vector(2, -self.wall_thickness).rotate(Axis.Z, Keys.thumb.rotation)):
+                    Rectangle(Choc.cap.d.X +1, Choc.cap.d.Y +1 + 2*self.wall_thickness, rotation=Keys.thumb.rotation)
+
+        return thumb_addition.sketch
 
 
 # main method
@@ -148,6 +163,7 @@ if __name__ == "__main__":
     sketch = outline.sketch
     inner_sketch = outline.inner_sketch
     keywell = outline.keywell_sketch
+    thumb_addition = outline.create_keywell_thumb_addition()
 
     show_all()
 

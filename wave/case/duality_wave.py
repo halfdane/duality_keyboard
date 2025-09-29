@@ -29,7 +29,7 @@ class KeyplateDimensions:
 
     clip_xy: float = 0.4
     clip_protusion: float = 0.4
-    clip_position_z: float = -size_z + 1.3
+    clip_position_z: float = -size_z + 1.6
 
 @dataclass
 class BumperHolderDimensions:
@@ -106,6 +106,10 @@ class DualityWaveCase:
         xiao_mirrored_plane = xiao_plane.rotated((180,0,0)).move(Location(self.dims.xiao_mirror_position))
         self.xiao = Xiao(xiao_plane, clearance=self.dims.clearance)
 
+        push_object(self.chocs, name="chocs")
+        push_object(self.xiao.model, name="xiao_left")
+        push_object(self.bumpers, name="bumpers")
+
         self.keywell_left = self.create_keywell()
         self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
@@ -118,10 +122,6 @@ class DualityWaveCase:
         self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
         self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.keyplate_dims.size_z - self.bottom_dims.size_z))
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
-
-        push_object(self.chocs, name="chocs")
-        push_object(self.xiao.model, name="xiao_left")
-        push_object(self.bumpers, name="bumpers")
 
         if both_sides:
             self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
@@ -207,16 +207,21 @@ class DualityWaveCase:
         print("Creating keywell...")
 
         with BuildPart() as keywell:
-            with BuildSketch():
-                add(self.outline.create_keywell_outline())
-            extrude(amount=self.keywell_dims.size_z)
+            with BuildSketch(Plane.XY.offset(self.keywell_dims.size_z)) as body_sketch:
+                add(self.outline.create_outline() )
+            extrude(amount=-self.keyplate_dims.size_z - self.keywell_dims.size_z)
+            fillet(objects=keywell.edges(), radius=1)
 
-            with BuildSketch() as wall_sketch:
-                add(self.outline.create_outline())
-                keywell_wall = self.outline.create_inner_outline(-self.bottom_dims.keyplate_offset)
-                add(keywell_wall, mode=Mode.SUBTRACT)
-            extrude(to_extrude=wall_sketch.sketch, amount=Choc.upper_housing.d.Z+Choc.base.d.Z)
-            extrude(to_extrude=wall_sketch.sketch, amount=-self.keyplate_dims.size_z)
+            with BuildSketch(Plane.XY.offset(self.keywell_dims.size_z)) as wall_sketch:
+                add(self.outline.create_keywell_outline() )
+            extrude(amount=-self.keyplate_dims.size_z - self.keywell_dims.size_z, mode=Mode.SUBTRACT)
+            
+            keywell_wall = self.outline.create_inner_outline(offset_by=-self.bottom_dims.keyplate_offset)
+            add(keywell_wall)
+            extrude(amount=-self.keyplate_dims.size_z  , mode=Mode.SUBTRACT)
+            bottom_inner_edges = keywell.edges(Select.LAST).group_by(Axis.Z)[0]
+            self.debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
+            chamfer(bottom_inner_edges, length=0.1)
 
             edges_to_add_clips = keywell_wall.edges().sort_by(Axis.Y, reverse=True)
             clip_offset = Vector(0, 
@@ -279,7 +284,7 @@ class DualityWaveCase:
             with BuildSketch(Plane.XY.offset(-self.keyplate_dims.size_z)) as base:
                 add(outline)
             extrude(amount=self.bottom_dims.size_z)
-            chamfer(objects=bottom.faces().filter_by(Axis.Z).edges(), length=0.2)
+            chamfer(objects=bottom.faces().filter_by(Axis.Z).edges(), length=0.1)
 
             edges_to_add_clips = base.edges().sort_by(Axis.Y, reverse=True)
 
