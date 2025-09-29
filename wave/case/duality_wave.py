@@ -98,9 +98,9 @@ class DualityWaveCase:
         push_object(self.xiao.model, name="xiao_left")
         push_object(self.bumpers, name="bumpers")
 
-        # self.keywell_left = self.create_keywell()
-        # self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
-        # push_object(self.keywell_left, name="keywell_left") if self.debug else None
+        self.keywell_left = self.create_keywell()
+        self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
+        push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
         self.keyplate_left = self.create_keyplate()
         self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
@@ -139,6 +139,9 @@ class DualityWaveCase:
 
             bottom_edges = faces().filter_by(Axis.Z)[-1].edges()
             chamfer(objects=bottom_edges, length=0.5)
+
+            edges_to_add_clips = base.edges().sort_by(Axis.Y, reverse=True)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=True, z_position=-self.dims.keyplate_z/2, extralong=True )
 
             print("  key holes...")
             with BuildSketch() as key_holes:
@@ -202,7 +205,6 @@ class DualityWaveCase:
             extrude(amount=PowerSwitch.dims.d.Z - self.dims.powerswitch_position.Z, mode=Mode.SUBTRACT)
             self.debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 
-
         return keyplate.part
     
     def create_keywell(self):
@@ -229,29 +231,14 @@ class DualityWaveCase:
                 print("  ********** keywell chamfer failed")
 
             edges_to_add_clips = keywell_wall.edges().sort_by(Axis.Y, reverse=True)
-            clip_offset = Vector(0, 
-                                 0, 
-                                 0)
-            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=False, z_position=self.dims.clip_position_z, clip_offset=clip_offset)
-            
-            clip_offset = Vector(0, 
-                                 self.dims.clip_protusion,
-                                 -self.dims.clip_protusion)
-            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=False, z_position=self.dims.clip_position_z, clip_offset=clip_offset)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=False, z_position=self.dims.clip_position_z, extralong=True )
+            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=False, z_position=self.dims.clip_position_z)
 
-            inner_bottom_edge = bottom_inner_edges.sort_by(Axis.Y)[-1]
-            edge_center = inner_bottom_edge.center()
-            edge_direction = (inner_bottom_edge.end_point() - inner_bottom_edge.start_point()).normalized()
-            plane_normal = Vector(edge_direction.Y, -edge_direction.X, 0)  # Perpendicular to edge in XY plane
-            plane_origin = Vector(edge_center.X, edge_center.Y, -self.dims.keyplate_z)
-            plane = Plane(origin=plane_origin, z_dir=plane_normal, x_dir=edge_direction)
-            with BuildSketch(plane) as clip:
-                Rectangle(inner_bottom_edge.length*0.55, 1)
-            extrude(amount=0.5,  taper=45-self.dims.clearance)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=False, z_position=-self.dims.keyplate_z/2, extralong=True )
 
         return keywell.part
 
-    def add_bottom_clips(self, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, clip_offset: Vector = Vector(0, 0, 0)) -> list[Sketch]:
+    def add_bottom_clips(self, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, extralong=False) -> list[Sketch]:
         """Clips on the outside are always protruding.
 
             Offset adds 
@@ -271,12 +258,15 @@ class DualityWaveCase:
             plane_origin = Vector(edge_center.X, edge_center.Y, z_position)
             plane = Plane(origin=plane_origin, z_dir=plane_normal, x_dir=edge_direction)
 
-            clip_length = e.length * self.dims.clip_xy + clip_offset.X
-            total_height = 2*self.dims.clip_protusion + clip_offset.Z
-            total_protrusion = self.dims.clip_protusion + clip_offset.Y
+            clip_length = e.length * self.dims.clip_xy
+            total_height = 3*self.dims.clip_protusion
+            total_protrusion = self.dims.clip_protusion * (1.5 if extralong else 1)
 
-            if clips_on_outside:
+            if clips_on_outside: 
+                total_height -= self.dims.clearance
+                clip_length -= self.dims.clearance
                 plane = plane.offset(-total_protrusion)
+
 
             with BuildSketch(plane) as clip:
                 Rectangle(clip_length, total_height)
@@ -284,8 +274,9 @@ class DualityWaveCase:
 
             dir = 1 if clips_on_outside else -1
             mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
-            extrude(to_extrude=clip, amount=total_protrusion * dir, mode=mode)
-            chamfer(clip.edges(), length=total_protrusion - self.dims.clearance/2)
+            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode)
+            if clips_on_outside:
+                fillet(clip.edges(), radius=self.dims.clip_protusion/2)
             clips.append(clip)
 
         self.debug_content.append({f"clips {"bottom" if clips_on_outside else "keywell"}": clips}) if self.debug else None
@@ -307,15 +298,8 @@ class DualityWaveCase:
 
             edges_to_add_clips = base.edges().sort_by(Axis.Y, reverse=True)
 
-            clip_offset = Vector(2*self.dims.clip_protusion - 2*self.dims.clearance,
-                                 0, 
-                                 2*self.dims.clip_protusion - 2*self.dims.clearance)
-            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=True, z_position=self.dims.clip_position_z, clip_offset=clip_offset)
-
-            clip_offset = Vector(4*self.dims.clip_protusion - 2*self.dims.clearance, 
-                                 self.dims.clip_protusion, 
-                                 3*self.dims.clip_protusion - 2*self.dims.clearance)
-            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=True, z_position=self.dims.clip_position_z, clip_offset=clip_offset)
+            self.add_bottom_clips(edges_to_add_clips[0], clips_on_outside=True, z_position=self.dims.clip_position_z, extralong=True)
+            self.add_bottom_clips(edges_to_add_clips[1:], clips_on_outside=True, z_position=self.dims.clip_position_z)
 
             print("  xiao support...")
             with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_support:
