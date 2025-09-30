@@ -138,7 +138,8 @@ class DualityWaveCase:
             chamfer(objects=faces().filter_by(Axis.Z).edges(), length=0.1)
 
             edges_to_add_clips = self.filter_clip_edges(base.edges())
-            self.add_bottom_clips("keyplate", edges_to_add_clips, clips_on_outside=True, z_position=-self.dims.keyplate_z/2)
+            c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=True, z_position=-self.dims.keyplate_z/2)
+            self.debug_content.append({"keyplate clips": c}) if self.debug else None
 
             print("  key holes...")
             with BuildSketch() as key_holes:
@@ -206,33 +207,70 @@ class DualityWaveCase:
     
     def create_keywell(self):
         print("Creating keywell...")
-
+        debug_content = []
+        self.debug_content.append({"keywell": debug_content}) if self.debug else None
         with BuildPart() as keywell:
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as body_sketch:
                 add(self.outline.create_outline() )
-            extrude(amount=-self.dims.below_z - self.dims.above_z)
-            fillet(objects=keywell.edges(), radius=1)
+            body = extrude(amount=-self.dims.below_z - self.dims.above_z)
 
-            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as wall_sketch:
+            def intersect_faces(faces: ShapeList[Face]) -> ShapeList[Face]:
+                return lambda aFace: len([aFace for f in faces if f.intersect(aFace) is not None]) > 0
+
+            print("  skulpting thumb cut...")
+            debug_thumb_content = []
+            debug_content.append({"thumb_cut": debug_thumb_content}) if self.debug else None
+
+            thumb_x_from_top = Choc.cap.d.Z + Choc.stem.d.Z
+            taper = 35
+            length_of_tapered_section = thumb_x_from_top / math.cos(math.radians(taper))
+            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as thumb_cut_sketch:
+                with Locations(sum(self.keys.thumb.locs)/len(self.keys.thumb.locs)+Vector(Choc.cap.d.X/2+length_of_tapered_section/2-1, -Choc.cap.d.Y/2).rotate(Axis.Z, self.keys.thumb.rotation)):
+                    Rectangle(Choc.cap.d.X * 3, Choc.cap.d.Y, rotation=self.keys.thumb.rotation)
+            debug_thumb_content.append({"sketch": thumb_cut_sketch}) if self.debug else None
+            thumb_cut=extrude(amount=-thumb_x_from_top, mode=Mode.SUBTRACT, taper=taper)
+            thumb_cut_faces = keywell.faces().filter_by(intersect_faces(thumb_cut.faces()))
+
+            debug_thumb_content.append({"faces": thumb_cut_faces}) if self.debug else None
+            upper_edges = thumb_cut_faces.edges().group_by(Axis.Z)[-1]
+            lower_edges = thumb_cut_faces.edges().group_by(Axis.Z)[0]
+            debug_thumb_content.append({"lower_edges": lower_edges}) if self.debug else None
+            back_and_top_edges = lower_edges.sort_by(Axis.Y, reverse=True)[0:3]
+            debug_thumb_content.append({"back_and_top_edges": back_and_top_edges}) if self.debug else None
+            thumb_to_fillet = ShapeList(upper_edges + back_and_top_edges)
+            debug_thumb_content.append({"to_fillet": thumb_to_fillet}) if self.debug else None
+            fillet(thumb_to_fillet, radius=length_of_tapered_section*0.8)
+
+            # every face thats not top or bottom
+            outside = [f for f in body.faces() if f not in body.faces().filter_by(Axis.Z)]
+            outside_faces = keywell.faces().filter_by(intersect_faces(outside))
+            debug_content.append({"outside_faces": outside_faces}) if self.debug else None
+            fillet(outside_faces.edges(), radius=1)
+
+            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
                 add(self.outline.create_keywell_outline() )
             extrude(amount=-self.dims.below_z - self.dims.above_z, mode=Mode.SUBTRACT)
 
             keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
             add(keywell_wall)
-            extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
-            bottom_inner_edges = keywell.edges(Select.LAST).group_by(Axis.Z)[0]
-            self.debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
-            try:
-                chamfer(bottom_inner_edges, length=0.1)
-            except:
-                print("  ********** keywell chamfer failed")
+            keywell_cut = extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
+
+            bottom_inner_edges = keywell.faces()\
+                .filter_by(intersect_faces(keywell_cut.faces())) \
+                .edges().group_by(Axis.Z)[0]
+            debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
+            chamfer(bottom_inner_edges, length=0.1)
 
             edges_to_add_clips = self.filter_clip_edges(keywell_wall.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
-            self.add_bottom_clips("keywell-bottom long", long_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
-            self.add_bottom_clips("keywell-bottom short", short_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
 
-            self.add_bottom_clips("keywell-keyplate", edges_to_add_clips, clips_on_outside=False, z_position=-self.dims.keyplate_z/2)
+            print("  adding clips...")
+            c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
+            debug_content.append({"bottom long clips": c}) if self.debug else None
+            c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
+            debug_content.append({"bottom short clips": c}) if self.debug else None
+            c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=False, z_position=-self.dims.keyplate_z/2)
+            debug_content.append({"keyplate clips": c}) if self.debug else None
 
         return keywell.part
     
@@ -256,8 +294,7 @@ class DualityWaveCase:
             .filter_by(lambda e: e.length > 5)
         return filtered_edges
 
-    def add_bottom_clips(self, name: str, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, extralong=False) -> list[Sketch]:
-        print(f"  {name}...")
+    def add_bottom_clips(self, edges: ShapeList[Edge] | Edge, clips_on_outside: bool = False, z_position: float = 0, extralong=False) -> list[Sketch]:
         if isinstance(edges, Edge):
             edges = ShapeList([edges])
         clips = []
@@ -289,7 +326,7 @@ class DualityWaveCase:
             if clips_on_outside:
                 fillet(clip.edges(), radius=self.dims.clip_protusion - 0.2)
             clips.append(clip)
-        self.debug_content.append({ name : clips if len(clips) > 1 else clips[0]}) if self.debug else None
+        return clips
 
 
     def create_bottom(self):
@@ -305,8 +342,10 @@ class DualityWaveCase:
 
             edges_to_add_clips = self.filter_clip_edges(base.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
-            self.add_bottom_clips("bottom long", long_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
-            self.add_bottom_clips("bottom short", short_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
+            c = self.add_bottom_clips(long_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
+            self.debug_content.append({"bottom long clips": c}) if self.debug else None
+            c = self.add_bottom_clips(short_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
+            self.debug_content.append({"bottom short clips": c}) if self.debug else None
 
             print("  xiao support...")
             with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_support:
