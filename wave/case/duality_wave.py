@@ -83,7 +83,7 @@ class DualityWaveCase:
 
         self.debug = debug
 
-        push_object(self.debug_content, name="debug_content") if self.debug else None
+        push_object(self.debug_content, name="debug") if self.debug else None
 
         self.create_accessories()
         
@@ -129,24 +129,25 @@ class DualityWaveCase:
 
     def create_keyplate(self):
         print("Creating keyplate...")
-
+        debug_content = []
+        self.debug_content.append({"keyplate": debug_content}) if self.debug else None
         with BuildPart() as keyplate:
             base=add(self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness - self.dims.clearance))
             extrude(amount=-self.dims.keyplate_z)
-            self.debug_content.append({"base": base}) if self.debug else None
+            debug_content.append({"base": base}) if self.debug else None
 
             chamfer(objects=faces().filter_by(Axis.Z).edges(), length=0.1)
 
             edges_to_add_clips = self.filter_clip_edges(base.edges())
             c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=True, z_position=-self.dims.keyplate_z/2)
-            self.debug_content.append({"keyplate clips": c}) if self.debug else None
+            debug_content.append({"clips": c}) if self.debug else None
 
             print("  key holes...")
             with BuildSketch() as key_holes:
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
                         Rectangle(Choc.below.d.X, Choc.below.d.Y, rotation=keycol.rotation)
-            self.debug_content.append({"key_holes (keyplate)": key_holes}) if self.debug else None
+            debug_content.append({"key_holes": key_holes}) if self.debug else None
             extrude(amount=-Choc.clamps.clearance_z, mode=Mode.SUBTRACT)
 
             with BuildSketch(Plane.XY.offset(-Choc.clamps.clearance_z)) as keyholes_with_space:
@@ -164,6 +165,7 @@ class DualityWaveCase:
             print("  connector cut...")
             connector_sketch = self.create_connector_sketch()
             extrude(to_extrude=connector_sketch, amount=self.dims.keyplate_z - Choc.bottom_housing.d.Z, mode=Mode.SUBTRACT)
+            debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
 
             print("  bumpers...")
             with BuildPart() as bumper_holder:
@@ -196,12 +198,12 @@ class DualityWaveCase:
                 with Locations((0.5, 0)):
                     Rectangle(PowerSwitch.dims.d.Y + 1, PowerSwitch.dims.d.X - 2)
             extrude(amount=PowerSwitch.dims.d.Z, mode=Mode.SUBTRACT)
-            self.debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
+            debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
             with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
                 with Locations((PowerSwitch.dims.d.Y/2 + 0.5, 0)):
                     Rectangle(1, PowerSwitch.dims.d.X - 2)
             extrude(amount=PowerSwitch.dims.d.Z - self.dims.powerswitch_position.Z, mode=Mode.SUBTRACT)
-            self.debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
+            debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 
         return keyplate.part
     
@@ -331,7 +333,8 @@ class DualityWaveCase:
 
     def create_bottom(self):
         print("Creating bottom...")
-
+        debug_content = []
+        self.debug_content.append({"bottom": debug_content}) if self.debug else None
         with BuildPart() as bottom:
             outline = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness - self.dims.clearance)
             
@@ -343,16 +346,16 @@ class DualityWaveCase:
             edges_to_add_clips = self.filter_clip_edges(base.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
             c = self.add_bottom_clips(long_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
-            self.debug_content.append({"bottom long clips": c}) if self.debug else None
+            debug_content.append({"long clips": c}) if self.debug else None
             c = self.add_bottom_clips(short_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
-            self.debug_content.append({"bottom short clips": c}) if self.debug else None
+            debug_content.append({"short clips": c}) if self.debug else None
 
             print("  xiao support...")
             with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_support:
                 with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y - Xiao.processor.forward_y)):
                     Rectangle(Xiao.processor.d.X + 2*self.dims.clearance, Xiao.processor.d.Y + 4*self.dims.clearance)
             extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z + self.dims.clearance) , mode=Mode.SUBTRACT)
-            self.debug_content.append({"xiao support": xiao_support}) if self.debug else None
+            debug_content.append({"xiao support": xiao_support}) if self.debug else None
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.dims.below_z)):
@@ -396,7 +399,7 @@ class DualityWaveCase:
                                     Circle(post.d.radius + 0.25)
                             add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, keycol.rotation))
             extrude(amount=5, mode=Mode.SUBTRACT)
-            self.debug_content.append({"chocs posts": choc_posts}) if self.debug else None
+            debug_content.append({"chocs posts": choc_posts}) if self.debug else None
 
             with BuildSketch(Plane.XY.offset(-Choc.below.d.Z)) as choc_posts:
                 for keycol in self.keys.keycols:
@@ -407,7 +410,7 @@ class DualityWaveCase:
                                     Circle(post.d.radius + 0.25)
                             add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, 180+keycol.rotation))
             extrude(amount=5, mode=Mode.SUBTRACT)
-            self.debug_content.append({"chocs posts rotated": choc_posts}) if self.debug else None
+            debug_content.append({"chocs posts rotated": choc_posts}) if self.debug else None
 
             with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
                 with Locations((PowerSwitch.dims.pin_length/2, 0)):
@@ -452,8 +455,6 @@ class DualityWaveCase:
                 l = Line(t, self.keys.inner.locs[0])
                 offset(l, amount=connector_width/2, side=Side.BOTH)
                 make_face()
-        
-        self.debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
         return connector_sketch.sketch            
 
     def create_accessories(self):
@@ -494,6 +495,7 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
     show_objects() 
+    show_all()
 
     export_stl(case.keywell_left, "keywell_left.stl", tolerance=0.01) if hasattr(case, "keywell_left") else None
     export_stl(case.keyplate_left, "keyplate_left.stl", tolerance=0.01) if hasattr(case, "keyplate_left") else None
