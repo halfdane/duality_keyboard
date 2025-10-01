@@ -54,14 +54,11 @@ class BumperHolderDimensions:
         base_offset = 2.5
         radius = BumperDimensions.radius + base_offset
         return [
-            self.keys.thumb.locs[1] + Vector(Choc.cap.d.X/2 - radius + CaseDimensions.wall_thickness, -Choc.cap.d.Y/2 + radius - CaseDimensions.wall_thickness).rotate(Axis.Z, Keys.thumb.rotation),
+            self.keys.thumb.locs[1] + Vector(Choc.cap.d.X/2 - radius/2 - 0.5, -Choc.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, Keys.thumb.rotation),
             Vector(o_dims.base.X, o_dims.base.Y) + Vector(-radius, -radius),
             Vector(0, 0) + Vector(radius, radius),
             Vector(0, o_dims.base.Y) + Vector(radius, -radius),
-        ]
-    
-    def bottom_holder_locations(self) -> list[Vector]:
-        return [
+
             (self.keys.middle.locs[0] + self.keys.middle.locs[1]) / 2 + (8, 0),
         ]
 
@@ -168,31 +165,6 @@ class DualityWaveCase:
             debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
 
             print("  bumpers...")
-            with BuildPart() as bumper_holder:
-                raising = 1
-                with BuildSketch(Plane.XY.offset(-self.dims.below_z+self.dims.bottom_plate_z-raising)) as bottom_holder_sketch:
-                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                        Circle(self.bumperholder_dims.radius - 1.5*self.bumperholder_dims.deflect)
-                extrude(amount=-self.dims.bottom_plate_z + self.bumper.dims.base_z + raising)
-                chamfer(edges(Select.LAST).group_by(Axis.Z)[-1], length=0.5 - self.dims.clearance)
-                extrude(to_extrude=offset(bottom_holder_sketch.sketch, amount=-0.5, mode=Mode.PRIVATE), amount=3, taper=45)
-
-                with BuildSketch(Plane.XY.offset(-self.dims.below_z+self.bumper.dims.base_z+self.bumperholder_dims.height_z)):
-                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                        Circle(self.bumperholder_dims.radius)
-                        Circle(self.bumper.dims.radius, mode=Mode.SUBTRACT)
-                extrude(amount=-self.bumper.dims.base_z-self.bumperholder_dims.height_z)
-            
-                chamfer(edges(Select.LAST).group_by(Edge.length)[-1], length=0.5)
-                fillet(edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[-1],
-                    radius=self.bumperholder_dims.deflect/2)
-
-                with BuildSketch(Plane.XY.offset(-self.dims.below_z)):
-                    with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                        Rectangle(10, 1)
-                        Rectangle(1, 10)
-                extrude(amount=self.dims.bottom_plate_z - raising/2, mode=Mode.SUBTRACT)
-
             with BuildSketch(Plane(self.dims.powerswitch_position)) as powerswitch_cut:
                 Rectangle(PowerSwitch.dims.d.Y, PowerSwitch.dims.d.X + self.dims.clearance)
                 with Locations((0.5, 0)):
@@ -363,33 +335,6 @@ class DualityWaveCase:
                     Circle(self.bumper.dims.radius)
             extrude(amount=self.bumper.dims.base_z, mode=Mode.SUBTRACT)
 
-            with BuildSketch(Plane.XY.offset(-self.dims.below_z)): 
-                with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                    Circle(self.bumper.dims.radius + 2*self.dims.clearance)
-            extrude(amount=self.dims.bottom_plate_z, mode=Mode.SUBTRACT)
-
-            with BuildSketch(Plane.XY.offset(-self.dims.below_z)): 
-                with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                    Circle(self.bumper.dims.radius + 2)
-            extrude(amount=self.dims.bottom_plate_z)
-
-            with BuildSketch(Plane.XY.offset(-self.dims.below_z+self.bumper.dims.base_z)): 
-                with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                    Circle(self.bumperholder_dims.radius - self.bumperholder_dims.deflect)
-            bottom_holder_cut1 = extrude(amount=self.dims.bottom_plate_z - self.bumper.dims.base_z, mode=Mode.SUBTRACT)
-
-            with BuildSketch(Plane.XY.offset(-self.dims.below_z)): 
-                with Locations(self.bumperholder_dims.bottom_holder_locations()):
-                    Circle(self.bumperholder_dims.radius + self.dims.clearance)
-            extrude(amount=self.bumper.dims.base_z + self.dims.clearance, mode=Mode.SUBTRACT)
-
-            chamfer(
-                bottom.edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[0]
-                + bottom_holder_cut1.edges().group_by(Axis.Z)[-1],
-                length=self.bumperholder_dims.deflect)
-            fillet(bottom.edges(Select.LAST).edges().filter_by(GeomType.CIRCLE).group_by(Edge.length)[0],
-                   radius=self.bumperholder_dims.deflect/2)
-
             with BuildSketch(Plane.XY.offset(-Choc.below.d.Z)) as choc_posts:
                 for keycol in self.keys.keycols:
                     with Locations([l for l in keycol.locs if l not in self.upside_down_locations]):
@@ -476,7 +421,7 @@ class DualityWaveCase:
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.dims.below_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
-            with Locations(self.bumperholder_dims.bumper_locations() + self.bumperholder_dims.bottom_holder_locations()):
+            with Locations(self.bumperholder_dims.bumper_locations()):
                 add(copy.copy(self.bumper.model))
         self.bumpers = self.bumpers.part
 
@@ -495,7 +440,6 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
     show_objects() 
-    show_all()
 
     export_stl(case.keywell_left, "keywell_left.stl", tolerance=0.01) if hasattr(case, "keywell_left") else None
     export_stl(case.keyplate_left, "keyplate_left.stl", tolerance=0.01) if hasattr(case, "keyplate_left") else None
