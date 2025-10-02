@@ -28,18 +28,22 @@ class CaseDimensions:
 
     clip_protusion: float = 0.4
 
-    xiao_offset: float = wall_thickness + Xiao.usb.forward_y + 2*clearance
-    xiao_pos_x: float = 10 + Xiao.dims.d.X/2
-    xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - xiao_offset
+    xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
+
+
+
+
+    xiao_pos_x: float = 2*wall_thickness + Xiao.dims.d.X/2 + xiao_to_power_switch + PowerSwitch.dims.d.Y/2
+    xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - wall_thickness - 2*clearance
     xiao_pos_z: float = -1.45
     xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
     xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
     powerswitch_position: Vector = Vector(
-                xiao_position.X + Xiao.dims.d.X/2 + PowerSwitch.dims.d.Y + PowerSwitch.dims.pin_length, 
-                xiao_position.Y + 5, 
+                xiao_position.X - Xiao.dims.d.X/2 - xiao_to_power_switch, 
+                xiao_position.Y - 2, 
                 -(below_z - 0.75*PowerSwitch.lever.d.Z))
-    powerswitch_rotation: Vector = Vector(0, 180, -90)
+    powerswitch_rotation: Vector = Vector(0, 180, 90)
 
 @dataclass
 class BumperHolderDimensions:
@@ -165,15 +169,56 @@ class DualityWaveCase:
             extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
 
             print("  connector cut...")
-            connector_sketch = self.create_connector_sketch()
-            extrude(to_extrude=connector_sketch, amount=self.dims.keyplate_z - Choc.bottom_housing.d.Z, mode=Mode.SUBTRACT)
+            connector_width: float = 1.5
+            with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z )) as connector_sketch:
+                for row in range(3):
+                    with BuildLine() as row_line:
+                        pts = [ keycol.locs[row] + (Choc.posts.p2.d.X, -Choc.posts.p2.d.Y) for keycol in self.keys.finger_cols]
+                        Polyline(*pts)
+                        offset(amount=connector_width, side=Side.BOTH)
+                    make_face()
+
+                for col in [self.keys.inner, self.keys.pointer, self.keys.middle, self.keys.ring]:
+                    column_to_topline = Line(col.locs[0], col.locs[2])
+                    offset(column_to_topline, amount=connector_width, side=Side.BOTH)
+                    make_face()
+                
+                with BuildLine() as pinkie_to_topline:
+                    pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2] ]
+                    Polyline(*pts)
+                    offset(amount=connector_width, side=Side.BOTH)
+                make_face()
+
+                l = Line(self.keys.thumb.locs[0]+ Choc.posts.p2.d, self.keys.thumb.locs[1]+ Choc.posts.p2.d)
+                offset(l, amount=connector_width, side=Side.BOTH)
+                make_face()
+                for t in self.keys.thumb.locs:
+                    l = Line(t, self.keys.inner.locs[0])
+                    offset(l, amount=connector_width, side=Side.BOTH)
+                    make_face()
+
+            extrude(amount=self.dims.keyplate_z - Choc.bottom_housing.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
+
+            connect_to_xiao_plane = Plane.XY.rotated((20,0,0))
+            connect_to_xiao_plane.origin = (self.keys.pinkie.locs[2] + (self.dims.xiao_position.X, self.dims.xiao_position.Y))/2
+            connect_to_xiao_plane.origin += Vector(0, 0, self.dims.xiao_position.Z)
+            with BuildSketch(connect_to_xiao_plane) as connect_to_xiao:
+                v = Vector(0, self.keys.pinkie.locs[2].Y - self.dims.xiao_position.Y)
+                l=Line(v/2, -v/2)
+                offset(l, amount=2*connector_width, side=Side.BOTH)
+                make_face()
+            debug_content.append({"connect_to_xiao": connect_to_xiao}) if self.debug else None
+
+            connect_to_xiao_cut = extrude(amount=-7, mode=Mode.SUBTRACT)
+            debug_content.append({"connect_to_xiao_cut": connect_to_xiao_cut}) if self.debug else None
 
             print("  powerswitch...")
             with BuildSketch(Plane(self.dims.powerswitch_position).rotated(self.dims.powerswitch_rotation)) as powerswitch_cut:
                 Rectangle(PowerSwitch.dims.d.X + self.dims.clearance, PowerSwitch.dims.d.Y)
-                with Locations((0, PowerSwitch.dims.pin_length/2 + 5)):
-                    Rectangle(PowerSwitch.dims.d.X - 2, PowerSwitch.dims.d.Y + PowerSwitch.dims.pin_length + 10)
+                pin_clearance_y = (PowerSwitch.dims.d.Y + PowerSwitch.dims.pin_length + 10)
+                with Locations((0, pin_clearance_y/2)):
+                    Rectangle(PowerSwitch.dims.d.X - 4, pin_clearance_y)
             extrude(amount=-PowerSwitch.dims.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 
@@ -325,7 +370,7 @@ class DualityWaveCase:
             print("  xiao support...")
             with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_support:
                 with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y - Xiao.processor.forward_y)):
-                    Rectangle(Xiao.processor.d.X + 2*self.dims.clearance, Xiao.processor.d.Y + 4*self.dims.clearance)
+                    Rectangle(Xiao.processor.d.X + 0.5, Xiao.processor.d.Y + 0.5)
             extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z + self.dims.clearance) , mode=Mode.SUBTRACT)
             debug_content.append({"xiao support": xiao_support}) if self.debug else None
 
@@ -359,38 +404,6 @@ class DualityWaveCase:
             chamfer(powerswitch_lever_cut.edges().group_by(Axis.Z)[0], length=1.5, length2=0.5)
 
         return bottom.part
-
-    def create_connector_sketch(self):
-        connector_width: float = 2
-        with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z )) as connector_sketch:
-            top_y = self.keys.middle.locs[2].Y+Choc.cap.d.Y/2
-
-            for row in range(3):
-                with BuildLine() as row_line:
-                    pts = [ keycol.locs[row] + (Choc.posts.p2.d.X, -Choc.posts.p2.d.Y) for keycol in self.keys.finger_cols]
-                    Polyline(*pts)
-                    offset(amount=connector_width/2, side=Side.BOTH)
-                make_face()
-
-            for col in [self.keys.inner, self.keys.pointer, self.keys.middle, self.keys.ring]:
-                column_to_topline = Line(col.locs[0], col.locs[2])
-                offset(column_to_topline, amount=connector_width/2, side=Side.BOTH)
-                make_face()
-            
-            with BuildLine() as pinkie_to_topline:
-                pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2], (self.keys.pinkie.locs[2].X, top_y) ]
-                Polyline(*pts)
-                offset(amount=connector_width, side=Side.BOTH)
-            make_face()
-
-            l = Line(self.keys.thumb.locs[0]+ Choc.posts.p2.d, self.keys.thumb.locs[1]+ Choc.posts.p2.d)
-            offset(l, amount=connector_width/2, side=Side.BOTH)
-            make_face()
-            for t in self.keys.thumb.locs:
-                l = Line(t, self.keys.inner.locs[0])
-                offset(l, amount=connector_width/2, side=Side.BOTH)
-                make_face()
-        return connector_sketch.sketch            
 
     def create_accessories(self):
         if not self.debug:
