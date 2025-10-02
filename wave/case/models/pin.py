@@ -8,6 +8,9 @@ class PinDimensions:
     radius: float = 0.5
 
 class Pin:
+
+    dims = PinDimensions()
+
     def __init__(self, length):
         self.length = length
 
@@ -22,7 +25,7 @@ class Pin:
                     (0, self.length, -1.05), # back to center
                 ], radius=0.5)
             with BuildSketch(Plane.XZ):
-                Circle(radius=PinDimensions.radius)
+                Circle(radius=self.dims.radius)
             sweep()
         self.model = pin.part
 

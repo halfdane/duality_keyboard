@@ -9,14 +9,14 @@ from models.symbol import Symbol
 from models.keys import Keys
 from models.outline import Outline
 from models.rubber_bumper import RubberBumper, BumperDimensions
+from models.pin import Pin
 
 from ocp_vscode import *
 
 
-@dataclass
+@dataclass(frozen=True)
 class CaseDimensions:
     clearance: float = 0.02
-    pin_radius: float = 0.5
     
     wall_thickness: float = 1.8
 
@@ -27,12 +27,10 @@ class CaseDimensions:
     keyplate_z: float = below_z - bottom_plate_z
 
     clip_protusion: float = 0.4
+    clip_lower_z: float = -below_z + bottom_plate_z/2
+    clip_upper_z: float = -keyplate_z/2
 
     xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
-
-
-
-
     xiao_pos_x: float = 2*wall_thickness + Xiao.dims.d.X/2 + xiao_to_power_switch + PowerSwitch.dims.d.Y/2
     xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - wall_thickness - 2*clearance
     xiao_pos_z: float = -1.45
@@ -44,6 +42,15 @@ class CaseDimensions:
                 xiao_position.Y - 2, 
                 -(below_z - 0.75*PowerSwitch.lever.d.Z))
     powerswitch_rotation: Vector = Vector(0, 180, 90)
+     
+    pin_radius: float = Pin.dims.radius + clearance
+    pin_plane: Plane = field(default_factory=lambda: Plane(((Outline.dims.base.X)/2, Outline.dims.base.Y, CaseDimensions.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction))
+    pin_locations: list[Vector] = (
+        Vector(0, 0),
+        Vector(0.47 * Outline.dims.base.X, 0),
+        Vector(-0.47 * Outline.dims.base.X, 0)
+    )
+
 
 @dataclass
 class BumperHolderDimensions:
@@ -265,7 +272,8 @@ class DualityWaveCase:
             outside_faces = keywell.faces().filter_by(intersect_faces(outside))
             debug_content.append({"outside_faces": outside_faces}) if self.debug else None
             fillet(outside_faces.edges(), radius=1)
-
+            
+            print("  keywell cut...")
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
                 add(self.outline.create_keywell_outline() )
             extrude(amount=-self.dims.below_z - self.dims.above_z, mode=Mode.SUBTRACT)
@@ -283,13 +291,31 @@ class DualityWaveCase:
             edges_to_add_clips = self.filter_clip_edges(keywell_wall.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
 
-            print("  adding clips...")
-            c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
+            print("  clips...")
+            c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z, extralong=True)
             debug_content.append({"bottom long clips": c}) if self.debug else None
-            c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
+            c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z)
             debug_content.append({"bottom short clips": c}) if self.debug else None
-            c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=False, z_position=-self.dims.keyplate_z/2)
+            c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=False, z_position=self.dims.clip_upper_z)
             debug_content.append({"keyplate clips": c}) if self.debug else None
+
+            print("  pin holes...")
+            with BuildSketch(self.dims.pin_plane) as pin_holes:
+                with Locations(self.dims.pin_locations):
+                    Circle(self.dims.pin_radius)
+            debug_content.append({"pin_holes": pin_holes}) if self.debug else None
+            extrude(amount=2* self.dims.wall_thickness, mode=Mode.SUBTRACT)
+
+            handle = 3
+            with BuildSketch(self.dims.pin_plane.rotated((30, 0, 0))) as pin_holders:
+                with Locations(self.dims.pin_locations[0:2]):
+                    with Locations((-handle/2+ self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance)):
+                        RectangleRounded(handle, 10, radius=self.dims.pin_radius)
+                with Locations(self.dims.pin_locations[2]):
+                    with Locations((handle/2 - self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance)):
+                        RectangleRounded(handle, 10, radius=self.dims.pin_radius)
+            extrude(amount=1, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
+            extrude(amount=-self.dims.wall_thickness, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
 
         return keywell.part
     
@@ -362,9 +388,9 @@ class DualityWaveCase:
 
             edges_to_add_clips = self.filter_clip_edges(base.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
-            c = self.add_bottom_clips(long_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2, extralong=True)
+            c = self.add_bottom_clips(long_clips, clips_on_outside=True, z_position=self.dims.clip_lower_z, extralong=True)
             debug_content.append({"long clips": c}) if self.debug else None
-            c = self.add_bottom_clips(short_clips, clips_on_outside=True, z_position=-self.dims.below_z + self.dims.bottom_plate_z/2)
+            c = self.add_bottom_clips(short_clips, clips_on_outside=True, z_position=self.dims.clip_lower_z)
             debug_content.append({"short clips": c}) if self.debug else None
 
             print("  xiao support...")
@@ -402,6 +428,13 @@ class DualityWaveCase:
             powerswitch_lever_cut = extrude(amount=self.dims.powerswitch_position.Z + self.dims.below_z, mode=Mode.SUBTRACT)
             debug_content.append({"powerswitch_lever_cut": powerswitch_lever_cut}) if self.debug else None  
             chamfer(powerswitch_lever_cut.edges().group_by(Axis.Z)[0], length=1.5, length2=0.5)
+
+            print("  pin holes...")
+            with BuildSketch(self.dims.pin_plane) as pin_holes:
+                with Locations(self.dims.pin_locations):
+                    Circle(self.dims.pin_radius)
+            debug_content.append({"pin_holes": pin_holes}) if self.debug else None
+            extrude(amount=2* self.dims.wall_thickness, mode=Mode.SUBTRACT)
 
         return bottom.part
 
