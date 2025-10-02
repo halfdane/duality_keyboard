@@ -46,7 +46,6 @@ class CaseDimensions:
     pin_radius: float = Pin.dims.radius + clearance
     pin_plane: Plane = field(default_factory=lambda: Plane(((Outline.dims.base.X)/2, Outline.dims.base.Y, CaseDimensions.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction))
     pin_locations: list[Vector] = (
-        Vector(0, 0),
         Vector(0.47 * Outline.dims.base.X, 0),
         Vector(-0.47 * Outline.dims.base.X, 0)
     )
@@ -106,6 +105,8 @@ class DualityWaveCase:
         accessories.append({"xiao": self.xiao.model})
         accessories.append({"bumpers": self.bumpers})
         accessories.append({"power_switch": self.powerswitch})
+        accessories.append({"pins": self.pins})
+
         push_object(accessories, name="accessories")
 
         self.keywell_left = self.create_keywell()
@@ -308,13 +309,13 @@ class DualityWaveCase:
 
             handle = 3
             with BuildSketch(self.dims.pin_plane.rotated((30, 0, 0))) as pin_holders:
-                with Locations(self.dims.pin_locations[0:2]):
-                    with Locations((-handle/2+ self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance)):
+                with Locations(self.dims.pin_locations[0]):
+                    with Locations((-handle/2+ self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance +1)):
                         RectangleRounded(handle, 10, radius=self.dims.pin_radius)
-                with Locations(self.dims.pin_locations[2]):
-                    with Locations((handle/2 - self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance)):
+                with Locations(self.dims.pin_locations[1]):
+                    with Locations((handle/2 - self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance + 1)):
                         RectangleRounded(handle, 10, radius=self.dims.pin_radius)
-            extrude(amount=1, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
+            extrude(amount=0.5, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
             extrude(amount=-self.dims.wall_thickness, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
 
         return keywell.part
@@ -462,6 +463,15 @@ class DualityWaveCase:
             .rotate(Axis.Y, self.dims.powerswitch_rotation.Y )\
             .rotate(Axis.Z, self.dims.powerswitch_rotation.Z )\
             .translate(self.dims.powerswitch_position)
+        
+        self.pins = []
+        length = 2*self.dims.wall_thickness
+        p = Pin(length=length)
+        for i, loc in enumerate(self.dims.pin_locations):
+            rot = Rotation(0, 180, 0)
+            pin = p.model if i == 0 else mirror(p.model, about=Plane.YZ)
+            pin = self.dims.pin_plane * Pos(loc) * Pos(0,0, length) * Rotation(-90, 0, 0) * rot * pin
+            self.pins.append(pin)
 
 
 if __name__ == "__main__":

@@ -20,8 +20,8 @@ class Pin:
                     (0, 0), # bottom
                     (0, self.length), # top
                     # at the top, bend to the right, 
-                    (5, self.length), # right
-                    (5, self.length, -1.05), # then bend down
+                    (2, self.length), # right
+                    (2, self.length, -1.05), # then bend down
                     (0, self.length, -1.05), # back to center
                 ], radius=0.5)
             with BuildSketch(Plane.XZ):
