@@ -10,6 +10,7 @@ from models.keys import Keys
 from models.outline import Outline
 from models.rubber_bumper import RubberBumper, BumperDimensions
 from models.pin import Pin
+from models.model_types import RoundDimensions
 
 from ocp_vscode import *
 
@@ -50,6 +51,10 @@ class CaseDimensions:
         Vector(-0.47 * Outline.dims.base.X, 0)
     )
 
+    weight_large_d: Vector = Vector(22.9, 19.0, 4.4)
+    weight_small_d: Vector = Vector(22.9, 12.0, 4.4)
+    battery_d: Vector = Vector(31.0, 17.0, 6)
+    magnet_d: RoundDimensions = RoundDimensions(5, 2)
 
 @dataclass
 class BumperHolderDimensions:
@@ -223,10 +228,10 @@ class DualityWaveCase:
 
             print("  powerswitch...")
             with BuildSketch(Plane(self.dims.powerswitch_position).rotated(self.dims.powerswitch_rotation)) as powerswitch_cut:
-                Rectangle(PowerSwitch.dims.d.X + self.dims.clearance, PowerSwitch.dims.d.Y)
+                Rectangle(PowerSwitch.dims.d.X + 2*self.dims.clearance, PowerSwitch.dims.d.Y + 2*self.dims.clearance)
                 pin_clearance_y = (PowerSwitch.dims.d.Y + PowerSwitch.dims.pin_length + 10)
                 with Locations((0, pin_clearance_y/2)):
-                    Rectangle(PowerSwitch.dims.d.X - 4, pin_clearance_y)
+                    Rectangle(PowerSwitch.dims.d.X - 3, pin_clearance_y)
             extrude(amount=-PowerSwitch.dims.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 

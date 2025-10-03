@@ -10,12 +10,12 @@ from models.model_types import RectDimensions, RoundDimensions, PosAndDims
 
 @dataclass
 class PowerSwitchDimensions:
-    d: RectDimensions = RectDimensions(9, 3.5, 4)
-    pin_length: float = 3.5
+    d: RectDimensions = RectDimensions(9, 3.4, 4)
+    pin_length: float = 4
 
 @dataclass
 class LeverDimensions:
-    d: RectDimensions = RectDimensions(1.5, 1.5, 1.5)
+    d: RectDimensions = RectDimensions(1.5, 1.5, 1.8)
     clearance: float = 3.5
     p: Vector = Vector(0, 0.8, 0)
 
@@ -36,7 +36,7 @@ class PowerSwitch:
                     Box(self.lever.d.Y, self.lever.d.X, self.lever.d.Z)
             with BuildPart(self.model.faces().sort_by(Axis.Y)[0]) as pins:
                 with Locations((0, 0, self.dims.d.Y/2)):
-                    with GridLocations(3.5, 2.2, 2, 3):
+                    with GridLocations(3.5, 2.5, 2, 3):
                         Cylinder(0.1, self.dims.pin_length)
         self.model = self.model.part.translate((0, 0, -self.dims.d.Z/2))
             
