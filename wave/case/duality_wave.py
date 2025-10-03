@@ -252,7 +252,7 @@ class DualityWaveCase:
             extrude(amount=self.dims.keyplate_z - Choc.bottom_housing.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
 
-            connect_to_xiao_plane = Plane.XY.rotated((20,0,0))
+            connect_to_xiao_plane = Plane.XY.rotated((10,0,0))
             connect_to_xiao_plane.origin = (self.keys.pinkie.locs[2] + (self.dims.xiao_position.X, self.dims.xiao_position.Y))/2
             connect_to_xiao_plane.origin += Vector(0, 0, self.dims.xiao_position.Z)
             with BuildSketch(connect_to_xiao_plane) as connect_to_xiao:
