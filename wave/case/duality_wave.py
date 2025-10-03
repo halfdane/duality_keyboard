@@ -26,7 +26,7 @@ class CaseDimensions:
     above_z: float = Choc.above.d.Z
     add_below_choc_posts: float = 0.7
     below_z: float = Choc.below.d.Z + add_below_choc_posts
-    bottom_plate_z: float = 2.4
+    bottom_plate_z: float = 3
     keyplate_z: float = below_z - bottom_plate_z
 
     clip_protusion: float = 0.4
@@ -48,10 +48,7 @@ class CaseDimensions:
      
     pin_radius: float = Pin.dims.radius + clearance
     pin_plane: Plane = field(default_factory=lambda: Plane(((Outline.dims.base.X)/2, Outline.dims.base.Y, CaseDimensions.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction))
-    pin_locations: list[Vector] = (
-        Vector(0.47 * Outline.dims.base.X, 0),
-        Vector(-0.47 * Outline.dims.base.X, 0)
-    )
+    pin_locations: list[Vector] = (Vector(0, 0))
 
     def battery_pd(self) -> PosAndDims:
         battery_d: RectDimensions = RectDimensions(31, 17 , 5.5)
@@ -162,7 +159,7 @@ class DualityWaveCase:
         push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
 
         self.bottom_left = self.create_bottom()
-        self.bottom_left = self.xiao.add_usb_cutouts(self.bottom_left)
+        self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
         self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
@@ -349,18 +346,7 @@ class DualityWaveCase:
                 with Locations(self.dims.pin_locations):
                     Circle(self.dims.pin_radius)
             debug_content.append({"pin_holes": pin_holes}) if self.debug else None
-            extrude(amount=2* self.dims.wall_thickness, mode=Mode.SUBTRACT)
-
-            handle = 3
-            with BuildSketch(self.dims.pin_plane.rotated((30, 0, 0))) as pin_holders:
-                with Locations(self.dims.pin_locations[0]):
-                    with Locations((-handle/2+ self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance +1)):
-                        RectangleRounded(handle, 10, radius=self.dims.pin_radius)
-                with Locations(self.dims.pin_locations[1]):
-                    with Locations((handle/2 - self.dims.pin_radius/2, -4 - self.dims.pin_radius + 2*self.dims.clearance + 1)):
-                        RectangleRounded(handle, 10, radius=self.dims.pin_radius)
-            extrude(amount=0.5, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
-            extrude(amount=-self.dims.wall_thickness, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
+            extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
             print("  battery recess...")
             battery_pd = self.dims.battery_pd()
@@ -501,7 +487,7 @@ class DualityWaveCase:
                 with Locations(self.dims.pin_locations):
                     Circle(self.dims.pin_radius)
             debug_content.append({"pin_holes": pin_holes}) if self.debug else None
-            extrude(amount=2* self.dims.wall_thickness, mode=Mode.SUBTRACT)
+            extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
         return bottom.part
 
@@ -521,7 +507,7 @@ class DualityWaveCase:
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.dims.below_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
             with Locations(self.bumperholder_dims.bumper_locations()):
-                add(copy.copy(self.bumper.model))
+                add(self.bumper.model)
         self.bumpers = self.bumpers.part
 
         self.powerswitch = PowerSwitch()
@@ -529,15 +515,12 @@ class DualityWaveCase:
             .rotate(Axis.Y, self.dims.powerswitch_rotation.Y )\
             .rotate(Axis.Z, self.dims.powerswitch_rotation.Z )\
             .translate(self.dims.powerswitch_position)
-        
-        self.pins = []
-        length = 2*self.dims.wall_thickness
-        p = Pin(length=length)
-        for i, loc in enumerate(self.dims.pin_locations):
-            rot = Rotation(0, 180, 0)
-            pin = p.model if i == 0 else mirror(p.model, about=Plane.YZ)
-            pin = self.dims.pin_plane * Pos(loc) * Pos(0,0, length) * Rotation(-90, 0, 0) * rot * pin
-            self.pins.append(pin)
+
+        self.pin = Pin()
+        with BuildPart(self.dims.pin_plane) as self.pins:
+            with Locations(self.dims.pin_locations):
+                add(self.pin.model)
+        self.pins = self.pins.part
 
 
 if __name__ == "__main__":
