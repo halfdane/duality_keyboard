@@ -10,13 +10,15 @@ from models.keys import Keys
 from models.outline import Outline
 from models.rubber_bumper import RubberBumper, BumperDimensions
 from models.pin import Pin
-from models.model_types import RoundDimensions
+from models.model_types import RoundDimensions, PosAndDims, RectDimensions
 
 from ocp_vscode import *
 
 
 @dataclass(frozen=True)
 class CaseDimensions:
+    outline: Outline
+
     clearance: float = 0.02
     
     wall_thickness: float = 1.8
@@ -51,10 +53,32 @@ class CaseDimensions:
         Vector(-0.47 * Outline.dims.base.X, 0)
     )
 
-    weight_large_d: Vector = Vector(22.9, 19.0, 4.4)
-    weight_small_d: Vector = Vector(22.9, 12.0, 4.4)
-    battery_d: Vector = Vector(31.0, 17.0, 6)
+    def battery_pd(self) -> PosAndDims:
+        battery_d: RectDimensions = RectDimensions(31, 17 , 5.5)
+        return PosAndDims(
+            d=battery_d,
+            p=self.outline.top_left + Vector(
+                (self.wall_thickness + self.clearance + 11),
+                -(self.wall_thickness + self.clearance)) + Vector(
+                battery_d.X/2, - battery_d.Y/2,
+                (self.above_z - battery_d.Z/2 - self.wall_thickness))
+    )
+
     magnet_d: RoundDimensions = RoundDimensions(5, 2)
+    magnet_positions: list[Vector] = (
+        Vector(Outline.dims.base.X - wall_thickness - clearance - magnet_d.radius - 6, Outline.dims.base.Y - wall_thickness - clearance - magnet_d.radius - 1, above_z - 0.5),
+        Keys.pinkie.locs[2] + Vector(0, Choc.cap.d.Y/2 + magnet_d.radius + 4, above_z - 0.5).rotate(Axis.Z, Keys.pinkie.rotation),
+        Vector(wall_thickness + clearance + magnet_d.radius, wall_thickness + magnet_d.radius + 0.2, above_z - 0.5),
+        Keys.pointer.locs[0] + Vector(-3, -Choc.cap.d.Y/2 - magnet_d.radius - 2, above_z - 0.5),
+        Keys.inner.locs[0] + Vector(Choc.cap.d.X/2 + magnet_d.radius+1, -3.3, above_z - 0.5)
+    )
+
+    weight_d: Vector = Vector(22.9, 12.0, 4.4)
+    weight_positions: list[Vector] = (
+        Vector(Outline.dims.base.X, Outline.dims.base.Y) + Vector(-wall_thickness - clearance - weight_d.X/2, -wall_thickness - clearance - weight_d.Y/2, magnet_positions[0].Z - magnet_d.Z),
+        Keys.pinkie.locs[2] + Vector(0, Choc.cap.d.Y/2 + weight_d.Y/2 + 3, magnet_positions[0].Z - magnet_d.Z).rotate(Axis.Z, Keys.pinkie.rotation)
+    )
+
 
 @dataclass
 class BumperHolderDimensions:
@@ -81,11 +105,8 @@ class BumperHolderDimensions:
 class DualityWaveCase:
     outline = Outline(wall_thickness=CaseDimensions.wall_thickness)
     keys = Keys()
-    upside_down_locations = (
-        Keys.pointer.locs[1],
-    )
 
-    dims = CaseDimensions()
+    dims = CaseDimensions(outline)
     bumperholder_dims = BumperHolderDimensions(keys, outline)
     bumper = RubberBumper()
 
@@ -111,6 +132,24 @@ class DualityWaveCase:
         accessories.append({"bumpers": self.bumpers})
         accessories.append({"power_switch": self.powerswitch})
         accessories.append({"pins": self.pins})
+
+        battery = Box(self.dims.battery_pd().d.X, self.dims.battery_pd().d.Y, self.dims.battery_pd().d.Z)
+        battery = battery.translate(self.dims.battery_pd().p)
+        accessories.append({"battery": battery})
+
+        with BuildPart() as magnets: 
+            with BuildSketch(Plane.XY.offset(self.dims.magnet_positions[0].Z)) as magnet_sketch:
+                with Locations(self.dims.magnet_positions):
+                    Circle(self.dims.magnet_d.radius)
+            extrude(amount=-self.dims.magnet_d.Z)
+        accessories.append({"magnets": magnets})
+
+        with BuildPart() as weights:
+            with BuildSketch(Plane.XY.offset(self.dims.weight_positions[0].Z)) as weight_sketch:
+                with Locations(self.dims.weight_positions):
+                    Rectangle(self.dims.weight_d.X, self.dims.weight_d.Y)
+            extrude(amount=-self.dims.weight_d.Z)
+        accessories.append({"weights": weights})
 
         push_object(accessories, name="accessories")
 
@@ -322,6 +361,28 @@ class DualityWaveCase:
                         RectangleRounded(handle, 10, radius=self.dims.pin_radius)
             extrude(amount=0.5, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
             extrude(amount=-self.dims.wall_thickness, to_extrude=pin_holders.sketch, mode=Mode.SUBTRACT)
+
+            print("  battery recess...")
+            battery_pd = self.dims.battery_pd()
+            with BuildSketch(Plane.XY.offset(battery_pd.p.Z)) as battery_sketch:
+                with Locations((battery_pd.p.X, battery_pd.p.Y)):
+                    Rectangle(battery_pd.d.X + 2*self.dims.clearance, battery_pd.d.Y + 2*self.dims.clearance)
+            extrude(amount=-battery_pd.d.Z - self.dims.wall_thickness, mode=Mode.SUBTRACT)
+            debug_content.append({"battery_sketch": battery_sketch}) if self.debug else None
+
+            print("  magnet recesses...")
+            with BuildSketch(Plane.XY.offset(self.dims.magnet_positions[0].Z)) as magnet_sketch:
+                with Locations(self.dims.magnet_positions):
+                    Circle(self.dims.magnet_d.radius + self.dims.clearance)
+            extrude(amount=-self.dims.above_z - self.dims.magnet_d.Z, mode=Mode.SUBTRACT)
+            debug_content.append({"magnet_sketch": magnet_sketch}) if self.debug else None
+
+            print("  weight recesses...")
+            with BuildSketch(Plane.XY.offset(self.dims.weight_positions[0].Z)) as weight_sketch:
+                with Locations(self.dims.weight_positions):
+                    Rectangle(self.dims.weight_d.X + 2*self.dims.clearance, self.dims.weight_d.Y + 2*self.dims.clearance)
+            extrude(amount=-self.dims.above_z - self.dims.weight_d.Z, mode=Mode.SUBTRACT)
+            debug_content.append({"weight_sketch": weight_sketch}) if self.debug else None
 
         return keywell.part
     

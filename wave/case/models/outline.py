@@ -15,7 +15,7 @@ choc_xy = choc_x + choc_y
 
 @dataclass
 class Dimensions:
-    base: Vector = Vector(107, 85)
+    base: Vector = Vector(107, 92)
 
 class Outline:
 
