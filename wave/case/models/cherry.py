@@ -41,15 +41,15 @@ class StemDimensions:
 
 @dataclass
 class CapDimensions:
-    d: RectDimensions = RectDimensions(18.1, 18.1, 12.3)
-    d_without_space: RectDimensions = RectDimensions(18, 18, d.Z)
+    d: RectDimensions = RectDimensions(18.1, 18.1, 4)
+    d_without_space: RectDimensions = RectDimensions(18, 18, 10)
 
 @dataclass
 class AboveDimensions:
     d: RectDimensions = RectDimensions(
         BaseDimensions.d.X,
         BaseDimensions.d.Y,
-        BaseDimensions.d.Z + UpperHousingDimensions.d.Z + StemDimensions.d.Z + CapDimensions.d.Z
+        BaseDimensions.d.Z + UpperHousingDimensions.d.Z + CapDimensions.d.Z
     )
 
 
@@ -102,38 +102,21 @@ class Cherry(Switch):
                 with Locations((0, 0, self.stem.d.Z / 2)):
                     Box(self.stem.d.X, self.stem.d.Y, self.stem.d.Z)
 
-            with BuildPart() as key_cap:
+            with BuildPart(mode=Mode.PRIVATE) as key_cap:
                 # Start with the plan of the key cap and extrude it
                 with BuildSketch() as plan:
-                    Rectangle(18 * MM, 18 * MM)
-                extrude(amount=10 * MM, taper=15)
+                    Rectangle(self.cap.d_without_space.X, self.cap.d_without_space.Y)
+                extrude(amount=self.cap.d_without_space.Z, taper=15)
                 # Create a dished top
-                with Locations((0, -3 * MM, 47 * MM)):
-                    Sphere(40 * MM, mode=Mode.SUBTRACT, rotation=(90, 0, 0))
+                with Locations((0, -3, 47)):
+                    Sphere(40, mode=Mode.SUBTRACT, rotation=(90, 0, 0))
                 # Fillet all the edges except the bottom
                 fillet(
-                    key_cap.edges().filter_by_position(Axis.Z, 0, 30 * MM, inclusive=(False, True)),
-                    radius=1 * MM,
+                    key_cap.edges().filter_by_position(Axis.Z, 0, 30, inclusive=(False, True)),
+                    radius=1,
                 )
-                # Hollow out the key by subtracting a scaled version
-                scale(by=(0.925, 0.925, 0.85), mode=Mode.SUBTRACT)
-
-                # Add supporting ribs while leaving room for switch activation
-                with BuildSketch(Plane(origin=(0, 0, 4 * MM))):
-                    Rectangle(15 * MM, 0.5 * MM)
-                    Rectangle(0.5 * MM, 15 * MM)
-                    Circle(radius=5.5 * MM / 2)
-                # Extrude the mount and ribs to the key cap underside
-                extrude(until=Until.NEXT)
-                # Find the face on the bottom of the ribs to build onto
-                rib_bottom = key_cap.faces().filter_by_position(Axis.Z, 4 * MM, 4 * MM)[0]
-                # Add the switch socket
-                with BuildSketch(rib_bottom) as cruciform:
-                    Circle(radius=5.5 * MM / 2)
-                    Rectangle(4.1 * MM, 1.17 * MM, mode=Mode.SUBTRACT)
-                    Rectangle(1.17 * MM, 4.1 * MM, mode=Mode.SUBTRACT)
-                extrude(amount=3.5 * MM, mode=Mode.ADD)
             key_cap = key_cap.part.translate((0, 0, self.upper_housing.d.Z))
+            add(key_cap)
 
         if show_model:
             from ocp_vscode import show_all

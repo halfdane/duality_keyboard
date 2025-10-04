@@ -45,8 +45,8 @@ class StemDimensions:
 
 @dataclass
 class CapDimensions:
-    d: RectDimensions = RectDimensions(18, 17, 2.25)
-    d_without_space: RectDimensions = RectDimensions(17.45, 16.571, d.Z)
+    d: RectDimensions = RectDimensions(18, 17, 2.5)
+    d_without_space: RectDimensions = RectDimensions(17.45, 16.571, 2.25)
 
 @dataclass
 class AboveDimensions:

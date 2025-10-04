@@ -133,7 +133,7 @@ class BumperHolderDimensions:
 
 class DualityWaveCase:
 
-    def __init__(self, switch, debug=False, both_sides=False):
+    def __init__(self, switch: Switch, debug=False, both_sides=False):
         self.switch = switch
         self.keys = Keys(self.switch)
         self.outline = Outline(switch=self.switch, keys=self.keys, wall_thickness=CaseDimensions.wall_thickness)
