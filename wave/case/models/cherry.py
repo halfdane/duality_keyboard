@@ -30,7 +30,6 @@ class PostDimensions:
 class ClampDimensions:
     p: PosAndDims = PosAndDims(p=Vector(13.95/2, 0, -1.9), 
                                d=RectDimensions((15.03-13.95)/2, 4.0, 0.8))
-    clearance_z: float = BottomHousingDimensions.d.Z - p.p.Z
 
 @dataclass
 class UpperHousingDimensions:
@@ -73,6 +72,7 @@ class Cherry(Switch):
 
     above = AboveDimensions()
     below = BelowDimensions()
+    clamp_clearance_z: float = BottomHousingDimensions.d.Z - ClampDimensions.p.p.Z
 
     def __init__(self, show_model=False, show_step_file=False):
         with BuildPart() as self.model:

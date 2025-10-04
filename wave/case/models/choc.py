@@ -33,7 +33,6 @@ class PostDimensions:
 class ClampDimensions:
     d: RectDimensions = RectDimensions(0.35, 3.154, 0.9)
     offset_between: float = 3.5
-    clearance_z: float = BottomHousingDimensions.d.Z - d.Z
 
 @dataclass
 class UpperHousingDimensions:
@@ -77,6 +76,8 @@ class Choc(Switch):
 
     above = AboveDimensions()
     below = BelowDimensions()
+
+    clamp_clearance_z: float = BottomHousingDimensions.d.Z - ClampDimensions.d.Z
 
     def __init__(self, show_model=False):
         with BuildPart() as self.model:
