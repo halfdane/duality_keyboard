@@ -6,7 +6,7 @@ if __name__ == "__main__":
 from dataclasses import dataclass
 import math
 from build123d import *
-from models.switch import Choc
+from models.choc import Choc
 from models.keys import Keys
 
 choc_x = Vector(Choc.cap.d.X, 0)

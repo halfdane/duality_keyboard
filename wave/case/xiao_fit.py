@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import math
 import copy
 from build123d import *
-from models.switch import Choc
+from models.choc import Choc
 from models.xiao import Xiao
 from models.power_switch import PowerSwitch
 from models.knurl import Knurl
