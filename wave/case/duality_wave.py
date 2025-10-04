@@ -463,6 +463,11 @@ class DualityWaveCase:
                     Rectangle(Xiao.processor.d.X + 0.5, Xiao.processor.d.Y + 0.5)
             extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z + self.dims.clearance) , mode=Mode.SUBTRACT)
             debug_content.append({"xiao support": xiao_support}) if self.debug else None
+            with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_cutout:
+                with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y - Xiao.processor.forward_y)):
+                    Rectangle(Xiao.dims.d.X - 0.5, Xiao.dims.d.Y - Xiao.processor.forward_y*2)
+            extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z/2) , mode=Mode.SUBTRACT)
+            debug_content.append({"xiao xiao_cutout": xiao_cutout}) if self.debug else None
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.dims.below_z)):
