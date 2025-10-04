@@ -6,6 +6,7 @@ if __name__ == "__main__":
 from dataclasses import dataclass
 from build123d import *
 from models.model_types import RectDimensions, RoundDimensions, PosAndDims
+from models.switch import Switch
 
 @dataclass
 class BaseDimensions:
@@ -41,8 +42,8 @@ class StemDimensions:
 
 @dataclass
 class CapDimensions:
-    d: RectDimensions = RectDimensions(18, 17, 2.25)
-    d_without_space: RectDimensions = RectDimensions(17.45, 16.571, d.Z)
+    d: RectDimensions = RectDimensions(18.1, 18.1, 12.3)
+    d_without_space: RectDimensions = RectDimensions(18, 18, d.Z)
 
 @dataclass
 class AboveDimensions:
@@ -61,7 +62,7 @@ class BelowDimensions:
         BottomHousingDimensions.d.Z + max([post.d.Z for post in PostDimensions.posts])
     )
 
-class Choc:
+class Cherry(Switch):
     base = BaseDimensions()
     bottom_housing = BottomHousingDimensions()
     posts = PostDimensions()
@@ -144,5 +145,5 @@ class Choc:
 if __name__ == "__main__":
     from ocp_vscode import show_object, set_defaults, Camera
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
-    switch = Choc(show_model=True)
-    # show_object(switch.model, name="Kailh Choc Switch")
+    switch = Cherry(show_model=True)
+    # show_object(switch.model, name="Cherry Switch")

@@ -6,6 +6,7 @@ if __name__ == "__main__":
 from dataclasses import dataclass
 from build123d import *
 from models.model_types import RectDimensions, RoundDimensions, PosAndDims
+from models.switch import Switch
 
 @dataclass
 class BaseDimensions:
@@ -65,7 +66,7 @@ class BelowDimensions:
         BottomHousingDimensions.d.Z + max([post.d.Z for post in PostDimensions.posts])
     )
 
-class Choc:
+class Choc(Switch):
     base = BaseDimensions()
     bottom_housing = BottomHousingDimensions()
     posts = PostDimensions()
@@ -77,7 +78,7 @@ class Choc:
     above = AboveDimensions()
     below = BelowDimensions()
 
-    def __init__(self, show_model=False, show_step_file=False):
+    def __init__(self, show_model=False):
         with BuildPart() as self.model:
             with BuildPart() as main_housing_base:
                 with Locations((0, 0, +self.base.d.Z / 2)):
@@ -119,11 +120,6 @@ class Choc:
 
         if show_model:
             from ocp_vscode import show_all
-            if show_step_file:
-                step_file = import_step('/home/tvollert/Downloads/MBK_Keycap_-_1u.step')
-                step_file = step_file.translate((0, -0.15, 3.6+self.base.d.Z/2))
-                pass
-                
             show_all()
 
 
@@ -132,5 +128,5 @@ class Choc:
 if __name__ == "__main__":
     from ocp_vscode import show_object, set_defaults, Camera
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
-    switch = Choc(show_model=True, show_step_file=True)
+    switch = Choc(show_model=True)
     # show_object(switch.model, name="Kailh Choc Switch")

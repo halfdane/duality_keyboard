@@ -1,8 +1,10 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 import math
 import copy
 from build123d import *
 from models.choc import Choc
+from models.cherry import Cherry
+from models.switch import Switch
 from models.xiao import Xiao
 from models.power_switch import PowerSwitch
 from models.symbol import Symbol
@@ -16,101 +18,135 @@ from models.model_types import RoundDimensions, PosAndDims, RectDimensions
 from ocp_vscode import *
 
 
-@dataclass(frozen=True)
+@dataclass
 class CaseDimensions:
-    outline: Outline
+    switch: InitVar[Switch]
+    outline: InitVar[Outline]
+    keys: InitVar[Keys]
 
     clearance: float = 0.02
-    
     wall_thickness: float = 1.8
 
-    above_z: float = Choc.above.d.Z
-    add_below_choc_posts: float = 0.7
-    below_z: float = Choc.below.d.Z + add_below_choc_posts
-    bottom_plate_z: float = 3
-    keyplate_z: float = below_z - bottom_plate_z
+    above_z: float = field(init=False)
+    add_below_choc_posts: float = field(init=False)
+    below_z: float = field(init=False)
+    bottom_plate_z: float = field(init=False)
+    keyplate_z: float = field(init=False)
 
     clip_protusion: float = 0.4
-    clip_lower_z: float = -below_z + bottom_plate_z/2
-    clip_upper_z: float = -keyplate_z/2
+    clip_lower_z: float = field(init=False)
+    clip_upper_z: float = field(init=False)
 
-    xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
-    xiao_pos_x: float = 2*wall_thickness + Xiao.dims.d.X/2 + xiao_to_power_switch + PowerSwitch.dims.d.Y/2
-    xiao_pos_y: float = Outline.dims.base.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - wall_thickness - 2*clearance
-    xiao_pos_z: float = -1.45
-    xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
-    xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
+    xiao_position: Vector = field(init=False)
+    xiao_mirror_position: Vector = field(init=False)
 
-    powerswitch_position: Vector = Vector(
-                xiao_position.X - Xiao.dims.d.X/2 - xiao_to_power_switch, 
-                xiao_position.Y - 2, 
-                -(below_z - 0.75*PowerSwitch.lever.d.Z))
-    powerswitch_rotation: Vector = Vector(0, 180, 90)
-     
-    pin_radius: float = Pin.dims.radius + clearance
-    pin_plane: Plane = field(default_factory=lambda: Plane(((Outline.dims.base.X)/2, Outline.dims.base.Y, CaseDimensions.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction))
-    pin_locations: list[Vector] = (Vector(0, 0))
+    powerswitch_position: Vector = field(init=False)
+    powerswitch_rotation: Vector = field(init=False)
 
-    def battery_pd(self) -> PosAndDims:
+    pin_radius: float = field(init=False)
+    pin_plane: Plane = field(init=False)
+    pin_locations: list[Vector] = field(init=False)
+
+    battery_pd: PosAndDims = field(init=False)
+
+    magnet_d: RoundDimensions = field(init=False)
+    magnet_positions: list[Vector] = field(init=False)
+
+    weight_d: Vector = field(init=False)
+    weight_positions: list[Vector] = field(init=False)
+
+    def __post_init__(self, switch: Switch, outline: Outline, keys: Keys):
+        self.add_below_choc_posts: float = 0.7
+        self.bottom_plate_z: float = 3.0
+        self.above_z: float = switch.above.d.Z
+        self.below_z: float = switch.below.d.Z + self.add_below_choc_posts
+        self.keyplate_z: float = self.below_z - self.bottom_plate_z
+
+        self.clip_lower_z: float = -self.below_z + self.bottom_plate_z/2
+        self.clip_upper_z: float = -self.keyplate_z/2
+
+        xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
+        xiao_pos_x: float = 2*self.wall_thickness + Xiao.dims.d.X/2 + xiao_to_power_switch + PowerSwitch.dims.d.Y/2
+        xiao_pos_y: float = outline.dims.base.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - self.wall_thickness - 2*self.clearance
+        xiao_pos_z: float = -1.45
+        self.xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
+        self.xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
+
+        self.powerswitch_rotation: Vector = Vector(0, 180, 90)
+        self.powerswitch_position: Vector = Vector(
+                xiao_pos_x - Xiao.dims.d.X/2 - xiao_to_power_switch, 
+                xiao_pos_y - 2, 
+                -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
+        
+        self.pin_radius: float = Pin.dims.radius + self.clearance
+        self.pin_plane: Plane = Plane(((outline.dims.base.X)/2, outline.dims.base.Y, self.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
+        self.pin_locations: list[Vector] = (Vector(0, 0))
+
         battery_d: RectDimensions = RectDimensions(31, 17 , 5.5)
-        return PosAndDims(
+        self.battery_pd = PosAndDims(
             d=battery_d,
-            p=self.outline.top_left + Vector(
-                (self.wall_thickness + self.clearance + 11),
-                -(self.wall_thickness + self.clearance)) + Vector(
-                battery_d.X/2, - battery_d.Y/2,
-                (self.above_z - battery_d.Z/2 - self.wall_thickness))
-    )
+            p=outline.top_left \
+                + Vector(
+                    (self.wall_thickness + self.clearance + 11), 
+                    -(self.wall_thickness + self.clearance)) \
+                + Vector(
+                    battery_d.X/2, 
+                    - battery_d.Y/2,
+                    (self.above_z - battery_d.Z/2 - self.wall_thickness)))
+        
+        self.magnet_d: RoundDimensions = RoundDimensions(5, 2)
+        self.magnet_positions: list[Vector] = (
+            Vector(outline.dims.base.X - self.wall_thickness - self.clearance - self.magnet_d.radius - 6, outline.dims.base.Y - self.wall_thickness - self.clearance - self.magnet_d.radius - 1, self.above_z - 0.5),
+            keys.pinkie.locs[2] + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 4, self.above_z - 0.5).rotate(Axis.Z, keys.pinkie.rotation),
+            Vector(self.wall_thickness + self.clearance + self.magnet_d.radius, self.wall_thickness + self.magnet_d.radius + 0.2, self.above_z - 0.5),
+            keys.pointer.locs[0] + Vector(-3, -switch.cap.d.Y/2 - self.magnet_d.radius - 2, self.above_z - 0.5),
+            keys.inner.locs[0] + Vector(switch.cap.d.X/2 + self.magnet_d.radius+1, -3.8, self.above_z - 0.5)
+        )
 
-    magnet_d: RoundDimensions = RoundDimensions(5, 2)
-    magnet_positions: list[Vector] = (
-        Vector(Outline.dims.base.X - wall_thickness - clearance - magnet_d.radius - 6, Outline.dims.base.Y - wall_thickness - clearance - magnet_d.radius - 1, above_z - 0.5),
-        Keys.pinkie.locs[2] + Vector(0, Choc.cap.d.Y/2 + magnet_d.radius + 4, above_z - 0.5).rotate(Axis.Z, Keys.pinkie.rotation),
-        Vector(wall_thickness + clearance + magnet_d.radius, wall_thickness + magnet_d.radius + 0.2, above_z - 0.5),
-        Keys.pointer.locs[0] + Vector(-3, -Choc.cap.d.Y/2 - magnet_d.radius - 2, above_z - 0.5),
-        Keys.inner.locs[0] + Vector(Choc.cap.d.X/2 + magnet_d.radius+1, -3.8, above_z - 0.5)
-    )
-
-    weight_d: Vector = Vector(22.9, 12.0, 4.4)
-    weight_positions: list[Vector] = (
-        Vector(Outline.dims.base.X, Outline.dims.base.Y) + Vector(-wall_thickness - clearance - weight_d.X/2, -wall_thickness - clearance - weight_d.Y/2, magnet_positions[0].Z - magnet_d.Z),
-        Keys.pinkie.locs[2] + Vector(0, Choc.cap.d.Y/2 + weight_d.Y/2 + 3, magnet_positions[0].Z - magnet_d.Z).rotate(Axis.Z, Keys.pinkie.rotation)
-    )
+        self.weight_d: Vector = Vector(22.9, 12.0, 4.4)
+        self.weight_positions: list[Vector] = (
+            Vector(outline.dims.base.X, outline.dims.base.Y) + Vector(-self.wall_thickness - self.clearance - self.weight_d.X/2, -self.wall_thickness - self.clearance - self.weight_d.Y/2, self.magnet_positions[0].Z - self.magnet_d.Z),
+            keys.pinkie.locs[2] + Vector(0, switch.cap.d.Y/2 + self.weight_d.Y/2 + 3, self.magnet_positions[0].Z - self.magnet_d.Z).rotate(Axis.Z, keys.pinkie.rotation)
+        )
 
 
 @dataclass
 class BumperHolderDimensions:
-    keys: Keys
-    outline: Outline
+    keys: InitVar[Keys]
+    outline: InitVar[Outline]
 
     radius: float = BumperDimensions.radius+1
     height_z: float = 0.5
     deflect: float = 0.4
 
-    def bumper_locations(self) -> list[Vector]:
-        o_dims = self.outline.dims
+    bumper_locations: list[Vector] = field(init=False)
+
+    def __post_init__(self, keys: Keys, outline: Outline):
+        o_dims = outline.dims
         base_offset = 2.5
         radius = BumperDimensions.radius + base_offset
-        return [
-            self.keys.thumb.locs[1] + Vector(Choc.cap.d.X/2 - radius/2 - 0.5, -Choc.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, Keys.thumb.rotation),
+        self.bumper_locations = [
+            keys.thumb.locs[1] + Vector(Choc.cap.d.X/2 - radius/2 - 0.5, -Choc.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, keys.thumb.rotation),
             Vector(o_dims.base.X, o_dims.base.Y) + Vector(-radius, -radius),
             Vector(0, 0) + Vector(radius, radius),
             Vector(0, o_dims.base.Y) + Vector(radius, -radius),
 
-            (self.keys.middle.locs[0] + self.keys.middle.locs[1]) / 2 + (8, 0),
+            (keys.middle.locs[0] + keys.middle.locs[1]) / 2 + (8, 0),
         ]
 
 class DualityWaveCase:
-    outline = Outline(wall_thickness=CaseDimensions.wall_thickness)
-    keys = Keys()
 
-    dims = CaseDimensions(outline)
-    bumperholder_dims = BumperHolderDimensions(keys, outline)
-    bumper = RubberBumper()
+    def __init__(self, switch, debug=False, both_sides=False):
+        self.switch = switch
+        self.keys = Keys(self.switch)
+        self.outline = Outline(switch=self.switch, keys=self.keys, wall_thickness=CaseDimensions.wall_thickness)
 
-    debug_content: list = []
+        self.dims = CaseDimensions(switch=self.switch, outline=self.outline, keys=self.keys)
+        self.bumperholder_dims = BumperHolderDimensions(self.keys, self.outline)
+        self.bumper = RubberBumper()
 
-    def __init__(self, debug=False, both_sides=False):
+        self.debug_content: list = []
+
         print("Creating case...")
 
         self.debug = debug
@@ -131,8 +167,8 @@ class DualityWaveCase:
         accessories.append({"power_switch": self.powerswitch})
         accessories.append({"pins": self.pins})
 
-        battery = Box(self.dims.battery_pd().d.X, self.dims.battery_pd().d.Y, self.dims.battery_pd().d.Z)
-        battery = battery.translate(self.dims.battery_pd().p)
+        battery = Box(self.dims.battery_pd.d.X, self.dims.battery_pd.d.Y, self.dims.battery_pd.d.Z)
+        battery = battery.translate(self.dims.battery_pd.p)
         accessories.append({"battery": battery})
 
         with BuildPart() as magnets: 
@@ -350,7 +386,7 @@ class DualityWaveCase:
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
             print("  battery recess...")
-            battery_pd = self.dims.battery_pd()
+            battery_pd = self.dims.battery_pd
             with BuildSketch(Plane.XY.offset(battery_pd.p.Z)) as battery_sketch:
                 with Locations((battery_pd.p.X, battery_pd.p.Y)):
                     Rectangle(battery_pd.d.X + 2*self.dims.clearance, battery_pd.d.Y + 2*self.dims.clearance)
@@ -471,7 +507,7 @@ class DualityWaveCase:
 
             print("  bumper cutouts...")
             with BuildSketch(Plane.XY.offset(-self.dims.below_z)):
-                with Locations(self.bumperholder_dims.bumper_locations()):
+                with Locations(self.bumperholder_dims.bumper_locations):
                     Circle(self.bumper.dims.radius)
             extrude(amount=self.bumper.dims.base_z, mode=Mode.SUBTRACT)
 
@@ -531,7 +567,7 @@ class DualityWaveCase:
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.dims.below_z + self.bumper.dims.base_z))
         with BuildPart() as self.bumpers:
-            with Locations(self.bumperholder_dims.bumper_locations()):
+            with Locations(self.bumperholder_dims.bumper_locations):
                 add(self.bumper.model)
         self.bumpers = self.bumpers.part
 
@@ -550,7 +586,7 @@ class DualityWaveCase:
 
 if __name__ == "__main__":
     set_port(3939)
-    case = DualityWaveCase(debug=True, both_sides=False)
+    case = DualityWaveCase(switch=Choc(), debug=True, both_sides=False)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
