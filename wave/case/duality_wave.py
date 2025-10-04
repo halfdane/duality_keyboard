@@ -6,6 +6,7 @@ from models.switch import Choc
 from models.xiao import Xiao
 from models.power_switch import PowerSwitch
 from models.symbol import Symbol
+from models.space_invader import SpaceInvader
 from models.keys import Keys
 from models.outline import Outline
 from models.rubber_bumper import RubberBumper, BumperDimensions
@@ -498,6 +499,15 @@ class DualityWaveCase:
                     Circle(self.dims.pin_radius)
             debug_content.append({"pin_holes": pin_holes}) if self.debug else None
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
+
+            print("  space invader...")
+            with BuildSketch(Plane.XY.offset(-self.dims.below_z)) as invader_sketch:
+                invader_height = 10
+                with Locations(self.outline.cirque_recess_position \
+                               + (self.outline.cirque_recess_radius-2, self.outline.cirque_recess_radius)):
+                    add(SpaceInvader(total_height=invader_height).sketch.rotate(Axis.Z, -40))
+            extrude(amount=1, mode=Mode.SUBTRACT)
+            debug_content.append({"invader_sketch": invader_sketch}) if self.debug else None
 
         return bottom.part
 
