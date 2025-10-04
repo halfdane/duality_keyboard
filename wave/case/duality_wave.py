@@ -370,6 +370,16 @@ class DualityWaveCase:
             extrude(amount=-self.dims.above_z - self.dims.weight_d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"weight_sketch": weight_sketch}) if self.debug else None
 
+            print("  symbol...")
+            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as symbol_sketch:
+                symbol_height = 20
+                with Locations(self.outline.top_left + Vector(0.7*symbol_height, -0.7*symbol_height)):
+                    add(Symbol(total_height=symbol_height).sketch)
+            extrude(amount=-1, mode=Mode.SUBTRACT)
+            debug_content.append({"symbol_sketch": symbol_sketch}) if self.debug else None
+
+
+
         return keywell.part
     
     def split_off_clips_that_should_be_longer(self, edges: ShapeList[Edge] | Edge) -> tuple[ShapeList[Edge], ShapeList[Edge]]:
