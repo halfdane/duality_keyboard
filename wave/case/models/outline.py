@@ -100,7 +100,7 @@ class Outline:
             offset_y = 4
             with Locations(Keys.thumb.locs[0] + Vector(0, offset_y/2).rotate(Axis.Z, Keys.thumb.rotation)):
                 Rectangle(x, y + offset_y, rotation=Keys.thumb.rotation)
-            offset_y = 3
+            offset_y = 2
             with Locations(Keys.thumb.locs[1] + Vector(0, offset_y/2).rotate(Axis.Z, Keys.thumb.rotation)):
                 Rectangle(x, y + offset_y, rotation=Keys.thumb.rotation)
 

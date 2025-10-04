@@ -68,7 +68,7 @@ class CaseDimensions:
         Keys.pinkie.locs[2] + Vector(0, Choc.cap.d.Y/2 + magnet_d.radius + 4, above_z - 0.5).rotate(Axis.Z, Keys.pinkie.rotation),
         Vector(wall_thickness + clearance + magnet_d.radius, wall_thickness + magnet_d.radius + 0.2, above_z - 0.5),
         Keys.pointer.locs[0] + Vector(-3, -Choc.cap.d.Y/2 - magnet_d.radius - 2, above_z - 0.5),
-        Keys.inner.locs[0] + Vector(Choc.cap.d.X/2 + magnet_d.radius+1, -3.3, above_z - 0.5)
+        Keys.inner.locs[0] + Vector(Choc.cap.d.X/2 + magnet_d.radius+1, -3.8, above_z - 0.5)
     )
 
     weight_d: Vector = Vector(22.9, 12.0, 4.4)
