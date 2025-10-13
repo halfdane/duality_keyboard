@@ -79,8 +79,10 @@ class CaseDimensions:
                 -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
         
         self.pin_radius: float = Pin.dims.radius + self.clearance
-        self.pin_plane: Plane = Plane(((outline.dims.base.X)/2, outline.dims.base.Y, self.clip_lower_z), z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
-        self.pin_locations: list[Vector] = (Vector(0, 0))
+        self.pin_plane: Plane = Plane(
+            (outline.dims.base.X/2, outline.dims.base.Y, -self.keyplate_z), 
+            z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
+        self.pin_location: Vector = Vector(0, 0)
 
         battery_d: RectDimensions = RectDimensions(31, 17 , 5.5)
         self.battery_pd = PosAndDims(
@@ -305,6 +307,23 @@ class DualityWaveCase:
             extrude(amount=-PowerSwitch.dims.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 
+            print("  pin extrusion...")
+            with BuildSketch(Plane.XY.offset(self.dims.pin_plane.origin.Z)) as pin_space_sketch:
+                with Locations((self.dims.pin_plane.origin.X, 
+                                self.outline.top_left.Y - 1.5*self.dims.wall_thickness - 0.5)):
+                    Rectangle(self.dims.wall_thickness*2 + 0.5, self.dims.wall_thickness*3 + 0.5)
+            pin_space =extrude(amount=self.dims.keyplate_z, mode=Mode.SUBTRACT)
+            debug_content.append({"pin_space": pin_space}) if self.debug else None
+
+            print("  pin holes...")
+            with BuildSketch(self.dims.pin_plane) as pin_holes:
+                Circle(self.dims.pin_radius)
+            debug_content.append({"pin_holes": pin_holes}) if self.debug else None
+            extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
+
+
+
+
         return keyplate.part
     
     def create_keywell(self):
@@ -377,8 +396,7 @@ class DualityWaveCase:
 
             print("  pin holes...")
             with BuildSketch(self.dims.pin_plane) as pin_holes:
-                with Locations(self.dims.pin_locations):
-                    Circle(self.dims.pin_radius)
+                Circle(self.dims.pin_radius)
             debug_content.append({"pin_holes": pin_holes}) if self.debug else None
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
@@ -506,6 +524,7 @@ class DualityWaveCase:
                     Circle(self.bumper.dims.radius)
             extrude(amount=self.bumper.dims.base_z, mode=Mode.SUBTRACT)
 
+            print("  switch post cutouts")
             with BuildSketch(Plane.XY.offset(-self.switch.below.d.Z)) as choc_posts:
                 for keycol in self.keys.keycols:
                     with Locations(keycol.locs):
@@ -529,10 +548,18 @@ class DualityWaveCase:
             debug_content.append({"powerswitch_lever_cut": powerswitch_lever_cut}) if self.debug else None  
             chamfer(powerswitch_lever_cut.edges().group_by(Axis.Z)[0], length=1.5, length2=0.5)
 
+            print("  pin extrusion...")
+            with BuildSketch(Plane.XY.offset(-self.dims.below_z + self.dims.bottom_plate_z)) as pin_space_sketch:
+                with Locations(((self.outline.top_right.X - self.outline.top_left.X)/2, 
+                                self.outline.top_left.Y - self.dims.wall_thickness*2 - 0.5)):
+                    Rectangle(self.dims.wall_thickness*2, self.dims.wall_thickness*2)
+            pin_space =extrude(amount=self.dims.keyplate_z, taper=2)
+            fillet(pin_space.edges(), radius=0.3 - self.dims.clearance)
+            debug_content.append({"pin_space": pin_space}) if self.debug else None
+
             print("  pin holes...")
             with BuildSketch(self.dims.pin_plane) as pin_holes:
-                with Locations(self.dims.pin_locations):
-                    Circle(self.dims.pin_radius)
+                Circle(self.dims.pin_radius)
             debug_content.append({"pin_holes": pin_holes}) if self.debug else None
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
@@ -544,6 +571,8 @@ class DualityWaveCase:
                     add(SpaceInvader(total_height=invader_height).sketch.rotate(Axis.Z, -40))
             extrude(amount=0.5, mode=Mode.SUBTRACT)
             debug_content.append({"invader_sketch": invader_sketch}) if self.debug else None
+
+
 
         return bottom.part
 
@@ -571,8 +600,7 @@ class DualityWaveCase:
 
         self.pin = Pin()
         with BuildPart(self.dims.pin_plane) as self.pins:
-            with Locations(self.dims.pin_locations):
-                add(self.pin.model)
+            add(self.pin.model)
         self.pins = self.pins.part
 
 
