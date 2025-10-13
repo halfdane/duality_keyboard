@@ -61,10 +61,7 @@ class ThumbDimensions(KeyCol):
         cap = Vector(switch.cap.d.X, switch.cap.d.Y)
         pos = previous + (-6.3, -17.8)
         rot = Vector(cap.X, 0).rotate(Axis.Z, self.rotation)
-        self.locs = (
-            Vector(pos),
-            Vector(pos + rot),
-        )
+        self.locs = (Vector(pos), Vector(pos + rot))
 
 @dataclass
 class Keys:
@@ -107,24 +104,22 @@ if __name__ == "__main__":
 
     def create_sizing(switch: Switch):
         keys = Keys(switch=switch)
-        with BuildPart() as sizing:
+        with BuildSketch() as sizing:
             for keycol in keys.keycols:
-                with BuildSketch():
-                    with Locations(keycol.locs) as l:
-                        Rectangle(switch.below.d.X, switch.below.d.Y, rotation=keycol.rotation)
-                extrude(amount=-5)
                 with Locations(keycol.locs) as l:
-                    Sphere(1)
+                    Rectangle(switch.above.d.X*2, switch.above.d.Y*2, rotation=keycol.rotation)
+                with Locations(keycol.locs) as l:
+                    Circle(1, mode=Mode.SUBTRACT)
             with Locations(keys.thumb.locs[0], keys.thumb.locs[1]) as l:
-                Sphere(radius=1)
+                Circle(radius=1, mode=Mode.SUBTRACT)
             with Locations(keys.thumb.locs[0]) as l:
-                Sphere(radius=1) 
+                Circle(radius=1, mode=Mode.SUBTRACT) 
             with Locations(keys.thumb.locs[1]) as l:
-                Sphere(radius=1) 
-        return sizing.part
+                Circle(radius=1 , mode=Mode.SUBTRACT) 
+        return sizing.sketch
 
     choc_sizing = create_sizing(switch=Choc())
-    cherry_sizing = create_sizing(switch=Cherry())
+    # cherry_sizing = create_sizing(switch=Cherry())
 
 
     show_all()

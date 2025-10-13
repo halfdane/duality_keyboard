@@ -88,49 +88,43 @@ class Outline:
         
     def create_keywell_outline(self):
         with BuildSketch() as keywell_outline:
-            x = self.switch.cap.d.X +1
-            y = self.switch.cap.d.Y + 1
             for keycol in self.keys.finger_cols:
-                with Locations(keycol.locs):
-                    Rectangle(x, y, rotation=keycol.rotation)
+                with BuildSketch():
+                    with Locations(keycol.locs):
+                        Rectangle(self.switch.above.d.X+4, self.switch.above.d.Y+3, rotation=keycol.rotation)
+            most_right = vertices().sort_by(Axis.X)[-1]
+            for keycol in [self.keys.thumb]:
+                with BuildSketch():
+                    for loc in keycol.locs:
+                        # if location is further right than base.X, only draw half the rectangle
+                        if loc.X > most_right.center().X:
+                            with Locations(loc):
+                                with Locations((0,1)):
+                                    Rectangle(self.switch.above.d.X+4, self.switch.above.d.Y+3+2, rotation=keycol.rotation)
+                        else:
+                            with Locations(loc):
+                                with Locations((0, 3)):
+                                    Rectangle(self.switch.above.d.X+4, self.switch.above.d.Y+3+6, rotation=keycol.rotation)
             
+            # remove small areas
+            for wire in wires().filter_by(lambda w: w.area < 20):
+                with BuildLine() as line:
+                    add(wire)
+                make_face()
 
-            offset_y = 4
-            with Locations(self.keys.thumb.locs[0] + Vector(0, offset_y/2).rotate(Axis.Z, self.keys.thumb.rotation)):
-                Rectangle(x, y + offset_y, rotation=self.keys.thumb.rotation)
-            offset_y = 2
-            with Locations(self.keys.thumb.locs[1] + Vector(0, offset_y/2).rotate(Axis.Z, self.keys.thumb.rotation)):
-                Rectangle(x, y + offset_y, rotation=self.keys.thumb.rotation)
-
-            with Locations(self.cirque_recess_position):
-                Circle(self.cirque_recess_radius +self.wall_thickness,  mode=Mode.SUBTRACT)
-
-
-            # manual fillet between pinkie and ring finger
-            pinkie_line = Line(self.keys.pinkie.locs[2] + Vector(x/2, y/2).rotate(Axis.Z, self.keys.pinkie.rotation),
-                                self.keys.pinkie.locs[2] + Vector(x/2, -y/2).rotate(Axis.Z, self.keys.pinkie.rotation), mode=Mode.PRIVATE)
-            ring_line = Line(self.keys.ring.locs[2] + Vector(-x/2, y).rotate(Axis.Z, self.keys.ring.rotation),
-                                self.keys.ring.locs[2] + Vector(-x/2, -y).rotate(Axis.Z, self.keys.ring.rotation), mode=Mode.PRIVATE)
-            pinkie_pos = pinkie_line@0.7
-            perpendicular_line_to_pinkie = Line(pinkie_pos, pinkie_pos + Vector(100,0).rotate(Axis.Z, self.keys.pinkie.rotation), mode=Mode.PRIVATE)
-            cross = perpendicular_line_to_pinkie.intersect(ring_line)
-            final_line = Line(pinkie_pos, cross, mode=Mode.PRIVATE)
-            a = SagittaArc(start_point=final_line@1, end_point=final_line@0, sagitta=final_line.length/2)
-            with BuildLine() as line:
-                add(a)
-                l1 = Line(a@1, a@1 + Vector(0, -20))
-                l2 = Line(l1@1, l1@1 + Vector(10, 0))
-                l3 = Line(l2@1, a@0)
-            make_face()
+            # iterate over pairs of edges and fillet acute angles
+            t = edges()
+            pairs = zip(t, t[1:] + t[:1])
+            for e1, e2 in pairs:
+                angle = e1.tangent_at(0).get_angle(e2.tangent_at(0))
+                if angle < 30 or angle > 150:
+                    v = vertices().filter_by(lambda v: v in e1.vertices() and v in e2.vertices())[0]
+                    fillet(v, radius=0.5)
         return keywell_outline.sketch
 
 # main method
 if __name__ == "__main__":
-    import time
     from ocp_vscode import *
-
-    start_time = time.time()
-
     set_port(3939)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
@@ -151,17 +145,17 @@ if __name__ == "__main__":
     choc_inner_sketch = outline.inner_sketch
     choc_keywell = outline.keywell_sketch
 
-    switch = Cherry()
-    keys = Keys(switch=switch)
-    outline = Outline(switch=switch, keys=keys, wall_thickness=1.8)
-    with BuildSketch() as cherry_key_holes:
-        for keycol in keys.keycols:
-            with BuildSketch():
-                with Locations(keycol.locs):
-                    Rectangle(switch.below.d.X, switch.below.d.Y, rotation=keycol.rotation)
-    cherry_sketch = outline.sketch
-    cherry_inner_sketch = outline.inner_sketch
-    cherry_keywell = outline.keywell_sketch
+    # switch = Cherry()
+    # keys = Keys(switch=switch)
+    # outline = Outline(switch=switch, keys=keys, wall_thickness=1.8)
+    # with BuildSketch() as cherry_key_holes:
+    #     for keycol in keys.keycols:
+    #         with BuildSketch():
+    #             with Locations(keycol.locs):
+    #                 Rectangle(switch.below.d.X, switch.below.d.Y, rotation=keycol.rotation)
+    # cherry_sketch = outline.sketch
+    # cherry_inner_sketch = outline.inner_sketch
+    # cherry_keywell = outline.keywell_sketch
 
     show_all()
 

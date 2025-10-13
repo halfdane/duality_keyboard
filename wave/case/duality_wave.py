@@ -322,8 +322,6 @@ class DualityWaveCase:
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
 
-
-
         return keyplate.part
     
     def create_keywell(self):
