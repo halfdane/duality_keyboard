@@ -65,22 +65,22 @@ class CaseDimensions:
         self.clip_lower_z: float = -self.below_z + self.bottom_plate_z/2
         self.clip_upper_z: float = -self.keyplate_z/2
 
-        xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
-        xiao_pos_x: float = 2*self.wall_thickness + Xiao.dims.d.X/2 + xiao_to_power_switch + PowerSwitch.dims.d.Y/2
-        xiao_pos_y: float = outline.dims.base.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - self.wall_thickness - 2*self.clearance
+        xiao_pos_x: float = outline.top_left.X + Xiao.dims.d.X/2 + 3.5*self.wall_thickness
+        xiao_pos_y: float = outline.top_left.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - self.wall_thickness - 2*self.clearance
         xiao_pos_z: float = -1.45
         self.xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
         self.xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
-        self.powerswitch_rotation: Vector = Vector(0, 180, 90)
+        xiao_to_power_switch: float = PowerSwitch.dims.d.Y/2 + PowerSwitch.dims.pin_length/2
+        self.powerswitch_rotation: Vector = Vector(0, 180, -90)
         self.powerswitch_position: Vector = Vector(
-                xiao_pos_x - Xiao.dims.d.X/2 - xiao_to_power_switch, 
+                xiao_pos_x + Xiao.dims.d.X/2 + xiao_to_power_switch, 
                 xiao_pos_y - 2, 
                 -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
         
         self.pin_radius: float = Pin.dims.radius + self.clearance
         self.pin_plane: Plane = Plane(
-            (outline.dims.base.X/2, outline.dims.base.Y, -self.keyplate_z), 
+            (outline.top_right.X/2, outline.top_right.Y, -self.keyplate_z), 
             z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
         self.pin_location: Vector = Vector(0, 0)
 
@@ -88,7 +88,7 @@ class CaseDimensions:
         self.battery_pd = PosAndDims(
             d=battery_d,
             p=outline.top_left \
-                + ((self.wall_thickness + self.clearance + 11), -(self.wall_thickness + self.clearance)) \
+                + ((self.wall_thickness + self.clearance), -(self.wall_thickness + self.clearance)) \
                 + (battery_d.X/2, - battery_d.Y/2, (self.above_z - battery_d.Z/2 - self.wall_thickness)))
         
         self.magnet_d: RoundDimensions = RoundDimensions(5, 2)
@@ -96,15 +96,14 @@ class CaseDimensions:
         self.magnet_positions: list[Vector] = (
             outline.top_right + (-self.wall_thickness - self.clearance - self.magnet_d.radius - 6, -self.wall_thickness - self.clearance - self.magnet_d.radius - 1, magnet_z),
             keys.pinkie.locs[2] + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 4, magnet_z).rotate(Axis.Z, keys.pinkie.rotation),
-            Vector(self.wall_thickness + self.clearance + self.magnet_d.radius, self.wall_thickness + self.magnet_d.radius + 0.2, magnet_z),
+            keys.middle.locs[2] + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 1.5, magnet_z),
             keys.pointer.locs[0] + (-3, -switch.cap.d.Y/2 - self.magnet_d.radius - 2, magnet_z),
-            keys.inner.locs[0] + (switch.cap.d.X/2 + self.magnet_d.radius+1, -3.8, magnet_z)
+            keys.inner.locs[0] + (switch.cap.d.X/2 + self.magnet_d.radius+1, -6, magnet_z)
         )
 
         self.weight_d: Vector = Vector(22.9, 12.0, 4.4)
         self.weight_positions: list[Vector] = (
             outline.top_right + (-self.wall_thickness - self.clearance - self.weight_d.X/2, -self.wall_thickness - self.clearance - self.weight_d.Y/2, self.magnet_positions[0].Z - self.magnet_d.Z),
-            keys.pinkie.locs[2] + Vector(0, switch.cap.d.Y/2 + self.weight_d.Y/2 + 3, self.magnet_positions[0].Z - self.magnet_d.Z).rotate(Axis.Z, keys.pinkie.rotation)
         )
 
 
@@ -121,14 +120,13 @@ class BumperHolderDimensions:
     bumper_locations: list[Vector] = field(init=False)
 
     def __post_init__(self, keys: Keys, outline: Outline, switch: Switch):
-        o_dims = outline.dims
         base_offset = 2.5
         radius = BumperDimensions.radius + base_offset
         self.bumper_locations = [
             keys.thumb.locs[1] + Vector(switch.cap.d.X/2 - radius/2 - 0.5, -switch.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, keys.thumb.rotation),
-            Vector(o_dims.base.X, o_dims.base.Y) + Vector(-radius, -radius),
-            Vector(0, 0) + Vector(radius, radius),
-            Vector(0, o_dims.base.Y) + Vector(radius, -radius),
+            outline.top_right + Vector(-radius, -radius),
+            outline.bottom_left + Vector(radius, radius),
+            outline.top_left + Vector(radius, -radius),
 
             (keys.middle.locs[0] + keys.middle.locs[1]) / 2 + (8, 0),
         ]
@@ -410,7 +408,7 @@ class DualityWaveCase:
             with BuildSketch(Plane.XY.offset(self.dims.magnet_positions[0].Z)) as magnet_sketch:
                 with Locations(self.dims.magnet_positions):
                     Circle(self.dims.magnet_d.radius + self.dims.clearance)
-            extrude(amount=-self.dims.above_z - self.dims.magnet_d.Z, mode=Mode.SUBTRACT)
+            extrude(amount=-self.dims.above_z - self.dims.magnet_d.Z - 0.5, mode=Mode.SUBTRACT)
             debug_content.append({"magnet_sketch": magnet_sketch}) if self.debug else None
 
             print("  weight recesses...")

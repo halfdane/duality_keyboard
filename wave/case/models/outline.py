@@ -4,9 +4,11 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataclasses import dataclass
+import math
 from build123d import *
 from models.switch import Switch
 from models.keys import Keys
+import copy
 
 @dataclass
 class Dimensions:
@@ -19,19 +21,36 @@ class Outline:
     def __init__(self, switch: Switch, keys: Keys, wall_thickness=1.8):
         self.switch = switch
         self.keys = keys
+        
+        d = self.get_direction2max_and_angle(keys.finger_cols)
+        d["top"] = d["top"][0] + 10, d["top"][1]
 
         self.wall_thickness = wall_thickness
 
         self.cirque_recess_radius = 22
         self.cirque_recess_position = Vector(52, -5)
+        
+        d_x = switch.cap.d.X / 2 + 2*wall_thickness
+        d_y = switch.cap.d.Y / 2 + 2*wall_thickness
 
-        self.bottom_left = Vector(0, 0)
-        self.top_left = Vector(0, self.dims.base.Y)
-        self.top_right = Vector(self.dims.base.X, self.dims.base.Y)
-        self.mid_right = Vector(self.dims.base.X, self.dims.base.Y/2)
+        self.bottom_left = Vector(d["left"][0], d["bottom"][0]) \
+            - Vector(d_x, 0) - Vector(0, d_y)
+        self.top_left = Vector(d["left"][0], d["top"][0]) \
+            - Vector(d_x, 0) + Vector(0, d_y)
+        self.top_right = Vector(d["right"][0], d["top"][0]) \
+            + Vector(d_x, 0) + Vector(0, d_y)
+        self.bottom_right = Vector(d["right"][0], d["bottom"][0]) \
+            + Vector(d_x, 0) - Vector(0, d_y)
+        self.mid_right = (self.top_right + self.bottom_right) / 2
 
-        self.thumb_cluster_horizontal = switch.cap.d.X/2 + wall_thickness + 1
-        self.thumb_cluster_vertical = switch.cap.d.Y/2 + wall_thickness + 1
+        self.thumb_cluster_horizontal = switch.cap.d.X / 2 + wall_thickness + 0.5
+        self.thumb_cluster_vertical = switch.cap.d.Y / 2 + wall_thickness + 0.5
+
+        all_thumbs = [self.keys.thumb]
+        # among the thumbs that are on the right side, find the one that is the topmost
+        rightmost_thumb = max(all_thumbs, key=lambda k: max(loc.X for loc in k.locs))
+        # among the thumbs that are on the left side, find the one
+
 
         self.thumb_bottom_left = self.keys.thumb.locs[0] + Vector(-self.thumb_cluster_horizontal, -self.thumb_cluster_vertical).rotate(Axis.Z, self.keys.thumb.rotation)
         self.thumb_bottom_right = self.keys.thumb.locs[1] + Vector(self.thumb_cluster_horizontal, -self.thumb_cluster_vertical).rotate(Axis.Z, self.keys.thumb.rotation)
@@ -42,6 +61,25 @@ class Outline:
         self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
         self.keywell_sketch = self.create_keywell_outline()
 
+    def get_direction2max_and_angle(self, columns):
+        direction2maxAndAngle: dict[str, tuple[int, int]] = {
+            "bottom": (math.inf, 0),
+            "top": (-math.inf, 0),
+            "left": (math.inf, 0),
+            "right": (-math.inf, 0),
+        }
+        for key_col in columns:
+            for loc in key_col.locs:
+                if loc.X < direction2maxAndAngle["left"][0]:
+                    direction2maxAndAngle["left"] = (loc.X, key_col.rotation)
+                if loc.X > direction2maxAndAngle["right"][0]:
+                    direction2maxAndAngle["right"] = (loc.X, key_col.rotation)
+                if loc.Y < direction2maxAndAngle["bottom"][0]:
+                    direction2maxAndAngle["bottom"] = (loc.Y, key_col.rotation)
+                if loc.Y > direction2maxAndAngle["top"][0]:
+                    direction2maxAndAngle["top"] = (loc.Y, key_col.rotation)
+        return direction2maxAndAngle
+
 
     def create_outline(self, offset_by=0):
         with BuildSketch() as outline:
@@ -50,16 +88,19 @@ class Outline:
                 Line(self.top_left, self.top_right)
                 l2 = Line(self.top_right, self.mid_right)
                 TangentArc([self.mid_right, self.thumb_top_right], tangent=l2 % 1)
-                Line(self.thumb_top_right, self.thumb_bottom_right)
-                Line(self.thumb_bottom_right, self.thumb_bottom_left)
-                Line(self.thumb_bottom_left, self.bottom_left)
+                
+
+
+                # Line(self.thumb_top_right, self.thumb_bottom_right)
+                # Line(self.thumb_bottom_right, self.thumb_bottom_left)
+                # Line(self.thumb_bottom_left, self.bottom_left)
             make_face()
-            with Locations(self.cirque_recess_position):
-                Circle(self.cirque_recess_radius, mode=Mode.SUBTRACT)
-            fillet(vertices(), radius=1)
-            if offset_by != 0:
-                offset(amount=offset_by)
-                fillet(vertices(), radius=1)
+            # with Locations(self.cirque_recess_position):
+            #     Circle(self.cirque_recess_radius, mode=Mode.SUBTRACT)
+            # fillet(vertices(), radius=1)
+            # if offset_by != 0:
+            #     offset(amount=offset_by)
+            #     fillet(vertices(), radius=1)
         return outline.sketch
     
     def create_inner_outline(self, offset_by=-1.8):
@@ -99,8 +140,8 @@ class Outline:
                         # if location is further right than base.X, only draw half the rectangle
                         if loc.X > most_right.center().X:
                             with Locations(loc):
-                                with Locations((0,1)):
-                                    Rectangle(self.switch.above.d.X+4, self.switch.above.d.Y+3+2, rotation=keycol.rotation)
+                                with Locations((0,0)):
+                                    Rectangle(self.switch.above.d.X+4, self.switch.above.d.Y+3, rotation=keycol.rotation)
                         else:
                             with Locations(loc):
                                 with Locations((0, 3)):
