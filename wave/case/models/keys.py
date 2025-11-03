@@ -4,91 +4,59 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dataclasses import dataclass, InitVar, field
+from functools import reduce
 import math
 from build123d import *
 from models.switch import Switch
+from ergogen import Point, get_points
+from itertools import groupby
+from collections import OrderedDict, defaultdict
 
+class ErgoKeys:
+    def __init__(self):
+        self.points = get_points()
+        self.thumb_clusters, self.finger_clusters = self._nest_points(self.points)
+        self.clusters = self.finger_clusters + self.thumb_clusters
 
-@dataclass
-class KeyCol:
-    switch: InitVar[Switch]
-    previous: InitVar[Vector]
-    rotation: float = field(init=False, default=0)
-    locs: list[Vector] = field(init=False, default_factory=list)
+        self.finger_keys = [k for c in self.finger_clusters for r in c for k in r]
+        self.thumb_keys = [k for c in self.thumb_clusters for r in c for k in r]
+        self.keys = self.finger_keys + self.thumb_keys
 
-@dataclass
-class PinkieDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        self.rotation = 8
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous
-        rot = Vector(0, cap.Y).rotate(Axis.Z, self.rotation)
-        self.locs = (Vector(pos), Vector(pos + rot), Vector(pos + 2*rot))
+    def _nest_points(self, points: dict[str, Point]) -> tuple[list[list[list[Point]]], list[list[list[Point]]]]:
+        def nest():
+            return OrderedDict()
+            
+        def reducer(acc, item):
+            key, point = item
+            parts = key.split('_')
+            cluster = parts[0]
+            column = parts[1] if len(parts) > 1 else "0"
+            row = parts[2] if len(parts) > 2 else "0"
+            if cluster not in acc:
+                acc[cluster] = nest()
+            if column not in acc[cluster]:
+                acc[cluster][column] = nest()
+            acc[cluster][column][row] = point
+            return acc
 
-@dataclass
-class RingFingerDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        offset: Vector = Vector(-1.9, -2.8)
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous + (cap.X, cap.Y) + offset
-        self.locs = (Vector(pos), Vector(pos + (0, cap.Y)), Vector(pos + (0, 2*cap.Y)))
+        def dict_to_nested_list(nested):
+            return [
+                [
+                    [col[row] for row in col]
+                    for col in cluster.values()
+                ]
+                for cluster in nested.values()
+            ]
+        
+        thumb_points = OrderedDict((k, v) for k, v in points.items() if k.startswith('thumb'))
+        finger_points = OrderedDict((k, v) for k, v in points.items() if not k.startswith('thumb'))
 
-@dataclass
-class MiddleFingerDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous + (cap.X, cap.Y/2)
-        self.locs = ( Vector(pos), Vector(pos + (0, cap.Y)), Vector(pos + (0, 2*cap.Y)) )
+        thumb_nested = dict_to_nested_list(reduce(reducer, thumb_points.items(), OrderedDict()))
+        finger_nested = dict_to_nested_list(reduce(reducer, finger_points.items(), OrderedDict()))
 
-@dataclass
-class PointerFingerDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous + (cap.X, -cap.Y/4)
-        self.locs = ( Vector(pos), Vector(pos + (0, cap.Y)), Vector(pos + (0, 2*cap.Y)) )
-
-@dataclass
-class InnerFingerDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous + (cap.X, -cap.Y/4)
-        self.locs = ( Vector(pos), Vector(pos + (0, cap.Y)), Vector(pos + (0, 2*cap.Y)) )
-
-@dataclass
-class ThumbDimensions(KeyCol):
-    def __post_init__(self, switch: Switch, previous: Vector):
-        self.rotation = -8
-        cap = Vector(switch.cap.d.X, switch.cap.d.Y)
-        pos = previous + (-6.3, -17.8)
-        rot = Vector(cap.X, 0).rotate(Axis.Z, self.rotation)
-        self.locs = (Vector(pos), Vector(pos + rot))
-
-@dataclass
-class Keys:
-    switch: InitVar[Switch]
-
-    pinkie: KeyCol = field(init=False)
-    ring: KeyCol = field(init=False)
-    middle: KeyCol = field(init=False)
-    pointer: KeyCol = field(init=False)
-    inner: KeyCol = field(init=False)
-    thumb: KeyCol = field(init=False)
-
-    finger_cols: list[KeyCol] = field(init=False)
-    keycols: list[KeyCol] = field(init=False)
-
-    def __post_init__(self, switch: Switch):
-        self.pinkie = PinkieDimensions(switch=switch, previous=Vector(21, 15))
-        self.ring = RingFingerDimensions(switch=switch, previous=self.pinkie.locs[0])
-        self.middle = MiddleFingerDimensions(switch=switch, previous=self.ring.locs[0])
-        self.pointer = PointerFingerDimensions(switch=switch, previous=self.middle.locs[0])
-        self.inner = InnerFingerDimensions(switch=switch, previous=self.pointer.locs[0])
-        self.thumb = ThumbDimensions(switch=switch, previous=self.inner.locs[0])
-
-        self.finger_cols = (self.pinkie, self.ring, self.middle, self.pointer, self.inner)
-        self.keycols: list[KeyCol] = [*self.finger_cols, self.thumb]
-
-
+            
+        
+        return thumb_nested, finger_nested
 
 # main method
 if __name__ == "__main__":
@@ -103,20 +71,14 @@ if __name__ == "__main__":
     from models.cherry import Cherry
 
     def create_sizing(switch: Switch):
-        keys = Keys(switch=switch)
+        keys = ErgoKeys()
         with BuildSketch() as sizing:
-            for keycol in keys.keycols:
-                with Locations(keycol.locs) as l:
-                    Rectangle(switch.above.d.X*2, switch.above.d.Y*2, rotation=keycol.rotation)
-                with Locations(keycol.locs) as l:
+            for key in keys.keys:
+                with Locations(key.p) as l:
+                    Rectangle(switch.below.d.X, switch.below.d.Y, rotation=key.r)
                     Circle(1, mode=Mode.SUBTRACT)
-            with Locations(keys.thumb.locs[0], keys.thumb.locs[1]) as l:
-                Circle(radius=1, mode=Mode.SUBTRACT)
-            with Locations(keys.thumb.locs[0]) as l:
-                Circle(radius=1, mode=Mode.SUBTRACT) 
-            with Locations(keys.thumb.locs[1]) as l:
-                Circle(radius=1 , mode=Mode.SUBTRACT) 
         return sizing.sketch
+
 
     choc_sizing = create_sizing(switch=Choc())
     # cherry_sizing = create_sizing(switch=Cherry())

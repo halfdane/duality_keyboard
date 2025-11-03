@@ -9,7 +9,7 @@ from models.xiao import Xiao
 from models.power_switch import PowerSwitch
 from models.symbol import Symbol
 from models.space_invader import SpaceInvader
-from models.keys import Keys
+from models.keys import ErgoKeys, Point
 from models.outline import Outline
 from models.rubber_bumper import RubberBumper, BumperDimensions
 from models.pin import Pin
@@ -22,7 +22,7 @@ from ocp_vscode import *
 class CaseDimensions:
     switch: InitVar[Switch]
     outline: InitVar[Outline]
-    keys: InitVar[Keys]
+    keys: InitVar[ErgoKeys]
 
     clearance: float = 0.02
     wall_thickness: float = 1.8
@@ -55,7 +55,7 @@ class CaseDimensions:
     weight_d: Vector = field(init=False)
     weight_positions: list[Vector] = field(init=False)
 
-    def __post_init__(self, switch: Switch, outline: Outline, keys: Keys):
+    def __post_init__(self, switch: Switch, outline: Outline, keys: ErgoKeys):
         self.add_below_choc_posts: float = 0.7
         self.bottom_plate_z: float = 3.0
         self.above_z: float = switch.above.d.Z
@@ -75,7 +75,7 @@ class CaseDimensions:
         self.powerswitch_rotation: Vector = Vector(0, 180, -90)
         self.powerswitch_position: Vector = Vector(
                 xiao_pos_x + Xiao.dims.d.X/2 + xiao_to_power_switch, 
-                xiao_pos_y - 2, 
+                xiao_pos_y - 1, 
                 -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
         
         self.pin_radius: float = Pin.dims.radius + self.clearance
@@ -95,10 +95,11 @@ class CaseDimensions:
         magnet_z: float = self.above_z - 0.5
         self.magnet_positions: list[Vector] = (
             outline.top_right + (-self.wall_thickness - self.clearance - self.magnet_d.radius - 6, -self.wall_thickness - self.clearance - self.magnet_d.radius - 1, magnet_z),
-            keys.pinkie.locs[2] + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 4, magnet_z).rotate(Axis.Z, keys.pinkie.rotation),
-            keys.middle.locs[2] + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 1.5, magnet_z),
-            keys.pointer.locs[0] + (-3, -switch.cap.d.Y/2 - self.magnet_d.radius - 2, magnet_z),
-            keys.inner.locs[0] + (switch.cap.d.X/2 + self.magnet_d.radius+1, -6, magnet_z)
+            keys.finger_clusters[0][0][2].p + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 4, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][0][2].r),
+            keys.finger_clusters[0][2][2].p + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 1.5, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][2][2].r),
+            keys.finger_clusters[0][2][0].p + Vector(0, -switch.cap.d.Y/2 - self.magnet_d.radius - 1.5, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][2][0].r),
+            keys.finger_clusters[0][3][0].p + Vector(-3, -switch.cap.d.Y/2 - self.magnet_d.radius - 2, magnet_z),
+
         )
 
         self.weight_d: Vector = Vector(22.9, 12.0, 4.4)
@@ -109,7 +110,7 @@ class CaseDimensions:
 
 @dataclass
 class BumperHolderDimensions:
-    keys: InitVar[Keys]
+    keys: InitVar[ErgoKeys]
     outline: InitVar[Outline]
     switch: InitVar[Switch]
 
@@ -119,23 +120,22 @@ class BumperHolderDimensions:
 
     bumper_locations: list[Vector] = field(init=False)
 
-    def __post_init__(self, keys: Keys, outline: Outline, switch: Switch):
+    def __post_init__(self, keys: ErgoKeys, outline: Outline, switch: Switch):
         base_offset = 2.5
         radius = BumperDimensions.radius + base_offset
         self.bumper_locations = [
-            keys.thumb.locs[1] + Vector(switch.cap.d.X/2 - radius/2 - 0.5, -switch.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, keys.thumb.rotation),
+            keys.thumb_clusters[0][1][0].p + Vector(switch.cap.d.X/2 - radius/2 - 0.5, -switch.cap.d.Y/2+radius/2 + 0.5).rotate(Axis.Z, keys.thumb_clusters[0][1][0].r),
             outline.top_right + Vector(-radius, -radius),
             outline.bottom_left + Vector(radius, radius),
             outline.top_left + Vector(radius, -radius),
-
-            (keys.middle.locs[0] + keys.middle.locs[1]) / 2 + (8, 0),
+            (keys.finger_clusters[0][2][0].p + keys.finger_clusters[0][2][1].p) / 2 + (8, 0),
         ]
 
 class DualityWaveCase:
 
     def __init__(self, switch: Switch, debug=False, both_sides=False):
         self.switch = switch
-        self.keys = Keys(self.switch)
+        self.keys = ErgoKeys()
         self.outline = Outline(switch=self.switch, keys=self.keys, wall_thickness=CaseDimensions.wall_thickness)
 
         self.dims = CaseDimensions(switch=self.switch, outline=self.outline, keys=self.keys)
@@ -188,14 +188,14 @@ class DualityWaveCase:
         self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
-        self.keyplate_left = self.create_keyplate()
-        self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
-        push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
+        # self.keyplate_left = self.create_keyplate()
+        # self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
+        # push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
 
-        self.bottom_left = self.create_bottom()
-        self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
-        self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
-        push_object(self.bottom_left, name="bottom_left") if self.debug else None
+        # self.bottom_left = self.create_bottom()
+        # self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
+        # self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
+        # push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         if both_sides:
             self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
@@ -233,9 +233,9 @@ class DualityWaveCase:
 
             print("  key holes...")
             with BuildSketch() as key_holes:
-                for keycol in self.keys.keycols:
-                    with Locations(keycol.locs):
-                        Rectangle(self.switch.below.d.X, self.switch.below.d.Y, rotation=keycol.rotation)
+                for key in self.keys.keys:
+                    with Locations(key.p):
+                        Rectangle(self.switch.below.d.X, self.switch.below.d.Y, rotation=key.r)
             debug_content.append({"key_holes": key_holes}) if self.debug else None
             extrude(amount=-self.switch.clamp_clearance_z, mode=Mode.SUBTRACT)
 
@@ -254,40 +254,67 @@ class DualityWaveCase:
             print("  connector cut...")
             connector_width: float = 1.5
             with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z )) as connector_sketch:
-                for row in range(3):
-                    with BuildLine() as row_line:
-                        pts = [ keycol.locs[row] + (self.switch.posts.p2.d.X, -self.switch.posts.p2.d.Y) for keycol in self.keys.finger_cols]
-                        Polyline(*pts)
-                        offset(amount=connector_width, side=Side.BOTH)
-                    make_face()
+                for cluster in self.keys.clusters:
+                    for keycol in cluster:
+                        with BuildLine() as col_line:
+                            pts = [ key.p + (self.switch.posts.p2.d.X, -self.switch.posts.p2.d.Y) for key in keycol]
+                            if len(pts) < 2:
+                                continue
+                            Polyline(*pts)
+                            offset(amount=connector_width, side=Side.BOTH)
+                        make_face()
 
-                for col in [self.keys.inner, self.keys.pointer, self.keys.middle, self.keys.ring]:
-                    column_to_topline = Line(col.locs[0], col.locs[2])
-                    offset(column_to_topline, amount=connector_width, side=Side.BOTH)
-                    make_face()
+                    max_rows = max(len(col) for col in cluster)
+                    for row_idx in range(max_rows):
+                        with BuildLine() as row_line:
+                            # For this row, collect the appropriate position from each column
+                            pts = []
+                            for col in cluster:
+                                if len(col) > row_idx:
+                                    pts.append(col[row_idx])
+                                elif len(col) > 0:  # fall back to the "lower" row if not enough points
+                                    pts.append(col[-1])
+                                # else: skip empty column (no point to connect)
+                            pts = [key.p + (self.switch.posts.p2.d.X, -self.switch.posts.p2.d.Y) for key in pts]
+                            if len(pts) < 2:
+                                continue
+                            Polyline(*pts)
+                            offset(amount=connector_width, side=Side.BOTH)
+                        make_face()
+
+                def find_closest_pair(keys_a: list[Point|Vector], keys_b: list[Point|Vector]) -> tuple[Vector, Vector]:
+                    min_distance = math.inf
+                    closest_a = None
+                    closest_b = None
+                    for a in keys_a:
+                        for b in keys_b:
+                            a_pos = a.p if isinstance(a, Point) else a
+                            b_pos = b.p if isinstance(b, Point) else b
+                            dist = (a_pos - b_pos).length
+                            if dist < min_distance:
+                                min_distance = dist
+                                closest_a = a_pos
+                                closest_b = b_pos
+                    return closest_a, closest_b
                 
-                with BuildLine() as pinkie_to_topline:
-                    pts = [ self.keys.pinkie.locs[0], self.keys.pinkie.locs[2] ]
-                    Polyline(*pts)
-                    offset(amount=connector_width, side=Side.BOTH)
-                make_face()
-
-                l = Line(self.keys.thumb.locs[0]+ self.switch.posts.p2.d, self.keys.thumb.locs[1]+ self.switch.posts.p2.d)
-                offset(l, amount=connector_width, side=Side.BOTH)
-                make_face()
-                for t in self.keys.thumb.locs:
-                    l = Line(t, self.keys.inner.locs[0])
-                    offset(l, amount=connector_width, side=Side.BOTH)
+                # find closest points between clusters and connect them
+                for i in range(len(self.keys.clusters)-1):
+                    cluster_a = [key for col in self.keys.clusters[i] for key in col]
+                    cluster_b = [key for col in self.keys.clusters[i+1] for key in col]
+                    closest_pair = find_closest_pair(cluster_a, cluster_b)
+                    l = Line(closest_pair)
+                    offset(objects=l, amount=connector_width, side=Side.BOTH)
                     make_face()
 
             extrude(amount=self.dims.keyplate_z - self.switch.bottom_housing.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
 
-            connect_to_xiao_plane = Plane.XY.rotated((10,0,0))
-            connect_to_xiao_plane.origin = (self.keys.pinkie.locs[2] + (self.dims.xiao_position.X, self.dims.xiao_position.Y))/2
-            connect_to_xiao_plane.origin += Vector(0, 0, self.dims.xiao_position.Z)
+            connect_to_xiao_plane = Plane.XY
+            top_pinkie = self.keys.finger_clusters[0][0][len(self.keys.finger_clusters[0][0])-1].p
+            connect_to_xiao_plane.origin = (top_pinkie + (self.dims.xiao_position.X, self.dims.xiao_position.Y))/2
+            connect_to_xiao_plane.origin += Vector(0, 0, self.dims.xiao_position.Z+0.3)
             with BuildSketch(connect_to_xiao_plane) as connect_to_xiao:
-                v = Vector(0, self.keys.pinkie.locs[2].Y - self.dims.xiao_position.Y)
+                v = Vector(0, top_pinkie.Y - self.dims.xiao_position.Y)
                 l=Line(v/2, -v/2)
                 offset(l, amount=2*connector_width, side=Side.BOTH)
                 make_face()
@@ -328,7 +355,7 @@ class DualityWaveCase:
         self.debug_content.append({"keywell": debug_content}) if self.debug else None
         with BuildPart() as keywell:
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as body_sketch:
-                add(self.outline.create_outline() )
+                add(self.outline.create_outline())
             body = extrude(amount=-self.dims.below_z - self.dims.above_z)
 
             def intersect_faces(faces: ShapeList[Face]) -> ShapeList[Face]:
@@ -340,55 +367,66 @@ class DualityWaveCase:
 
             thumb_x_from_top = self.switch.cap.d.Z + self.switch.stem.d.Z
             taper = 35
-            length_of_tapered_section = thumb_x_from_top / math.cos(math.radians(taper))
-            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as thumb_cut_sketch:
-                with Locations(sum(self.keys.thumb.locs)/len(self.keys.thumb.locs)+Vector(self.switch.cap.d.X/2+length_of_tapered_section/2-1, -self.switch.cap.d.Y/2).rotate(Axis.Z, self.keys.thumb.rotation)):
-                    Rectangle(self.switch.cap.d.X * 3, self.switch.cap.d.Y, rotation=self.keys.thumb.rotation)
-            debug_thumb_content.append({"sketch": thumb_cut_sketch}) if self.debug else None
-            thumb_cut=extrude(amount=-thumb_x_from_top, mode=Mode.SUBTRACT, taper=taper)
-            thumb_cut_faces = keywell.faces().filter_by(intersect_faces(thumb_cut.faces()))
+            with BuildSketch(Plane.XY.offset(self.dims.above_z - thumb_x_from_top)) as thumb_cut_sketch:
+                for thumb_cluster in self.keys.thumb_clusters:
+                    for column_index, column in enumerate(thumb_cluster):
+                        for key_index, key in enumerate(column):
+                            x = self.switch.above.d.X * 1.5
+                            y = self.switch.above.d.Y * 0.75
+                            loc = Location(key.p + (0, -y), key.r)
+                            if key_index == 0 and column_index == 0:
+                                # this is the innermost key - start the cut further to the right
+                                loc.position += Vector(self.switch.above.d.X/3, 0, 0).rotate(Axis.Z, key.r)
+                            
+                            if key_index == 0:
+                                # this is the first key in the column - make the cut taller
+                                loc.position += Vector(0, -5, 0).rotate(Axis.Z, key.r)
+                                y += 10
+                            with Locations(loc):
+                                Rectangle(x, y)
 
-            debug_thumb_content.append({"faces": thumb_cut_faces}) if self.debug else None
-            upper_edges = thumb_cut_faces.edges().group_by(Axis.Z)[-1]
-            lower_edges = thumb_cut_faces.edges().group_by(Axis.Z)[0]
-            debug_thumb_content.append({"lower_edges": lower_edges}) if self.debug else None
-            back_and_top_edges = lower_edges.sort_by(Axis.Y, reverse=True)[0:3]
-            debug_thumb_content.append({"back_and_top_edges": back_and_top_edges}) if self.debug else None
-            thumb_to_fillet = ShapeList(upper_edges + back_and_top_edges)
-            debug_thumb_content.append({"to_fillet": thumb_to_fillet}) if self.debug else None
-            fillet(thumb_to_fillet, radius=length_of_tapered_section*0.8)
+            debug_thumb_content.append({"sketch": thumb_cut_sketch}) if self.debug else None
+            thumb_cut=extrude(amount=thumb_x_from_top, mode=Mode.SUBTRACT, taper=-taper)
 
             # every face thats not top or bottom
             outside = [f for f in body.faces() if f not in body.faces().filter_by(Axis.Z)]
             outside_faces = keywell.faces().filter_by(intersect_faces(outside))
             debug_content.append({"outside_faces": outside_faces}) if self.debug else None
             fillet(outside_faces.edges(), radius=1)
-            
-            print("  keywell cut...")
-            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
-                add(self.outline.create_keywell_outline() )
-            extrude(amount=-self.dims.below_z - self.dims.above_z, mode=Mode.SUBTRACT)
 
+            
             keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
             add(keywell_wall)
             keywell_cut = extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
 
-            bottom_inner_edges = keywell.faces()\
+            inner_faces = keywell.faces()\
                 .filter_by(intersect_faces(keywell_cut.faces())) \
+                .group_by(Axis.Z)[0]
+            debug_content.append({"inner_faces": inner_faces}) if self.debug else None
+            bottom_inner_edges = inner_faces \
                 .edges().group_by(Axis.Z)[0]
             debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
-            chamfer(bottom_inner_edges, length=0.1)
+
+            chamfer(set(bottom_inner_edges), length=0.1)
+            
+            print("  keywell cut...")
+            with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
+                add(self.outline.create_keywell_outline() )
+            extrude(to_extrude=key_cut_sketch.sketch, amount=-self.dims.below_z - self.dims.above_z, mode=Mode.SUBTRACT)
+
+
 
             edges_to_add_clips = self.filter_clip_edges(keywell_wall.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
 
             print("  clips...")
-            c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z, extralong=True)
-            debug_content.append({"bottom long clips": c}) if self.debug else None
-            c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z)
-            debug_content.append({"bottom short clips": c}) if self.debug else None
+            # c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z, extralong=True)
+            # debug_content.append({"bottom long clips": c}) if self.debug else None
+            # c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z)
+            # debug_content.append({"bottom short clips": c}) if self.debug else None
             c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=False, z_position=self.dims.clip_upper_z)
             debug_content.append({"keyplate clips": c}) if self.debug else None
+            return keywell.part
 
             print("  pin holes...")
             with BuildSketch(self.dims.pin_plane) as pin_holes:
@@ -476,7 +514,7 @@ class DualityWaveCase:
             dir = 1 if clips_on_outside else -1
             mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
             taper = 5 if extralong else 0
-            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode, taper=-dir*taper)
+            extrude(to_extrude=clip, amount=-dir*total_protrusion, mode=mode, taper=-dir*taper)
             if clips_on_outside:
                 fillet(clip.edges(), radius=self.dims.clip_protusion - 0.2)
             clips.append(clip)
@@ -510,7 +548,7 @@ class DualityWaveCase:
             debug_content.append({"xiao support": xiao_support}) if self.debug else None
             with BuildSketch(Plane.XY.offset(self.dims.xiao_position.Z)) as xiao_cutout:
                 with Locations((self.dims.xiao_position.X, self.dims.xiao_position.Y - Xiao.processor.forward_y)):
-                    Rectangle(Xiao.dims.d.X - 0.5, Xiao.dims.d.Y - Xiao.processor.forward_y*2)
+                    Rectangle(Xiao.dims.d.X - 0.5, Xiao.dims.d.Y - Xiao.processor.forward_y*2 +4)
             extrude(amount=-(Xiao.dims.d.Z + Xiao.processor.d.Z/2) , mode=Mode.SUBTRACT)
             debug_content.append({"xiao xiao_cutout": xiao_cutout}) if self.debug else None
 
@@ -522,13 +560,13 @@ class DualityWaveCase:
 
             print("  switch post cutouts")
             with BuildSketch(Plane.XY.offset(-self.switch.below.d.Z)) as choc_posts:
-                for keycol in self.keys.keycols:
-                    with Locations(keycol.locs):
+                for key in self.keys.keys:
+                    with Locations(key.p):
                         for post in self.switch.posts.posts:
                             with BuildSketch(mode=Mode.PRIVATE) as choc_post_sketch:
                                 with Locations(post.p):
                                     Circle(post.d.radius + 0.25)
-                            add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, keycol.rotation))
+                            add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, key.r))
             extrude(amount=5, mode=Mode.SUBTRACT)
             debug_content.append({"chocs posts": choc_posts}) if self.debug else None
 
@@ -577,9 +615,9 @@ class DualityWaveCase:
             return
         
         with BuildPart() as self.switches:
-            for keycol in self.keys.keycols:
-                with Locations(keycol.locs):
-                    add(self.switch.model.part.rotate(Axis.Z, keycol.rotation))
+            for key in self.keys.keys:
+                with Locations(key.p):
+                    add(self.switch.model.part.rotate(Axis.Z, key.r))
         self.switches = self.switches.part
         
         self.bumper.model = self.bumper.model.rotate(Axis.X, 180).translate((0,0,-self.dims.below_z + self.bumper.dims.base_z))

@@ -1,3 +1,4 @@
+from itertools import groupby
 import json
 from ocp_vscode import *
 
@@ -425,6 +426,17 @@ def parse_points(config: Dict, units: Dict[str, float]) -> Dict[str, Point]:
 
     return filtered
 
+def get_points():
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.ergogen.yml')
+    config = load_config(config_path)
+    config = unflatten_dot_notation(config)
+    config = handle_inheritance(config)
+    config = parameterize(config)
+
+    units = parse_units(config)
+    points = parse_points(config.get('points', {}), units)
+
+    return points
 
 def main(config_path: str):
     global config
@@ -435,7 +447,7 @@ def main(config_path: str):
 
     units = parse_units(config)
     points = parse_points(config.get('points', {}), units)
-    
+
     with BuildSketch() as sketch:
         for point in points.values():
             with Locations(point.p):
