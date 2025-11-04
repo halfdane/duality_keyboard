@@ -17,7 +17,7 @@ class Outline:
         self.wall_thickness = wall_thickness
 
         self.cirque_recess_radius = 22
-        self.cirque_recess_position = Vector(30.5, -22)
+        self.cirque_recess_position = Vector(30, -24)
         
         self.d_x = switch.cap.d.X / 2 + 2*wall_thickness
         self.d_y = switch.cap.d.Y / 2 + 2*wall_thickness
@@ -28,7 +28,7 @@ class Outline:
         self.left = finger_outer_points.sort_by(Axis.X)[0].X - self.wall_thickness
         self.right = finger_outer_points.sort_by(Axis.X)[-1].X + self.wall_thickness
         self.bottom = finger_outer_points.sort_by(Axis.Y)[0].Y - self.wall_thickness
-        self.top = finger_outer_points.sort_by(Axis.Y)[-1].Y + self.wall_thickness
+        self.top = finger_outer_points.sort_by(Axis.Y)[-1].Y + self.wall_thickness + 10
 
         self.bottom_left = Vector(self.left, self.bottom)
         self.top_left = Vector(self.left, self.top) 
@@ -66,7 +66,7 @@ class Outline:
         bottom_left_thumb_key = self.keys.thumb_clusters[0][0][0]
         bottom_right_thumb_key = self.keys.thumb_clusters[0][len(self.keys.thumb_clusters[0])-1][0]
 
-        self.thumb_bottom_left = bottom_left_thumb_key.p + Vector(-self.d_x+self.wall_thickness, -self.d_y).rotate(Axis.Z, bottom_left_thumb_key.r)
+        self.thumb_bottom_left = bottom_left_thumb_key.p + Vector(-self.d_x+self.wall_thickness, -self.d_y+1).rotate(Axis.Z, bottom_left_thumb_key.r)
         self.thumb_bottom_right = bottom_right_thumb_key.p + Vector(self.d_x, -self.d_y).rotate(Axis.Z, bottom_right_thumb_key.r)
 
         def is_crossing_keywell(t: TangentArc):
@@ -176,7 +176,11 @@ class Outline:
                 if angle < 30 or angle > 150:
                     v = vertices().filter_by(lambda v: v in e1.vertices() and v in e2.vertices())
                     if v:
-                        fillet(v, radius=0.7)
+                        try:
+                            fillet(v[0], radius=0.7)
+                        except Exception as e:
+                            pass
+                        # fillet(v, radius=0.7)
 
         return self.reorient_edges(keywell_outline.sketch), self.reorient_edges(fingers_outline.sketch)
 
@@ -203,11 +207,11 @@ if __name__ == "__main__":
     switch = Choc()
     keys = ErgoKeys()
     outline = Outline(switch=switch, keys=keys, wall_thickness=1.8)
-    # with BuildSketch() as choc_key_holes:
-    #     for key in keys.keys:
-    #         with BuildSketch():
-    #             with Locations(key.p):
-    #                 Rectangle(switch.below.d.X, switch.below.d.Y, rotation=key.r)
+    with BuildSketch() as choc_key_holes:
+        for key in keys.keys:
+            with BuildSketch():
+                with Locations(key.p):
+                    Rectangle(switch.below.d.X, switch.below.d.Y, rotation=key.r)
     choc_sketch = outline.sketch
     choc_sketch_arrows = add_arrows(choc_sketch.edges())
     choc_inner_sketch = outline.inner_sketch

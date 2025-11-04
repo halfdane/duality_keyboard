@@ -79,8 +79,9 @@ class CaseDimensions:
                 -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
         
         self.pin_radius: float = Pin.dims.radius + self.clearance
+        self.pin_x: float = outline.top_right.X/2
         self.pin_plane: Plane = Plane(
-            (outline.top_right.X/2, outline.top_right.Y, -self.keyplate_z), 
+            (self.pin_x, outline.top_right.Y, -self.keyplate_z), 
             z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
         self.pin_location: Vector = Vector(0, 0)
 
@@ -188,14 +189,14 @@ class DualityWaveCase:
         self.keywell_left = self.xiao.add_usb_cutouts(self.keywell_left)
         push_object(self.keywell_left, name="keywell_left") if self.debug else None
 
-        # self.keyplate_left = self.create_keyplate()
-        # self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
-        # push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
+        self.keyplate_left = self.create_keyplate()
+        self.keyplate_left = self.xiao.add_large_usb_cutouts(self.keyplate_left)
+        push_object(self.keyplate_left, name="keyplate_left") if self.debug else None
 
-        # self.bottom_left = self.create_bottom()
-        # self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
-        # self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
-        # push_object(self.bottom_left, name="bottom_left") if self.debug else None
+        self.bottom_left = self.create_bottom()
+        self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
+        self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
+        push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         if both_sides:
             self.keywell_right = mirror(self.keywell_left, about=Plane.YZ)
@@ -226,6 +227,8 @@ class DualityWaveCase:
             debug_content.append({"base": base}) if self.debug else None
 
             chamfer(objects=faces().filter_by(Axis.Z).edges(), length=0.1)
+
+            debug_content.append({"base edges": base.edges()}) if self.debug else None
 
             edges_to_add_clips = self.filter_clip_edges(base.edges())
             c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=True, z_position=-self.dims.keyplate_z/2)
@@ -499,16 +502,16 @@ class DualityWaveCase:
             if clips_on_outside: 
                 total_height -= self.dims.clearance * (8 if extralong else 2)
                 clip_length -= 1
-                plane = plane.offset(-total_protrusion)
+                plane = plane.offset(total_protrusion)
 
             with BuildSketch(plane) as clip:
                 Rectangle(clip_length, total_height)
             clip = clip.sketch
 
-            dir = 1 if clips_on_outside else -1
+            dir = -1 if clips_on_outside else 1
             mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
             taper = 5 if extralong else 0
-            extrude(to_extrude=clip, amount=-dir*total_protrusion, mode=mode, taper=-dir*taper)
+            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode, taper=dir*taper)
             if clips_on_outside:
                 fillet(clip.edges(), radius=self.dims.clip_protusion - 0.2)
             clips.append(clip)
@@ -578,7 +581,7 @@ class DualityWaveCase:
 
             print("  pin extrusion...")
             with BuildSketch(Plane.XY.offset(-self.dims.below_z + self.dims.bottom_plate_z)) as pin_space_sketch:
-                with Locations(((self.outline.top_right.X - self.outline.top_left.X)/2, 
+                with Locations((self.dims.pin_x, 
                                 self.outline.top_left.Y - self.dims.wall_thickness*2 - 0.5)):
                     Rectangle(self.dims.wall_thickness*2, self.dims.wall_thickness*2)
             pin_space =extrude(amount=self.dims.keyplate_z, taper=2)
@@ -599,8 +602,6 @@ class DualityWaveCase:
                     add(SpaceInvader(total_height=invader_height).sketch.rotate(Axis.Z, -40))
             extrude(amount=0.5, mode=Mode.SUBTRACT)
             debug_content.append({"invader_sketch": invader_sketch}) if self.debug else None
-
-
 
         return bottom.part
 

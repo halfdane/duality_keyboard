@@ -74,8 +74,7 @@ points:
         spread: 1kx
 
       columns:
-        outerpinkie.key.splay: pinky_rotation
-        pinky:
+        pinky.key.splay: pinky_rotation
         ring.key.splay: -pinky_rotation
         ring.key.stagger: middle_stagger
         middle.key.stagger: 0.5ky
@@ -88,14 +87,16 @@ points:
     thumb:
       anchor:
         ref: matrix_inner_bottom
-        shift: [-6.5, -U]
+        shift: [-6.5, -18]
         rotate: thumb_rotation
       columns:
+
         middle:
+          key.name: thumb_middle
           key.origin: [-0.5U, -0.3U]
         reachy:
+          key.name: thumb_reachy
           key.origin: [-0.5U, -0.3U]
-
 
 
 outlines:
