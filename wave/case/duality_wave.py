@@ -360,6 +360,21 @@ class DualityWaveCase:
 
             def intersect_faces(faces: ShapeList[Face]) -> ShapeList[Face]:
                 return lambda aFace: len([aFace for f in faces if f.intersect(aFace) is not None]) > 0
+        
+            print("  keywell cut...")
+            keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
+            add(keywell_wall)
+            keywell_cut = extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
+
+            inner_faces = keywell.faces()\
+                .filter_by(intersect_faces(keywell_cut.faces())) \
+                .group_by(Axis.Z)[0]
+            debug_content.append({"inner_faces": inner_faces}) if self.debug else None
+            bottom_inner_edges = inner_faces \
+                .edges().group_by(Axis.Z)[0]
+            debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
+
+            chamfer(set(bottom_inner_edges), length=0.1)
 
             print("  skulpting thumb cut...")
             debug_thumb_content = []
@@ -393,40 +408,20 @@ class DualityWaveCase:
             outside_faces = keywell.faces().filter_by(intersect_faces(outside))
             debug_content.append({"outside_faces": outside_faces}) if self.debug else None
             fillet(outside_faces.edges(), radius=1)
-
             
-            keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
-            add(keywell_wall)
-            keywell_cut = extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
-
-            inner_faces = keywell.faces()\
-                .filter_by(intersect_faces(keywell_cut.faces())) \
-                .group_by(Axis.Z)[0]
-            debug_content.append({"inner_faces": inner_faces}) if self.debug else None
-            bottom_inner_edges = inner_faces \
-                .edges().group_by(Axis.Z)[0]
-            debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
-
-            chamfer(set(bottom_inner_edges), length=0.1)
-            
-            print("  keywell cut...")
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
-                add(self.outline.create_keywell_outline() )
+                add(self.outline.create_keywell_outline())
             extrude(to_extrude=key_cut_sketch.sketch, amount=-self.dims.below_z - self.dims.above_z, mode=Mode.SUBTRACT)
 
-
-
+            print("  clips...")
             edges_to_add_clips = self.filter_clip_edges(keywell_wall.edges())
             long_clips, short_clips = self.split_off_clips_that_should_be_longer(edges_to_add_clips)
-
-            print("  clips...")
-            # c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z, extralong=True)
-            # debug_content.append({"bottom long clips": c}) if self.debug else None
-            # c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z)
-            # debug_content.append({"bottom short clips": c}) if self.debug else None
+            c = self.add_bottom_clips(long_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z, extralong=True)
+            debug_content.append({"bottom long clips": c}) if self.debug else None
+            c = self.add_bottom_clips(short_clips, clips_on_outside=False, z_position=self.dims.clip_lower_z)
+            debug_content.append({"bottom short clips": c}) if self.debug else None
             c = self.add_bottom_clips(edges_to_add_clips, clips_on_outside=False, z_position=self.dims.clip_upper_z)
             debug_content.append({"keyplate clips": c}) if self.debug else None
-            return keywell.part
 
             print("  pin holes...")
             with BuildSketch(self.dims.pin_plane) as pin_holes:
@@ -481,7 +476,6 @@ class DualityWaveCase:
         if isinstance(edges, Edge):
             edges = ShapeList([edges])
         filtered_edges = edges\
-            .sort_by(Axis.Y, reverse=True)\
             .filter_by(GeomType.LINE)\
             .filter_by(lambda e: e.length > 5)
         return filtered_edges

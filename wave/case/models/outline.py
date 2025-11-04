@@ -22,7 +22,7 @@ class Outline:
         self.d_x = switch.cap.d.X / 2 + 2*wall_thickness
         self.d_y = switch.cap.d.Y / 2 + 2*wall_thickness
 
-        self.keywell_sketch, fingers_sketch, thumbs_sketch = self.create_keywell_outline()
+        self.keywell_sketch, fingers_sketch = self.create_keywell_outline()
         # find left, right, top, bottom points
         finger_outer_points = ShapeList({e.start_point() for e in fingers_sketch.edges()} | {e.end_point() for e in fingers_sketch.edges()})
         self.left = finger_outer_points.sort_by(Axis.X)[0].X - self.wall_thickness
@@ -39,14 +39,35 @@ class Outline:
         self.sketch = self.create_outline()
         self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
 
+    def reorient_edges(self, sketch):
+        """Create new sketch with consistently oriented edges."""
+        edges = list(sketch.wires()[0].edges())
+        ordered, remaining = [edges[0]], edges[1:]
+        
+        while remaining:
+            end = ordered[-1].end_point()
+            i = next(i for i, e in enumerate(remaining) 
+                    if e.start_point() == end or e.end_point() == end)
+            edge = remaining.pop(i)
+            ordered.append(edge if edge.start_point() == end else edge.reversed())
+
+        face = Face(Wire(ordered))
+        
+        # Counter-clockwise creates upward normal (+Z), clockwise creates downward normal (-Z)
+        if face.normal_at().Z > 0:  # Clockwise - need to reverse
+            ordered = [e.reversed() for e in reversed(ordered)]
+        
+        with BuildSketch(Plane.XY) as sk:
+            make_face(Wire(ordered))
+        return sk.sketch
+
 
     def create_outline(self):
         bottom_left_thumb_key = self.keys.thumb_clusters[0][0][0]
         bottom_right_thumb_key = self.keys.thumb_clusters[0][len(self.keys.thumb_clusters[0])-1][0]
 
-        self.thumb_bottom_left = bottom_left_thumb_key.p + Vector(-self.d_x+1, -self.d_y).rotate(Axis.Z, bottom_left_thumb_key.r)
+        self.thumb_bottom_left = bottom_left_thumb_key.p + Vector(-self.d_x+self.wall_thickness, -self.d_y).rotate(Axis.Z, bottom_left_thumb_key.r)
         self.thumb_bottom_right = bottom_right_thumb_key.p + Vector(self.d_x, -self.d_y).rotate(Axis.Z, bottom_right_thumb_key.r)
-        self.thumb_top_left = bottom_left_thumb_key.p + Vector(-self.d_x, self.d_y + self.wall_thickness).rotate(Axis.Z, bottom_left_thumb_key.r)
 
         def is_crossing_keywell(t: TangentArc):
             for edge in self.keywell_sketch.edges():
@@ -104,14 +125,8 @@ class Outline:
                             add(c, mode=Mode.SUBTRACT)
                             self.cirque_recess_position = loc
                             found_position = True
-
-            for vertex in vertices():
-                try:
-                    fillet(vertex, radius=1)
-                except Exception as e:
-                    #ignore fillet errors
-                    pass
-        return outline.sketch
+            fillet(vertices(), radius=1)
+        return self.reorient_edges(outline.sketch)
     
     def create_inner_outline(self, offset_by=-1.8):
         with BuildSketch() as inner_outline:
@@ -128,9 +143,9 @@ class Outline:
                 rect_y = 15
                 with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - rect_y/3)):
                     RectangleRounded(25, rect_y, radius=rect_y/2 - 0.01, rotation=180)
-        
-        return inner_outline.sketch
-        
+
+        return self.reorient_edges(inner_outline.sketch)
+
     def create_keywell_outline(self):
         with BuildSketch() as fingers_outline:
             for key in self.keys.finger_keys:
@@ -163,7 +178,16 @@ class Outline:
                     if v:
                         fillet(v, radius=0.7)
 
-        return keywell_outline.sketch, fingers_outline.sketch, thumbs_outline.sketch
+        return self.reorient_edges(keywell_outline.sketch), self.reorient_edges(fingers_outline.sketch)
+
+def add_arrows(edges):
+    with BuildSketch() as arrows:
+        for edge in edges:
+            with Locations(edge.center()):
+                # get rotation angle in degrees
+                angle = math.degrees(math.atan2(edge.end_point().Y - edge.start_point().Y, edge.end_point().X - edge.start_point().X))
+                ArrowHead(size=5, rotation=angle)
+    return arrows.sketch
 
 # main method
 if __name__ == "__main__":
@@ -185,8 +209,11 @@ if __name__ == "__main__":
     #             with Locations(key.p):
     #                 Rectangle(switch.below.d.X, switch.below.d.Y, rotation=key.r)
     choc_sketch = outline.sketch
+    choc_sketch_arrows = add_arrows(choc_sketch.edges())
     choc_inner_sketch = outline.inner_sketch
+    choc_inner_sketch_arrows = add_arrows(choc_inner_sketch.edges())
     choc_keywell = outline.keywell_sketch
+    choc_keywell_arrows = add_arrows(choc_keywell.edges())
 
     # # switch = Cherry()
     # # keys = Keys(switch=switch)
