@@ -1,0 +1,34 @@
+units:
+  # MY KEYCAPS: 17.5mmx16.5mm
+  # cx and cy:  18.0mmx17.0mm for kailh choc
+  kx: cx
+  ky: cy
+
+points:
+  key.width: 13.9
+  key.height: 13.9
+  zones:      
+    matrix:
+      key:
+        padding: 1ky
+        spread: 1kx
+
+      columns:
+        middle.key.stagger: 0.5ky
+        index.key.stagger: 0.25ky
+        inner.key.stagger: -0.25ky
+      rows:
+        bottom:
+    thumb:
+      anchor:
+        ref: matrix_inner_bottom
+        shift: [-6.5, -18]
+        rotate: -8
+      columns:
+        middle:
+          key.origin: [-0.5U, -0.3U]
+        reachy:
+          key.origin: [-0.5U, -0.3U]
+
+      
+      

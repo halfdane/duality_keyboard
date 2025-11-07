@@ -13,8 +13,8 @@ from itertools import groupby
 from collections import OrderedDict, defaultdict
 
 class ErgoKeys:
-    def __init__(self):
-        self.points = get_points()
+    def __init__(self, points: dict[str, Point]):
+        self.points = points
         self.thumb_clusters, self.finger_clusters = self._nest_points(self.points)
         self.clusters = self.finger_clusters + self.thumb_clusters
 
@@ -70,10 +70,13 @@ if __name__ == "__main__":
     from models.choc import Choc
     from models.cherry import Cherry
 
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ergogen', 'snap_fit.yml')
+    points = get_points(file_path=config_path)
+
     def create_sizing(switch: Switch):
-        keys = ErgoKeys()
+        keys = ErgoKeys(points=points)
         with BuildSketch() as sizing:
-            for key in keys.keys:
+            for key in keys.finger_keys:
                 with Locations(key.p) as l:
                     Rectangle(switch.below.d.X, switch.below.d.Y, rotation=key.r)
                     Circle(1, mode=Mode.SUBTRACT)

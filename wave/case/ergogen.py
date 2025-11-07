@@ -426,8 +426,8 @@ def parse_points(config: Dict, units: Dict[str, float]) -> Dict[str, Point]:
 
     return filtered
 
-def get_points():
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.ergogen.yml')
+def get_points(file_path: str = None) -> Dict[str, Point]:
+    config_path = file_path
     config = load_config(config_path)
     config = unflatten_dot_notation(config)
     config = handle_inheritance(config)
@@ -459,9 +459,8 @@ def main(config_path: str):
 if __name__ == "__main__":
     import sys, os
 
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test.ergogen.yml')
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ergogen', 'wave.yml')
     main(config_path)
-
     
     set_port(3939)
     show_clear()

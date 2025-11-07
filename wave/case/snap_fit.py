@@ -98,20 +98,10 @@ class CaseDimensions:
                 + (battery_d.X/2, - battery_d.Y/2, (self.above_z - battery_d.Z/2 - self.wall_thickness)))
         
         self.magnet_d: RoundDimensions = RoundDimensions(5, 2)
-        magnet_z: float = self.above_z - 0.5
-        self.magnet_positions: list[Vector] = (
-            outline.top_right + (-self.wall_thickness - self.clearance - self.magnet_d.radius - 6, -self.wall_thickness - self.clearance - self.magnet_d.radius - 1, magnet_z),
-            keys.finger_clusters[0][0][2].p + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 4, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][0][2].r),
-            keys.finger_clusters[0][2][2].p + Vector(0, switch.cap.d.Y/2 + self.magnet_d.radius + 1.5, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][2][2].r),
-            keys.finger_clusters[0][2][0].p + Vector(0, -switch.cap.d.Y/2 - self.magnet_d.radius - 1.5, magnet_z).rotate(Axis.Z, keys.finger_clusters[0][2][0].r),
-            keys.finger_clusters[0][3][0].p + Vector(-3, -switch.cap.d.Y/2 - self.magnet_d.radius - 2, magnet_z),
+        self.magnet_positions: list[Vector] = ()
 
-        )
-
-        self.weight_d: Vector = Vector(22.9, 12.0, 4.4)
-        self.weight_positions: list[Vector] = (
-            outline.top_right + (-self.wall_thickness - self.clearance - self.weight_d.X/2, -self.wall_thickness - self.clearance - self.weight_d.Y/2, self.magnet_positions[0].Z - self.magnet_d.Z),
-        )
+        self.weight_d: Vector = Vector()
+        self.weight_positions: list[Vector] = ()
 
         bumpers_base_offset = 2.5
         bumpers_radius = BumperDimensions.radius + bumpers_base_offset
@@ -120,24 +110,20 @@ class CaseDimensions:
             outline.top_right + Vector(-bumpers_radius, -bumpers_radius),
             outline.bottom_left + Vector(bumpers_radius, bumpers_radius),
             outline.top_left + Vector(bumpers_radius, -bumpers_radius),
-            (keys.finger_clusters[0][2][0].p + keys.finger_clusters[0][2][1].p) / 2 + (8, 0),
         ]
 
 
 if __name__ == "__main__":
     set_port(3939)
     switch = Choc()
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ergogen', 'wave.yml')
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ergogen', 'snap_fit.yml')
+
     points = get_points(file_path=config_path)
     keys = ErgoKeys(points=points)
-    outline = Outline(switch=switch, keys=keys, wall_thickness=CaseDimensions.wall_thickness)
+    outline = Outline(switch=switch, keys=keys, wall_thickness=CaseDimensions.wall_thickness, additional_top_space=20)
     dims = CaseDimensions(switch=switch, outline=outline, keys=keys)
     case = WaveCase(switch=switch, keys=keys, caseDimensions=dims, outline=outline, debug=True, both_sides=False)
     show_clear()
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
     show_objects() 
-
-    export_stl(case.keywell_left, "keywell_left.stl", tolerance=0.01) if hasattr(case, "keywell_left") else None
-    export_stl(case.keyplate_left, "keyplate_left.stl", tolerance=0.01) if hasattr(case, "keyplate_left") else None
-    export_stl(case.bottom_left, "bottom_left.stl", tolerance=0.01) if hasattr(case, "bottom_left") else None

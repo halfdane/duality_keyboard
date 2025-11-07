@@ -7,10 +7,10 @@ import math
 from build123d import *
 from models.switch import Switch
 from models.keys import ErgoKeys
-from ergogen import Point
+from ergogen import Point, get_points
 
 class Outline:
-    def __init__(self, switch: Switch, keys: ErgoKeys, wall_thickness=1.8):
+    def __init__(self, switch: Switch, keys: ErgoKeys, wall_thickness=1.8, additional_top_space=10):
         self.switch = switch
         self.keys = keys
         
@@ -28,7 +28,7 @@ class Outline:
         self.left = finger_outer_points.sort_by(Axis.X)[0].X - self.wall_thickness
         self.right = finger_outer_points.sort_by(Axis.X)[-1].X + self.wall_thickness
         self.bottom = finger_outer_points.sort_by(Axis.Y)[0].Y - self.wall_thickness
-        self.top = finger_outer_points.sort_by(Axis.Y)[-1].Y + self.wall_thickness + 10
+        self.top = finger_outer_points.sort_by(Axis.Y)[-1].Y + self.wall_thickness + additional_top_space
 
         self.bottom_left = Vector(self.left, self.bottom)
         self.top_left = Vector(self.left, self.top) 
@@ -38,27 +38,39 @@ class Outline:
 
         self.sketch = self.create_outline()
         self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
+    
+    def is_wire_ccw(self, wire: Wire) -> bool:
+        points = []
+        for edge in wire.edges():
+            pt = edge.start_point()
+            points.append(pt)
+        points.append(points[0])
+
+        area = 0
+        for i in range(len(points) - 1):
+            area += points[i].cross(points[i + 1]).Z
+
+        # Im Allgemeinen: area < 0 heißt CW, area > 0 heißt CCW
+        return area > 0
 
     def reorient_edges(self, sketch):
         """Create new sketch with consistently oriented edges."""
-        edges = list(sketch.wires()[0].edges())
-        ordered, remaining = [edges[0]], edges[1:]
-        
-        while remaining:
-            end = ordered[-1].end_point()
-            i = next(i for i, e in enumerate(remaining) 
-                    if e.start_point() == end or e.end_point() == end)
-            edge = remaining.pop(i)
-            ordered.append(edge if edge.start_point() == end else edge.reversed())
-
-        face = Face(Wire(ordered))
-        
-        # Counter-clockwise creates upward normal (+Z), clockwise creates downward normal (-Z)
-        if face.normal_at().Z > 0:  # Clockwise - need to reverse
-            ordered = [e.reversed() for e in reversed(ordered)]
-        
         with BuildSketch(Plane.XY) as sk:
-            make_face(Wire(ordered))
+            for wire in sketch.wires():
+                edges = list(wire.edges())
+                ordered, remaining = [edges[0]], edges[1:]
+                
+                while remaining:
+                    end = ordered[-1].end_point()
+                    i = next(i for i, e in enumerate(remaining) 
+                            if e.start_point() == end or e.end_point() == end)
+                    edge = remaining.pop(i)
+                    ordered.append(edge if edge.start_point() == end else edge.reversed())
+                
+                if not self.is_wire_ccw(wire):
+                    ordered = [e.reversed() for e in ordered]
+                
+                make_face(Wire(ordered))
         return sk.sketch
 
 
@@ -177,10 +189,9 @@ class Outline:
                     v = vertices().filter_by(lambda v: v in e1.vertices() and v in e2.vertices())
                     if v:
                         try:
-                            fillet(v[0], radius=0.7)
+                            fillet(v, radius=0.7)
                         except Exception as e:
                             pass
-                        # fillet(v, radius=0.7)
 
         return self.reorient_edges(keywell_outline.sketch), self.reorient_edges(fingers_outline.sketch)
 
@@ -205,7 +216,10 @@ if __name__ == "__main__":
     from models.cherry import Cherry
 
     switch = Choc()
-    keys = ErgoKeys()
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ergogen', 'snap_fit.yml')
+    points = get_points(file_path=config_path)
+    keys = ErgoKeys(points=points)
+    
     outline = Outline(switch=switch, keys=keys, wall_thickness=1.8)
     with BuildSketch() as choc_key_holes:
         for key in keys.keys:
