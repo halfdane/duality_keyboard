@@ -129,7 +129,7 @@ class WaveCase:
             with BuildSketch() as key_holes:
                 for key in self.keys.keys:
                     with Locations(key.p):
-                        Rectangle(self.switch.below.d.X, self.switch.below.d.Y, rotation=key.r)
+                        Rectangle(self.switch.below.d.X + self.dims.clearance, self.switch.below.d.Y + self.dims.clearance, rotation=key.r)
             debug_content.append({"key_holes": key_holes}) if self.debug else None
             extrude(amount=-self.switch.clamp_clearance_z, mode=Mode.SUBTRACT)
 
