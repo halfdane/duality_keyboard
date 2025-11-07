@@ -2,6 +2,8 @@ from dataclasses import dataclass, field, InitVar
 import math
 import copy
 
+from sympy import shape
+
 from wave_generator import WaveCase
 from build123d import *
 from models.choc import Choc
@@ -61,8 +63,8 @@ class CaseDimensions:
     bumper_locations: list[Vector] = field(init=False)
 
     def __post_init__(self, switch: Switch, outline: Outline, keys: ErgoKeys):
-        self.add_below_choc_posts: float = 0.7
-        self.bottom_plate_z: float = 3.0
+        self.add_below_choc_posts: float = -0.35
+        self.bottom_plate_z: float = 2.2
         self.above_z: float = switch.above.d.Z
         self.below_z: float = switch.below.d.Z + self.add_below_choc_posts
         self.keyplate_z: float = self.below_z - self.bottom_plate_z
@@ -72,7 +74,7 @@ class CaseDimensions:
 
         xiao_pos_x: float = outline.top_left.X + Xiao.dims.d.X/2 + 3.5*self.wall_thickness
         xiao_pos_y: float = outline.top_left.Y - Xiao.dims.d.Y/2 - Xiao.usb.forward_y - self.wall_thickness - 2*self.clearance
-        xiao_pos_z: float = -1.45
+        xiao_pos_z: float = - self.below_z + Xiao.usb.d.Z + Xiao.dims.d.Z
         self.xiao_position: Vector = Vector(xiao_pos_x, xiao_pos_y, xiao_pos_z)
         self.xiao_mirror_position: Vector = Vector(-xiao_pos_x, xiao_pos_y, xiao_pos_z)
 
@@ -94,7 +96,7 @@ class CaseDimensions:
         self.battery_pd = PosAndDims(
             d=battery_d,
             p=outline.top_left \
-                + ((self.wall_thickness + self.clearance), -(self.wall_thickness + self.clearance)) \
+                + ((self.wall_thickness + self.clearance)+1, -(self.wall_thickness + self.clearance)-1 ) \
                 + (battery_d.X/2, - battery_d.Y/2, (self.above_z - battery_d.Z/2 - self.wall_thickness)))
         
         self.magnet_d: RoundDimensions = RoundDimensions(5, 2)
@@ -127,3 +129,8 @@ if __name__ == "__main__":
     set_defaults(ortho=True, default_edgecolor="#121212", reset_camera=Camera.KEEP)
     set_colormap(ColorMap.seeded(colormap="rgb", alpha=1, seed_value="wave"))
     show_objects() 
+
+    export_stl(case.keywell_left, "keywell_left_snap_fit.stl") if hasattr(case, "keywell_left") else None
+    export_stl(case.keyplate_left, "keyplate_left_snap_fit.stl") if hasattr(case, "keyplate_left") else None
+    export_stl(case.bottom_left, "bottom_left_snap_fit.stl") if hasattr(case, "bottom_left") else None
+

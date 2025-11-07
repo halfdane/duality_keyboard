@@ -99,21 +99,19 @@ class Xiao:
         length = self.reset_lever_dims.d.Y
         lever_width = self.reset_lever_dims.d.X
         lever_gap = self.reset_lever_dims.gap
-        p = self.reset_lever_dims.p
+        p = self.reset_lever_dims.p        
         with BuildSketch() as reset_sketch:
-            with BuildLine() as line:
-                l1 = Line(p+Vector(-lever_width/2, 0), p+Vector(-lever_width/2, length))
-                l3 = Line(l1@0 + Vector(-lever_gap, 0), l1@1 + Vector(-lever_gap, 0))
-                rl = RadiusArc(l3@1, l1@1, radius=lever_gap/2, short_sagitta=True)
-
-                r1 = Line(p+Vector(lever_width/2, 0), p+Vector(lever_width/2, length))
-                r3 = Line(r1@0 + Vector(lever_gap, 0), r1@1 + Vector(lever_gap, 0))
-                rr = RadiusArc(r1@1, r3@1, radius=lever_gap/2, short_sagitta=True)
-
-                a1 = EllipticalCenterArc((l3@0 + r3@0)/2, lever_width/2, lever_width, start_angle=180, end_angle=360)
-                a2 = EllipticalCenterArc((l3@0 + r3@0)/2, lever_width/2 + lever_gap, lever_width + lever_width/4, start_angle=180, end_angle=360)
-
+            with BuildLine() as line2:
+                f3 = Line(p+(-lever_width/2 -lever_gap, 0),
+                          p+(-lever_width/2 -lever_gap, length))
+                g3 = Line(p+(lever_width/2 +lever_gap, 0),
+                          p+(lever_width/2 +lever_gap, length))
+                h2 = EllipticalCenterArc((f3@0 + g3@0)/2, lever_width/2 + lever_gap, lever_width + lever_width/4, start_angle=180, end_angle=360)
+                i = Line(f3@1+(lever_gap/2, lever_gap/2), g3@1+(-lever_gap/2, lever_gap/2))
+                rj = RadiusArc(f3@1, i@0, radius=lever_gap/2, short_sagitta=True)
+                lj = RadiusArc(i@1, g3@1, radius=lever_gap/2, short_sagitta=True)
             make_face()
+
         return reset_sketch.sketch
 
     def _create_reset_button_bump(self):
@@ -176,21 +174,19 @@ class Xiao:
         with BuildPart() as p:
             add(part)
             dist = plane.origin.Z - self.plane.origin.Z + self.dims.d.Z + self.components.reset_button_d.d.Z
-            with BuildSketch(plane) as lever_sketch:
-                add(self._create_reset_button_lever_sketch())
-            extrude(dir=plane.z_dir, amount=10, mode=Mode.SUBTRACT)
+            lever = self._create_reset_button_lever_sketch()
+            with BuildSketch(plane) as lever_removal_sketch:
+                add(lever)
+            extrude(dir=-plane.z_dir, amount=10, mode=Mode.SUBTRACT)
 
-            thin_to = 1.8
-            with BuildSketch(plane) as lever_thinning_sketch:
-                Rectangle(self.dims.d.X-4, self.dims.d.Y-4)
-                add(offset(self.reset_button_bump, amount=0.5))
-                with Locations(self.reset_lever_dims.p + Vector(-0.5, self.reset_lever_dims.d.Y/2)):
-                    Rectangle(self.reset_lever_dims.d.X+1, self.reset_lever_dims.d.Y+2)
-            extrude(dir=plane.z_dir, amount=thin_to, mode=Mode.SUBTRACT)
-
-            with BuildSketch(plane.offset(thin_to)) as reset_button_bump:
+            with BuildSketch(plane) as lever_add_sketch:
+                add(offset(lever, amount=-self.reset_lever_dims.gap))
+                with Locations((0, self.reset_lever_dims.gap)):
+                    add(offset(lever, amount=-self.reset_lever_dims.gap))
+            extrude(dir=-plane.z_dir, amount=1.18, mode=Mode.ADD)
+            with BuildSketch(plane) as reset_button_bump:
                 add(self.reset_button_bump)
-            extrude(amount=dist-thin_to, mode=Mode.ADD)
+            extrude(amount=dist, mode=Mode.ADD)
 
 
         return p.part
@@ -220,7 +216,7 @@ if __name__ == "__main__":
     # usb_cut.part = xiao.plane * usb_cut.part
 
     bumper_plane = xiao_plane.offset(Xiao.dims.d.Z + Xiao.usb.d.Z)
-    reset_lever = xiao.add_reset_lever(model, bumper_plane)
+    # reset_lever = xiao.add_reset_lever(model, bumper_plane)
 
     with BuildSketch(xiao_plane, bumper_plane) as plane_sketch:
         Circle(10)

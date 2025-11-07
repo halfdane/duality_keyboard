@@ -54,8 +54,6 @@ class ErgoKeys:
         thumb_nested = dict_to_nested_list(reduce(reducer, thumb_points.items(), OrderedDict()))
         finger_nested = dict_to_nested_list(reduce(reducer, finger_points.items(), OrderedDict()))
 
-            
-        
         return thumb_nested, finger_nested
 
 # main method

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field, InitVar
 import math
 import copy
 from build123d import *
+from build123d import Shape
 from models.choc import Choc
 from models.cherry import Cherry
 from models.switch import Switch
@@ -83,7 +84,8 @@ class WaveCase:
 
         self.bottom_left = self.create_bottom()
         self.bottom_left = self.xiao.add_large_usb_cutouts(self.bottom_left)
-        self.bottom_left = self.xiao.add_reset_lever(self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z)) 
+        self.bottom_left = self.xiao.add_reset_lever(
+            self.bottom_left, xiao_plane.offset(self.dims.keyplate_z + self.dims.bottom_plate_z + self.dims.xiao_position.Z)) 
         push_object(self.bottom_left, name="bottom_left") if self.debug else None
 
         if both_sides:
@@ -97,7 +99,8 @@ class WaveCase:
 
             self.bottom_right = mirror(self.bottom_left, about=Plane.YZ)
             self.bottom_right = self.xiao.add_large_usb_cutouts(self.bottom_right)
-            self.bottom_right = self.xiao.add_reset_lever(self.bottom_right, xiao_mirrored_plane.offset(self.dims.keyplate_z + self.dims.xiao_position.Z))
+            self.bottom_right = self.xiao.add_reset_lever(
+                self.bottom_right, xiao_mirrored_plane.offset(self.dims.keyplate_z + self.dims.bottom_plate_z + self.dims.xiao_position.Z))
             push_object(self.bottom_right, name="bottom_right") if self.debug else None
 
             accessories.append({"chocs_right": mirror(self.switches, about=Plane.YZ)})
@@ -265,7 +268,7 @@ class WaveCase:
                 .edges().group_by(Axis.Z)[0]
             debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
 
-            # chamfer(set(bottom_inner_edges), length=0.1)
+            chamfer(set(bottom_inner_edges), length=0.1)
 
             print("  skulpting thumb cut...")
             debug_thumb_content = []
@@ -298,7 +301,8 @@ class WaveCase:
             outside = [f for f in body.faces() if f not in body.faces().filter_by(Axis.Z)]
             outside_faces = keywell.faces().filter_by(intersect_faces(outside))
             debug_content.append({"outside_faces": outside_faces}) if self.debug else None
-            # fillet(outside_faces.edges(), radius=1)
+            
+            fillet(outside_faces.edges(), radius=0.95)
             
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as key_cut_sketch:
                 add(self.outline.create_keywell_outline())
@@ -459,9 +463,9 @@ class WaveCase:
                         for post in [self.switch.posts.center]:
                             with BuildSketch(mode=Mode.PRIVATE) as choc_post_sketch:
                                 with Locations(post.p):
-                                    Circle(post.d.radius + 0.25)
+                                    Circle(post.d.radius + 0.1)
                             add(choc_post_sketch.sketch.mirror(Plane.XZ).rotate(Axis.Z, key.r))
-            extrude(amount=5, mode=Mode.SUBTRACT)
+            extrude(amount=self.switch.posts.center.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"chocs posts": choc_posts}) if self.debug else None
 
             with BuildSketch(Plane(self.dims.powerswitch_position).rotated(self.dims.powerswitch_rotation)) as powerswitch_cut:
