@@ -364,7 +364,8 @@ class WaveCase:
         ."""
         if isinstance(edges, Edge):
             edges = ShapeList([edges])
-        long_clip_edges = edges.sort_by(Axis.Y)[0:6]
+        # the last one is usually the top edge, so skip it
+        long_clip_edges = edges.sort_by(Axis.Y)[:-1]
 
         # keep only long clip edges that are roughly horizontal
         def is_horizontal(edge: Edge) -> bool:
