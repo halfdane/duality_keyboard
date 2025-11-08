@@ -13,7 +13,7 @@ from models.space_invader import SpaceInvader
 from models.keys import ErgoKeys, Point, get_points
 from models.rubber_bumper import RubberBumper, BumperDimensions
 from models.pin import Pin
-from models.model_types import RoundDimensions, PosAndDims, RectDimensions
+from models.model_types import WaveDimensions
 
 from ocp_vscode import *
 
@@ -21,8 +21,7 @@ from models.outline import Outline
 
 
 class WaveCase:
-
-    def __init__(self, switch: Switch, keys: ErgoKeys, caseDimensions, outline, debug=False, both_sides=False):
+    def __init__(self, switch: Switch, keys: ErgoKeys, caseDimensions: WaveDimensions, outline, debug=False, both_sides=False):
         self.switch = switch
         self.keys = keys
 
@@ -249,17 +248,7 @@ class WaveCase:
             print("  keywell cut...")
             keywell_wall = self.outline.create_inner_outline(offset_by=-self.dims.wall_thickness)
             add(keywell_wall)
-            keywell_cut = extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
-
-            inner_faces = keywell.faces()\
-                .filter_by(intersect_faces(keywell_cut.faces())) \
-                .group_by(Axis.Z)[0]
-            debug_content.append({"inner_faces": inner_faces}) if self.debug else None
-            bottom_inner_edges = inner_faces \
-                .edges().group_by(Axis.Z)[0]
-            debug_content.append({"bottom_inner_edges": bottom_inner_edges}) if self.debug else None
-
-            chamfer(set(bottom_inner_edges), length=0.1)
+            extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
 
             print("  skulpting thumb cut...")
             debug_thumb_content = []
@@ -342,7 +331,7 @@ class WaveCase:
             print("  symbol...")
             with BuildSketch(Plane.XY.offset(self.dims.above_z)) as symbol_sketch:
                 symbol_height = 20
-                with Locations(self.outline.top_left + Vector(0.6*symbol_height, -0.6*symbol_height)):
+                with Locations(self.outline.top_left + Vector(0.65*symbol_height, -0.6*symbol_height)):
                     add(Symbol(total_height=symbol_height).sketch)
             extrude(amount=-0.5, mode=Mode.SUBTRACT)
             debug_content.append({"symbol_sketch": symbol_sketch}) if self.debug else None
@@ -488,13 +477,13 @@ class WaveCase:
             extrude(amount=self.pin.dims.length, mode=Mode.SUBTRACT)
 
             print("  space invader...")
-            with BuildSketch(Plane.XY.offset(-self.dims.below_z)) as invader_sketch:
-                invader_height = 10
-                with Locations(self.outline.cirque_recess_position \
-                               + (self.outline.cirque_recess_radius-2, self.outline.cirque_recess_radius)):
-                    add(SpaceInvader(total_height=invader_height).sketch.rotate(Axis.Z, -40))
-            extrude(amount=0.5, mode=Mode.SUBTRACT)
-            debug_content.append({"invader_sketch": invader_sketch}) if self.debug else None
+            if self.dims.space_invader is not None:
+                with BuildSketch(Plane.XY.offset(-self.dims.below_z)) as invader_sketch:
+                    invader_height = 10
+                    with Locations(self.dims.space_invader):
+                        add(SpaceInvader(total_height=invader_height).sketch)
+                extrude(amount=0.5, mode=Mode.SUBTRACT)
+                debug_content.append({"invader_sketch": invader_sketch}) if self.debug else None
 
         return bottom.part
 

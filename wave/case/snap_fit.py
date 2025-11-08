@@ -21,10 +21,10 @@ from models.model_types import RoundDimensions, PosAndDims, RectDimensions
 from ocp_vscode import *
 
 from models.outline import Outline
-
+from models.model_types import WaveDimensions
 
 @dataclass
-class CaseDimensions:
+class CaseDimensions(WaveDimensions):
     switch: InitVar[Switch]
     outline: InitVar[Outline]
     keys: InitVar[ErgoKeys]
@@ -32,35 +32,7 @@ class CaseDimensions:
     clearance: float = 0.02
     wall_thickness: float = 1.8
 
-    above_z: float = field(init=False)
-    add_below_choc_posts: float = field(init=False)
-    below_z: float = field(init=False)
-    bottom_plate_z: float = field(init=False)
-    keyplate_z: float = field(init=False)
-
     clip_protusion: float = 0.4
-    clip_lower_z: float = field(init=False)
-    clip_upper_z: float = field(init=False)
-
-    xiao_position: Vector = field(init=False)
-    xiao_mirror_position: Vector = field(init=False)
-
-    powerswitch_position: Vector = field(init=False)
-    powerswitch_rotation: Vector = field(init=False)
-
-    pin_radius: float = field(init=False)
-    pin_plane: Plane = field(init=False)
-    pin_locations: list[Vector] = field(init=False)
-
-    battery_pd: PosAndDims = field(init=False)
-
-    magnet_d: RoundDimensions = field(init=False)
-    magnet_positions: list[Vector] = field(init=False)
-
-    weight_d: Vector = field(init=False)
-    weight_positions: list[Vector] = field(init=False)
-
-    bumper_locations: list[Vector] = field(init=False)
 
     def __post_init__(self, switch: Switch, outline: Outline, keys: ErgoKeys):
         self.add_below_choc_posts: float = -0.35
@@ -113,6 +85,8 @@ class CaseDimensions:
             outline.bottom_left + Vector(bumpers_radius, bumpers_radius-3),
             outline.top_left + Vector(bumpers_radius, -bumpers_radius),
         ]
+
+        self.space_invader: Location = Location((29, -10), (0, 0, -45))
 
 
 if __name__ == "__main__":
