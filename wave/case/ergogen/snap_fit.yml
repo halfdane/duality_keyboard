@@ -14,7 +14,6 @@ points:
         spread: 1kx
 
       columns:
-        middle.key.stagger: 0.5ky
         index.key.stagger: 0.25ky
         inner.key.stagger: -0.25ky
       rows:

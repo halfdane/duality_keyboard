@@ -69,7 +69,7 @@ class CaseDimensions:
         self.below_z: float = switch.below.d.Z + self.add_below_choc_posts
         self.keyplate_z: float = self.below_z - self.bottom_plate_z
 
-        self.clip_lower_z: float = -self.below_z + self.bottom_plate_z/2
+        self.clip_lower_z: float = -self.below_z + self.bottom_plate_z*0.6
         self.clip_upper_z: float = -self.keyplate_z/2
 
         xiao_pos_x: float = outline.top_left.X + Xiao.dims.d.X/2 + 3.5*self.wall_thickness
@@ -82,8 +82,8 @@ class CaseDimensions:
         self.powerswitch_rotation: Vector = Vector(0, 180, -90)
         self.powerswitch_position: Vector = Vector(
                 xiao_pos_x + Xiao.dims.d.X/2 + xiao_to_power_switch, 
-                xiao_pos_y - 1, 
-                -(self.below_z - 0.75*PowerSwitch.lever.d.Z))
+                xiao_pos_y - 4, 
+                -(PowerSwitch.dims.d.Z))
         
         self.pin_radius: float = Pin.dims.radius + self.clearance
         self.pin_x: float = outline.top_right.X/2
@@ -110,7 +110,7 @@ class CaseDimensions:
         self.bumper_locations = [
             keys.thumb_clusters[0][1][0].p + Vector(switch.cap.d.X/2 - bumpers_radius/2 - 0.5, -switch.cap.d.Y/2+bumpers_radius/2 + 0.5).rotate(Axis.Z, keys.thumb_clusters[0][1][0].r),
             outline.top_right + Vector(-bumpers_radius, -bumpers_radius),
-            outline.bottom_left + Vector(bumpers_radius, bumpers_radius),
+            outline.bottom_left + Vector(bumpers_radius, bumpers_radius-3),
             outline.top_left + Vector(bumpers_radius, -bumpers_radius),
         ]
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     points = get_points(file_path=config_path)
     keys = ErgoKeys(points=points)
-    outline = Outline(switch=switch, keys=keys, wall_thickness=CaseDimensions.wall_thickness, additional_top_space=20)
+    outline = Outline(switch=switch, keys=keys, wall_thickness=CaseDimensions.wall_thickness, additional_top_space=22)
     dims = CaseDimensions(switch=switch, outline=outline, keys=keys)
     case = WaveCase(switch=switch, keys=keys, caseDimensions=dims, outline=outline, debug=True, both_sides=False)
     show_clear()

@@ -146,8 +146,8 @@ class WaveCase:
             extrude(amount=-self.dims.below_z, mode=Mode.SUBTRACT)
 
             print("  connector cut...")
-            connector_width: float = 1.5
-            with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z )) as connector_sketch:
+            connector_width: float = 2
+            with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z)) as connector_sketch:
                 for cluster in self.keys.clusters:
                     for keycol in cluster:
                         with BuildLine() as col_line:
@@ -199,23 +199,14 @@ class WaveCase:
                     l = Line(closest_pair)
                     offset(objects=l, amount=connector_width, side=Side.BOTH)
                     make_face()
+                
+                top_pinkie = self.keys.finger_clusters[0][0][len(self.keys.finger_clusters[0][0])-1].p
+                l=Line(top_pinkie, self.dims.xiao_position)
+                offset(l, amount=connector_width, side=Side.BOTH)
+                make_face()
 
             extrude(amount=self.dims.keyplate_z - self.switch.bottom_housing.d.Z, mode=Mode.SUBTRACT)
             debug_content.append({"connector_sketch": connector_sketch}) if self.debug else None
-
-            connect_to_xiao_plane = Plane.XY
-            top_pinkie = self.keys.finger_clusters[0][0][len(self.keys.finger_clusters[0][0])-1].p
-            connect_to_xiao_plane.origin = (top_pinkie + (self.dims.xiao_position.X, self.dims.xiao_position.Y))/2
-            connect_to_xiao_plane.origin += Vector(0, 0, self.dims.xiao_position.Z+0.3)
-            with BuildSketch(connect_to_xiao_plane) as connect_to_xiao:
-                v = Vector(0, top_pinkie.Y - self.dims.xiao_position.Y)
-                l=Line(v/2, -v/2)
-                offset(l, amount=2*connector_width, side=Side.BOTH)
-                make_face()
-            debug_content.append({"connect_to_xiao": connect_to_xiao}) if self.debug else None
-
-            connect_to_xiao_cut = extrude(amount=-7, mode=Mode.SUBTRACT)
-            debug_content.append({"connect_to_xiao_cut": connect_to_xiao_cut}) if self.debug else None
 
             print("  powerswitch...")
             with BuildSketch(Plane(self.dims.powerswitch_position).rotated(self.dims.powerswitch_rotation)) as powerswitch_cut:
@@ -398,22 +389,22 @@ class WaveCase:
 
             clip_xy_ratio: float = 0.6
             clip_length = e.length * clip_xy_ratio
-            total_height = 4*self.dims.clip_protusion
+            total_height = 2*self.dims.clip_protusion
             total_protrusion = self.dims.clip_protusion * (2 if extralong else 1)
 
             if clips_on_outside: 
                 total_height -= self.dims.clearance * (8 if extralong else 2)
                 clip_length -= 1
-                plane = plane.offset(-total_protrusion)
+                plane = plane.offset(total_protrusion)
 
             with BuildSketch(plane) as clip:
                 Rectangle(clip_length, total_height)
             clip = clip.sketch
 
-            dir = 1 if clips_on_outside else -1
+            dir = -1 if clips_on_outside else 1
             mode = Mode.ADD if clips_on_outside else Mode.SUBTRACT
             taper = 5 if extralong else 0
-            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode, taper=-dir*taper)
+            extrude(to_extrude=clip, amount=dir*total_protrusion, mode=mode, taper=dir*taper)
             if clips_on_outside:
                 fillet(clip.edges(), radius=self.dims.clip_protusion - 0.2)
             clips.append(clip)

@@ -38,41 +38,71 @@ class Outline:
 
         self.sketch = self.create_outline()
         self.inner_sketch = self.create_inner_outline(-self.wall_thickness)
+
+    def centroid(self, wire: Wire) -> Vector:
+        """Calculate the centroid of a wire by averaging its vertices."""
+        vertices = wire.vertices()
+        x_sum = sum(v.X for v in vertices)
+        y_sum = sum(v.Y for v in vertices)
+        z_sum = sum(v.Z for v in vertices)
+        count = len(vertices)
+        return Vector(x_sum / count, y_sum / count, z_sum / count)
+
+    def orient_wire_ccw(self, wire: Wire) -> Wire:
+        """
+        Given a wire and a center point, reorient and sort the edges
+        so they form a counter-clockwise loop around the center.
+        Returns a new Wire with edges ordered CCW and oriented consistently.
+        """
+        center: Vector = self.centroid(wire)
+
+        # Function to compute angle from center to edge start point
+        def angle_of_edge(edge: Edge) -> float:
+            start = edge.start_point()
+            vec = start - center
+            return math.atan2(vec.Y, vec.X)
+        
+        # Reorient edges to have direction going counter-clockwise:
+        # We'll check orientation against center + perpendicular vector
+        def reorient_edge(edge: Edge) -> Edge:
+            # Vector from center to start and end points
+            start_vec = edge.start_point() - center
+            end_vec = edge.end_point() - center
+            
+            # Determine current edge direction relative to center
+            # Calculate cross product to see if edge goes CW or CCW relative to center
+            cross = start_vec.cross(end_vec).Z
+
+            # If cross is negative, edge is clockwise w.r.t. center, reverse it
+            if cross < 0:
+                return edge.reversed()
+            else:
+                return edge
+        
+        # Reorient all edges first
+        reoriented = [reorient_edge(edge) for edge in wire.edges()]
+        
+        # Sort edges by angle of their start point (CCW order)
+        sorted_edges = sorted(reoriented, key=angle_of_edge)
+        
+        # Create new wire from sorted edges
+        return Wire(sorted_edges)
     
-    def is_wire_ccw(self, wire: Wire) -> bool:
-        points = []
-        for edge in wire.edges():
-            pt = edge.start_point()
-            points.append(pt)
-        points.append(points[0])
-
-        area = 0
-        for i in range(len(points) - 1):
-            area += points[i].cross(points[i + 1]).Z
-
-        # Im Allgemeinen: area < 0 heißt CW, area > 0 heißt CCW
-        return area > 0
-
-    def reorient_edges(self, sketch):
-        """Create new sketch with consistently oriented edges."""
-        with BuildSketch(Plane.XY) as sk:
-            for wire in sketch.wires():
-                edges = list(wire.edges())
-                ordered, remaining = [edges[0]], edges[1:]
-                
-                while remaining:
-                    end = ordered[-1].end_point()
-                    i = next(i for i, e in enumerate(remaining) 
-                            if e.start_point() == end or e.end_point() == end)
-                    edge = remaining.pop(i)
-                    ordered.append(edge if edge.start_point() == end else edge.reversed())
-                
-                if not self.is_wire_ccw(wire):
-                    ordered = [e.reversed() for e in ordered]
-                
-                make_face(Wire(ordered))
+    def reorient_edges(self, sketch: Sketch) -> Sketch:
+        """reorient edges in the sketch to be consistently CCW."""
+        with BuildSketch() as sk:
+            wires = sketch.wires()
+            for wire in wires:
+                make_face(self.orient_wire_ccw(wire))
         return sk.sketch
 
+    def is_crossing_keywell(self, edges: list[Edge]) -> bool:
+        for e in edges: 
+            for edge in self.keywell_sketch.edges():
+                inter = e.intersect(edge)
+                if inter:
+                    return True
+        return False
 
     def create_outline(self):
         bottom_left_thumb_key = self.keys.thumb_clusters[0][0][0]
@@ -81,12 +111,6 @@ class Outline:
         self.thumb_bottom_left = bottom_left_thumb_key.p + Vector(-self.d_x+self.wall_thickness, -self.d_y+1).rotate(Axis.Z, bottom_left_thumb_key.r)
         self.thumb_bottom_right = bottom_right_thumb_key.p + Vector(self.d_x, -self.d_y).rotate(Axis.Z, bottom_right_thumb_key.r)
 
-        def is_crossing_keywell(t: TangentArc):
-            for edge in self.keywell_sketch.edges():
-                inter = t.intersect(edge)
-                if inter:
-                    return True
-            return False
         
         with BuildSketch() as outline:
             with BuildLine() as line:
@@ -99,7 +123,7 @@ class Outline:
                     top_right_thumb_key = self.keys.thumb_clusters[0][thumb_col_index][len(self.keys.thumb_clusters[0][thumb_col_index])-1]
                     self.thumb_top = top_right_thumb_key.p + Vector(self.d_x, self.d_y).rotate(Axis.Z, top_right_thumb_key.r)
                     t = TangentArc([self.mid_right, self.thumb_top], tangent=l3 % 1, mode=Mode.PRIVATE)
-                    if not is_crossing_keywell(t):
+                    if not self.is_crossing_keywell(t.edges()):
                         add(t)
                         break
 
@@ -132,7 +156,7 @@ class Outline:
                         loc = Vector(midpoint.X, self.cirque_recess_position.Y)
                         with Locations(loc):
                             c = Circle(self.cirque_recess_radius, mode=Mode.PRIVATE)
-                        if self.cirque_recess_radius < chord_vec.length / 2 and not is_crossing_keywell(c):
+                        if self.cirque_recess_radius < chord_vec.length / 2 and not self.is_crossing_keywell(c.edges()):
                             # there's definitelly enough space for the circle here - just position it next to the thumb cluster
                             add(c, mode=Mode.SUBTRACT)
                             self.cirque_recess_position = loc
@@ -151,10 +175,12 @@ class Outline:
                     except Exception as e:
                         #ignore fillet errors
                         pass
-            with BuildSketch(mode=Mode.SUBTRACT) as help:
-                rect_y = 15
-                with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - rect_y/3)):
-                    RectangleRounded(25, rect_y, radius=rect_y/2 - 0.01, rotation=180)
+
+            rect_y = 15
+            with Locations(self.cirque_recess_position + (0, self.cirque_recess_radius - rect_y/3)):
+                r = RectangleRounded(25, rect_y, radius=rect_y/2 - 0.01, mode=Mode.PRIVATE)
+                if not self.is_crossing_keywell(r.edges()):
+                    RectangleRounded(25, rect_y, radius=rect_y/2 - 0.01, mode=Mode.SUBTRACT)
 
         return self.reorient_edges(inner_outline.sketch)
 
@@ -232,6 +258,10 @@ if __name__ == "__main__":
     choc_inner_sketch_arrows = add_arrows(choc_inner_sketch.edges())
     choc_keywell = outline.keywell_sketch
     choc_keywell_arrows = add_arrows(choc_keywell.edges())
+
+    with BuildPart() as display:
+        with Locations(outline.centroid(choc_sketch.wire())):
+            Sphere(1)
 
     # # switch = Cherry()
     # # keys = Keys(switch=switch)
