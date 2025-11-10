@@ -60,7 +60,7 @@ class CaseDimensions(WaveDimensions):
         self.pin_radius: float = Pin.dims.radius + self.clearance
         self.pin_x: float = outline.top_right.X/2
         self.pin_plane: Plane = Plane(
-            (self.pin_x, outline.top_right.Y, -self.keyplate_z), 
+            (self.pin_x, outline.top_right.Y, -self.keyplate_z+0.5), 
             z_dir=-Axis.Y.direction, x_dir=Axis.X.direction)
         self.pin_location: Vector = Vector(0, 0)
 

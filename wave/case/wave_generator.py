@@ -217,7 +217,7 @@ class WaveCase:
             debug_content.append({"powerswitch_cut": powerswitch_cut}) if self.debug else None
 
             print("  pin extrusion...")
-            with BuildSketch(Plane.XY.offset(self.dims.pin_plane.origin.Z)) as pin_space_sketch:
+            with BuildSketch(Plane.XY.offset(-self.dims.keyplate_z)) as pin_space_sketch:
                 with Locations((self.dims.pin_plane.origin.X, 
                                 self.outline.top_left.Y - 1.5*self.dims.wall_thickness - 0.5)):
                     Rectangle(self.dims.wall_thickness*2 + 0.5, self.dims.wall_thickness*3 + 0.5)
